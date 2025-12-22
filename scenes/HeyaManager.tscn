@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://qn1kwsobslby"]
+
+[ext_resource type="Script" uid="uid://bs3xcpmmrjvi7" path="res://scripts/HeyaManager.gd" id="1_uvks8"]
+
+[node name="HeyaMangager" type="Node2D"]
+script = ExtResource("1_uvks8")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer"]
+offset_right = 40.0
+offset_bottom = 40.0
+metadata/_edit_use_anchors_ = true

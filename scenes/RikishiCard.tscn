@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8x7x6x5x4x3"]
+
+[ext_resource type="Script" path="res://scripts/RikishiCard.gd" id="1_abcde"]
+
+[node name="RikishiCard" type="PanelContainer"]
+offset_right = 600.0
+offset_bottom = 100.0
+script = ExtResource("1_abcde")
