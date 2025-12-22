@@ -2,25 +2,3 @@
 .godot/
 /android/
 /ios/
-*.a
-*.o
-*.tmp
-*.bak
-*.swp
-*.lib
-*.dll
-*.so
-*.dylib
-*.png.import
-*.jpg.import
-*.jpeg.import
-*.mp3.import
-*.wav.import
-*.ogg.import
-*.tga.import
-# But actually, keep .import files for Godot 4 as they are metadata? 
-# Wait, standard Godot 4 gitignore only ignores .godot/. 
-# Reverting to simple standard.
-.godot/
-/android/
-/ios/
