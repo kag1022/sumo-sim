@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/simulation_runner.ts","./src/components/banzuketable.tsx","./src/components/controlpanel.tsx","./src/components/dailymatches.tsx","./src/logic/banzuke.ts","./src/logic/basho.ts","./src/logic/match.ts","./src/logic/rikishi.ts","./src/logic/torikumi.ts","./src/logic/types.ts","./src/store/usesumostore.ts"],"version":"5.9.3"}
