@@ -2,15 +2,18 @@ import { useState, useEffect } from 'react';
 import WrestlerList from './components/WrestlerList';
 import LogWindow from './components/LogWindow';
 import BashoResultModal from './components/BashoResultModal';
+import YushoModal from './components/YushoModal';
 import ScoutPanel from './components/ScoutPanel';
+import IntroScreen from './components/IntroScreen';
 import { TrainingType, Wrestler } from './types';
 import { GameProvider, useGame } from './context/GameContext';
 import { useGameLoop } from './hooks/useGameLoop';
 import { formatHybridDate } from './utils/time';
-import { generateFullRoster } from './utils/dummyGenerator';
+import { generateFullRoster, generateHeyas } from './utils/dummyGenerator';
 import { updateBanzuke } from './utils/banzuke';
 import { formatRank } from './utils/formatting';
 import { MAX_PLAYERS_PER_HEYA } from './utils/constants';
+import { calculateSeverance } from './utils/retirement';
 
 // Dummy data generation
 const generateDummyWrestlers = (): Wrestler[] => {
@@ -27,11 +30,19 @@ const generateDummyWrestlers = (): Wrestler[] => {
       injuryStatus: 'healthy',
       history: [],
       currentBashoStats: { wins: 0, losses: 0 },
-      potential: 90,
-      flexibility: 80,
-      weight: 155,
+
+      potential: 100,
+      flexibility: 100,
+      weight: 160,
       height: 185,
-      background: '伝説の横綱'
+      background: '伝説の横綱',
+      // New Init
+      age: 29,
+      maxRank: 'Yokozuna',
+      historyMaxLength: 0,
+      timeInHeya: 120,
+      injuryDuration: 0,
+      consecutiveLoseOrAbsent: 0
     },
     {
       id: 'player-2',
@@ -45,11 +56,19 @@ const generateDummyWrestlers = (): Wrestler[] => {
       injuryStatus: 'healthy',
       history: [],
       currentBashoStats: { wins: 0, losses: 0 },
-      potential: 95,
-      flexibility: 90,
-      weight: 127,
-      height: 183,
-      background: 'ウルフ'
+
+      potential: 90,
+      flexibility: 80,
+      weight: 155,
+      height: 182,
+      background: 'ウルフ',
+      // New Init
+      age: 26,
+      maxRank: 'Yokozuna',
+      historyMaxLength: 0,
+      timeInHeya: 80,
+      injuryDuration: 0,
+      consecutiveLoseOrAbsent: 0
     },
     {
       id: 'player-3',
@@ -63,11 +82,19 @@ const generateDummyWrestlers = (): Wrestler[] => {
       injuryStatus: 'healthy',
       history: [],
       currentBashoStats: { wins: 0, losses: 0 },
-      potential: 92,
-      flexibility: 85,
-      weight: 160,
-      height: 185,
-      background: '平成の大横綱'
+
+      potential: 85,
+      flexibility: 60,
+      weight: 170,
+      height: 180,
+      background: '平成の大横綱',
+      // New Init
+      age: 24,
+      maxRank: 'Ozeki',
+      historyMaxLength: 0,
+      timeInHeya: 60,
+      injuryDuration: 0,
+      consecutiveLoseOrAbsent: 0
     },
     {
       id: 'player-4',
@@ -81,19 +108,32 @@ const generateDummyWrestlers = (): Wrestler[] => {
       injuryStatus: 'healthy',
       history: [],
       currentBashoStats: { wins: 0, losses: 0 },
+
       potential: 70,
-      flexibility: 60,
+      flexibility: 40,
       weight: 140,
-      height: 178,
-      background: '期待の若手'
+      height: 175,
+      background: '期待の若手',
+      // New Init
+      age: 20,
+      maxRank: 'Makushita',
+      historyMaxLength: 0,
+      timeInHeya: 24,
+      injuryDuration: 0,
+      consecutiveLoseOrAbsent: 0
     }
   ];
 };
 
 // Inner Component to use Hooks
 const GameScreen = () => {
-  const { currentDate, funds, wrestlers, setWrestlers, gameMode, bashoFinished } = useGame();
-  const { advanceTime, closeBashoModal, candidates, recruitWrestler } = useGameLoop();
+  const { currentDate, funds, wrestlers, setWrestlers, setHeyas, gameMode, bashoFinished, lastMonthBalance, yushoWinners, setYushoWinners, isInitialized } = useGame();
+
+  if (!isInitialized) {
+    return <IntroScreen />;
+  }
+
+  const { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler } = useGameLoop();
   const [selectedWrestler, setSelectedWrestler] = useState<Wrestler | null>(null);
   const [trainingType, setTrainingType] = useState<TrainingType>('shiko');
   const [showScout, setShowScout] = useState(false);
@@ -101,19 +141,24 @@ const GameScreen = () => {
   // Initialize Data once
   useEffect(() => {
     if (wrestlers.length === 0) {
-      // 1. Get Player Wrestlers
+      // 1. Generate Heyas
+      const newHeyas = generateHeyas(45);
+      setHeyas(newHeyas);
+
+      // 2. Get Player Wrestlers (Ensure they have a valid heyaId or create a Player Heya)
+      // For now, Player Wrestlers are hardcoded with 'player_heya'.
       const playerWrestlers = generateDummyWrestlers();
 
-      // 2. Generate CPU Roster
+      // 3. Generate CPU Roster using the new Heyas
       // We want CPUs to compete but NOT duplicate positions if possible.
       // But strict quota checks are hard if we manually insert players.
       // Simplified: Generate full CPU roster, then "Insert/Replace" players?
       // Or just append.
       // If we append 4 players to 940, total 944. Valid.
 
-      let roster = [...playerWrestlers, ...generateFullRoster()];
+      let roster = [...playerWrestlers, ...generateFullRoster(newHeyas)]; // Pass heyas
 
-      // 3. Normalize Ranks (Re-sort and Assign)
+      // 4. Normalize Ranks (Re-sort and Assign)
       // This ensures players get properly slotted into the hierarchy based on their initial ranks (seed) or logic.
       // Wait, updateBanzuke recalculates based on SCORE.
       // Initial score = Rank Base.
@@ -122,7 +167,7 @@ const GameScreen = () => {
 
       setWrestlers(roster);
     }
-  }, [wrestlers.length, setWrestlers]);
+  }, [wrestlers.length, setWrestlers, setHeyas]);
 
   const activeSelectedWrestler = selectedWrestler
     ? wrestlers.find(w => w.id === selectedWrestler.id) || selectedWrestler
@@ -160,12 +205,18 @@ const GameScreen = () => {
             <div className="w-px h-8 bg-white/30"></div>
 
             {/* Funds */}
-            <div className="text-center min-w-[120px]">
-              <span className="block text-[10px] opacity-70">所持金</span>
-              <span className={`font-mono font-bold text-xl ${funds < 0 ? 'text-red-300 animate-pulse' : 'text-white'}`}>
-                {funds.toLocaleString()}
-                <span className="text-xs ml-1 font-sans font-normal">円</span>
-              </span>
+            <div className="flex flex-col items-end min-w-[120px]">
+              {lastMonthBalance !== null && (
+                <div className={`text-xs font-bold mb-1 ${lastMonthBalance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  (先月: {lastMonthBalance >= 0 ? '+' : ''}{lastMonthBalance.toLocaleString()})
+                </div>
+              )}
+              <div className={`text-4xl font-mono font-bold tracking-tighter ${funds < 0 ? 'text-red-400' : 'text-[#f2d07e]'}`}>
+                ¥ {funds.toLocaleString()}
+              </div>
+              <div className="text-xs text-slate-400 uppercase tracking-widest mt-1">
+                Current Funds
+              </div>
             </div>
 
             <div className="w-px h-8 bg-white/30"></div>
@@ -287,12 +338,25 @@ const GameScreen = () => {
                         怪我のため療養中
                       </div>
                     )}
-                    {/* Show Basho Stats if in Tournament */}
+                    {/* Current Basho Stats (if active) */}
                     {gameMode === 'tournament' && (
                       <div className="mt-4 p-2 bg-slate-100 rounded font-mono text-xl font-bold text-center">
                         {activeSelectedWrestler.currentBashoStats.wins} 勝 {activeSelectedWrestler.currentBashoStats.losses} 敗
                       </div>
                     )}
+
+                    {/* Age and Tenure Info */}
+                    <div className="mt-3 flex justify-center gap-4 text-sm font-bold border-t border-slate-100 pt-2">
+                      <div className={`${activeSelectedWrestler.age >= 35 ? 'text-red-500' :
+                        activeSelectedWrestler.age >= 30 ? 'text-amber-600' :
+                          'text-slate-600'
+                        }`}>
+                        {activeSelectedWrestler.age}歳
+                      </div>
+                      <div className="text-slate-500">
+                        在籍 {Math.floor((activeSelectedWrestler.timeInHeya || 0) / 12)}年
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -301,23 +365,47 @@ const GameScreen = () => {
                       <div className="w-32 bg-slate-100 rounded-full h-2 mt-1.5 overflow-hidden">
                         <div className="bg-[#b7282e] h-full transition-all duration-500" style={{ width: `${activeSelectedWrestler.stats.mind}%` }}></div>
                       </div>
-                      <span className="font-mono">{activeSelectedWrestler.stats.mind}</span>
+                      <span className="font-mono">{Math.floor(activeSelectedWrestler.stats.mind)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>技</span>
                       <div className="w-32 bg-slate-100 rounded-full h-2 mt-1.5 overflow-hidden">
                         <div className="bg-amber-600 h-full transition-all duration-500" style={{ width: `${activeSelectedWrestler.stats.technique}%` }}></div>
                       </div>
-                      <span className="font-mono">{activeSelectedWrestler.stats.technique}</span>
+                      <span className="font-mono">{Math.floor(activeSelectedWrestler.stats.technique)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>体</span>
                       <div className="w-32 bg-slate-100 rounded-full h-2 mt-1.5 overflow-hidden">
                         <div className="bg-slate-700 h-full transition-all duration-500" style={{ width: `${activeSelectedWrestler.stats.body}%` }}></div>
                       </div>
-                      <span className="font-mono">{activeSelectedWrestler.stats.body}</span>
+                      <span className="font-mono">{Math.floor(activeSelectedWrestler.stats.body)}</span>
                     </div>
                   </div>
+                  {/* Retire Button (Only for Player Wrestlers) */}
+                  {selectedWrestler && selectedWrestler.heyaId === 'player_heya' && (
+                    <div className="mt-8 pt-8 border-t border-slate-200">
+                      <h4 className="font-bold text-slate-900 mb-2">引退処理</h4>
+                      <p className="text-xs text-slate-500 mb-4">
+                        引退させると、最高位と在籍期間に応じた「ご祝儀」を受け取り、力士は部屋を去ります。
+                        この操作は取り消せません。
+                      </p>
+                      <button
+                        onClick={() => {
+                          if (!selectedWrestler) return; // Should not happen if button is visible
+                          const severance = calculateSeverance(selectedWrestler);
+                          if (window.confirm(`${selectedWrestler.name}を引退させますか？\n\n予想されるご祝儀: ¥${severance.toLocaleString()}`)) {
+                            retireWrestler(selectedWrestler.id);
+                            setSelectedWrestler(null);
+                          }
+                        }}
+                        className="bg-stone-200 hover:bg-stone-300 text-stone-600 px-4 py-2 rounded text-sm font-bold w-full transition-colors"
+                      >
+                        引退勧告を行う
+                      </button>
+                    </div>
+                  )}
+
                 </div>
               ) : (
                 <p className="text-slate-400 text-sm text-center py-8">
@@ -332,7 +420,14 @@ const GameScreen = () => {
       {/* Log Window Area */}
       <LogWindow />
       {/* Modal */}
-      {bashoFinished && (
+      {yushoWinners && (
+        <YushoModal
+          winners={yushoWinners}
+          onClose={() => setYushoWinners(null)}
+        />
+      )}
+
+      {bashoFinished && !yushoWinners && (
         <BashoResultModal wrestlers={wrestlers} onClose={closeBashoModal} />
       )}
 
@@ -342,10 +437,11 @@ const GameScreen = () => {
           funds={funds}
           currentCount={playerWrestlers.length}
           limit={MAX_PLAYERS_PER_HEYA}
-          onRecruit={(c) => {
-            recruitWrestler(c);
+          onRecruit={(c, name) => {
+            recruitWrestler(c, name);
             setShowScout(false);
           }}
+          onInspect={inspectCandidate}
           onClose={() => setShowScout(false)}
         />
       )}

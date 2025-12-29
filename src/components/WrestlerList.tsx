@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { Wrestler } from '../types';
 import { formatRank } from '../utils/formatting';
 
@@ -8,17 +8,27 @@ interface WrestlerListProps {
 }
 
 const WrestlerList: React.FC<WrestlerListProps> = ({ wrestlers, onSelect }) => {
+    // Sort logic: Sekitori -> Non-Sekitori -> MaeZumo
+    const sortedWrestlers = [...wrestlers].sort((a, b) => {
+        // Custom Sort: Move MaeZumo to bottom
+        if (a.rank === 'MaeZumo' && b.rank !== 'MaeZumo') return 1;
+        if (a.rank !== 'MaeZumo' && b.rank === 'MaeZumo') return -1;
+        return 0; // Keeping original order otherwise
+    });
+
     return (
         <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-            {wrestlers.map((wrestler) => (
+            {sortedWrestlers.map((wrestler) => (
                 <div
                     key={wrestler.id}
                     onClick={() => onSelect(wrestler)}
                     className={`
                         relative flex items-center p-3 rounded-md cursor-pointer transition-all hover:scale-[1.01] hover:shadow-md
-                        ${wrestler.isSekitori
-                            ? 'bg-gradient-to-r from-[#fcf9f2] to-amber-50 border border-amber-200'
-                            : 'bg-white border border-slate-200'
+                        ${wrestler.rank === 'MaeZumo'
+                            ? 'bg-stone-200 border border-stone-300 opacity-80'
+                            : wrestler.isSekitori
+                                ? 'bg-gradient-to-r from-[#fcf9f2] to-amber-50 border border-amber-200'
+                                : 'bg-white border border-slate-200'
                         }
                     `}
                 >
@@ -42,6 +52,12 @@ const WrestlerList: React.FC<WrestlerListProps> = ({ wrestlers, onSelect }) => {
                         <div className="flex justify-between items-baseline">
                             <h3 className={`font-serif font-bold text-lg ${wrestler.isSekitori ? 'text-slate-900' : 'text-slate-700'}`}>
                                 {wrestler.name}
+                                <span className={`ml-2 text-sm font-normal ${wrestler.age >= 35 ? 'text-red-500 font-bold' :
+                                    wrestler.age >= 30 ? 'text-amber-500' :
+                                        'text-slate-400'
+                                    }`}>
+                                    ({wrestler.age}歳)
+                                </span>
                             </h3>
                             {/* Full Formatted Rank */}
                             <span className="font-serif text-sm font-bold text-stone-600 mr-2">
@@ -51,9 +67,9 @@ const WrestlerList: React.FC<WrestlerListProps> = ({ wrestlers, onSelect }) => {
 
                         {/* Status / History Stub */}
                         <div className="flex items-center gap-4 mt-1 text-xs text-slate-500 font-mono">
-                            <span>心 {wrestler.stats.mind}</span>
-                            <span>技 {wrestler.stats.technique}</span>
-                            <span>体 {wrestler.stats.body}</span>
+                            <span>心 {Math.floor(wrestler.stats.mind)}</span>
+                            <span>技 {Math.floor(wrestler.stats.technique)}</span>
+                            <span>体 {Math.floor(wrestler.stats.body)}</span>
 
                             {/* Current Basho Stats (if active) */}
                             {wrestler.currentBashoStats.wins + wrestler.currentBashoStats.losses > 0 && (

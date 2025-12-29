@@ -71,7 +71,14 @@ export const generateCandidates = (count: number): Candidate[] => {
             weight,
             background: BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)],
             scoutCost: roundedCost,
-            revealedStats
+            revealedStats,
+            // New Init for Candidates (Fresh Recruits)
+            age: 15 + Math.floor(Math.random() * 4), // 15-18
+            maxRank: 'Jonokuchi',
+            historyMaxLength: 0,
+            timeInHeya: 0,
+            injuryDuration: 0,
+            consecutiveLoseOrAbsent: 0
         });
     }
 

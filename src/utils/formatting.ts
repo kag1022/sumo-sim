@@ -67,6 +67,7 @@ export const formatRank = (rank: Rank, side?: 'East' | 'West', number?: number):
         case 'Sandanme': rankName = '三段目'; break;
         case 'Jonidan': rankName = '序二段'; break;
         case 'Jonokuchi': rankName = '序ノ口'; break;
+        case 'MaeZumo': return '前相撲'; // Special case, no side/number usually
     }
 
     // Number Handling

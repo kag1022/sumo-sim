@@ -33,5 +33,5 @@ export const getRankValue = (rank: string): number => {
     // OR: assume the input wrestler array is ALREADY sorted by rank? (Usually list is).
     // Let's rely on array index for tie-breaking if generic.
 
-    return RANK_HIERARCHY[rank] || 0;
+    return RANK_VALUE_MAP[rank] || 0;
 };

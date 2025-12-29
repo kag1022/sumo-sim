@@ -8,7 +8,8 @@ export type Rank =
     | "Makushita"
     | "Sandanme"
     | "Jonidan"
-    | "Jonokuchi";
+    | "Jonokuchi"
+    | "MaeZumo";
 
 export type TrainingType = 'shiko' | 'teppo' | 'moushi_ai' | 'rest';
 
@@ -18,6 +19,14 @@ export interface WrestlerStats {
     mind: number;
     technique: number;
     body: number;
+}
+
+export interface Heya {
+    id: string;
+    name: string;
+    shikonaPrefix: string;
+    strengthMod: number; // 0.8 to 1.2
+    wrestlerCount: number;
 }
 
 export interface Wrestler {
@@ -41,6 +50,15 @@ export interface Wrestler {
     weight: number; // kg
     height: number; // cm
     background: string; // Flavor text
+
+    // Retirement System Fields
+    age: number;
+    maxRank: Rank;
+    historyMaxLength: number; // To track timeInHeya approximately if not using date? 
+    // Let's use `timeInHeya` as months active
+    timeInHeya: number;
+    injuryDuration: number; // Weeks (or Days) injured consecutively
+    consecutiveLoseOrAbsent: number; // Bashos
 }
 
 export interface Candidate extends Omit<Wrestler, 'history' | 'currentBashoStats'> {

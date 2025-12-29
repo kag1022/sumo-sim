@@ -37,7 +37,7 @@ export const calculateBanzukeScore = (wrestler: Wrestler): number => {
     // Special Bonus for Perfect Record (Priority)
     // Instead of Flag Sort, we give points.
     let bonus = 0;
-    const isPerfect = wins === 7 && losses === 0;
+
 
     // SCORE CAP LOGIC
     // Calculate raw score
