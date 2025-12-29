@@ -120,7 +120,8 @@ export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi'): Wrestler
         historyMaxLength: 0,
         timeInHeya: 0,
         injuryDuration: 0,
-        consecutiveLoseOrAbsent: 0
+        consecutiveLoseOrAbsent: 0,
+        stress: 0
     };
 };
 
@@ -205,7 +206,8 @@ export const generateFullRoster = (existingHeyas: Heya[]): Wrestler[] => {
                 historyMaxLength: 0,
                 timeInHeya: Math.floor(Math.random() * 120), // 0-10 years
                 injuryDuration: 0,
-                consecutiveLoseOrAbsent: 0
+                consecutiveLoseOrAbsent: 0,
+                stress: 0
             });
         }
     };

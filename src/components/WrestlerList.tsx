@@ -71,6 +71,19 @@ const WrestlerList: React.FC<WrestlerListProps> = ({ wrestlers, onSelect }) => {
                             <span>技 {Math.floor(wrestler.stats.technique)}</span>
                             <span>体 {Math.floor(wrestler.stats.body)}</span>
 
+                            {/* Stress Bar */}
+                            <div className="flex items-center gap-1 ml-2" title="ストレス">
+                                <span className="text-[10px]">ス</span>
+                                <div className="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full transition-all duration-300 ${(wrestler.stress || 0) > 80 ? 'bg-red-500' :
+                                            (wrestler.stress || 0) > 50 ? 'bg-amber-400' : 'bg-blue-400'
+                                            }`}
+                                        style={{ width: `${wrestler.stress || 0}%` }}
+                                    />
+                                </div>
+                            </div>
+
                             {/* Current Basho Stats (if active) */}
                             {wrestler.currentBashoStats.wins + wrestler.currentBashoStats.losses > 0 && (
                                 <span className="ml-auto font-bold text-slate-800 bg-slate-100 px-2 rounded">
@@ -83,12 +96,14 @@ const WrestlerList: React.FC<WrestlerListProps> = ({ wrestlers, onSelect }) => {
                     {/* Injury Overlay */}
                     {wrestler.injuryStatus === 'injured' && (
                         <>
-                            <div className="absolute inset-0 bg-slate-200/50 grayscale-[0.5] rounded-md pointer-events-none" />
-                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-2 border-red-600 text-red-600 font-serif font-bold text-xl p-1 opacity-80 rotate-[-12deg] pointer-events-none whitespace-nowrap bg-white/80">
-                                休 場
-                            </div>
-                            <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] px-1 rounded font-bold">
-                                怪我
+                            <div className="absolute inset-0 bg-red-50/80 grayscale-[0.3] rounded-md pointer-events-none border-2 border-red-200" />
+                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center p-2 rounded pointer-events-none max-w-[90%]">
+                                <span className="border-4 border-red-600 text-red-600 font-serif font-black text-2xl px-4 py-1 opacity-90 rotate-[-8deg] bg-white/90 shadow-lg whitespace-nowrap">
+                                    休 場
+                                </span>
+                                <span className="mt-2 text-xs font-bold text-red-700 bg-white/90 px-2 py-0.5 rounded shadow-sm">
+                                    全治 {(wrestler.injuryDuration || 0)} 週間
+                                </span>
                             </div>
                         </>
                     )}

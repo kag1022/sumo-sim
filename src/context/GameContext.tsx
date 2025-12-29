@@ -14,12 +14,14 @@ interface GameState {
     bashoFinished: boolean;
     yushoWinners: Record<string, Wrestler> | null;
     lastMonthBalance: number | null;
-    isInitialized: boolean; // NEW
-    oyakataName: string | null; // NEW
+    isInitialized: boolean;
+    oyakataName: string | null;
+    okamiLevel: number;
+    reputation: number;
 }
 
 interface GameContextProps extends GameState {
-    setFunds: (amount: number) => void;
+    setFunds: React.Dispatch<React.SetStateAction<number>>;
     setWrestlers: React.Dispatch<React.SetStateAction<Wrestler[]>>;
     setHeyas: React.Dispatch<React.SetStateAction<Heya[]>>;
     advanceDate: (days: number) => void;
@@ -28,7 +30,12 @@ interface GameContextProps extends GameState {
     setBashoFinished: (finished: boolean) => void;
     setYushoWinners: (winners: Record<string, Wrestler> | null) => void;
     setLastMonthBalance: (amount: number) => void;
-    startGame: (settings: InitialSettings) => void; // NEW
+    startGame: (settings: InitialSettings) => void;
+    // Phase 19: Okami & Events
+    okamiLevel: number;
+    reputation: number;
+    setOkamiLevel: (level: number) => void;
+    setReputation: (rep: number) => void;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -49,9 +56,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isInitialized, setIsInitialized] = useState<boolean>(false);
     const [oyakataName, setOyakataName] = useState<string | null>(null);
 
-    const setFunds = (amount: number) => {
-        setFundsState(amount);
-    };
+    // Phase 19
+    const [okamiLevel, setOkamiLevel] = useState<number>(1);
+    const [reputation, setReputation] = useState<number>(50);
+
+    const setFunds: React.Dispatch<React.SetStateAction<number>> = setFundsState;
 
     const startGame = (settings: InitialSettings) => {
         const data = initializeGameData(settings);
@@ -111,7 +120,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setLastMonthBalance,
             isInitialized,
             oyakataName,
-            startGame
+            startGame,
+            okamiLevel,
+            reputation,
+            setOkamiLevel,
+            setReputation
         }}>
             {children}
         </GameContext.Provider>

@@ -78,7 +78,8 @@ export const generateCandidates = (count: number): Candidate[] => {
             historyMaxLength: 0,
             timeInHeya: 0,
             injuryDuration: 0,
-            consecutiveLoseOrAbsent: 0
+            consecutiveLoseOrAbsent: 0,
+            stress: 0
         });
     }
 

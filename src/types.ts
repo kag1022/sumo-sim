@@ -59,6 +59,7 @@ export interface Wrestler {
     timeInHeya: number;
     injuryDuration: number; // Weeks (or Days) injured consecutively
     consecutiveLoseOrAbsent: number; // Bashos
+    stress: number; // 0-100
 }
 
 export interface Candidate extends Omit<Wrestler, 'history' | 'currentBashoStats'> {

@@ -5,6 +5,7 @@ import BashoResultModal from './components/BashoResultModal';
 import YushoModal from './components/YushoModal';
 import ScoutPanel from './components/ScoutPanel';
 import IntroScreen from './components/IntroScreen';
+import ManagementModal from './components/ManagementModal';
 import { TrainingType, Wrestler } from './types';
 import { GameProvider, useGame } from './context/GameContext';
 import { useGameLoop } from './hooks/useGameLoop';
@@ -42,7 +43,8 @@ const generateDummyWrestlers = (): Wrestler[] => {
       historyMaxLength: 0,
       timeInHeya: 120,
       injuryDuration: 0,
-      consecutiveLoseOrAbsent: 0
+      consecutiveLoseOrAbsent: 0,
+      stress: 0
     },
     {
       id: 'player-2',
@@ -68,7 +70,8 @@ const generateDummyWrestlers = (): Wrestler[] => {
       historyMaxLength: 0,
       timeInHeya: 80,
       injuryDuration: 0,
-      consecutiveLoseOrAbsent: 0
+      consecutiveLoseOrAbsent: 0,
+      stress: 0
     },
     {
       id: 'player-3',
@@ -94,7 +97,8 @@ const generateDummyWrestlers = (): Wrestler[] => {
       historyMaxLength: 0,
       timeInHeya: 60,
       injuryDuration: 0,
-      consecutiveLoseOrAbsent: 0
+      consecutiveLoseOrAbsent: 0,
+      stress: 0
     },
     {
       id: 'player-4',
@@ -120,23 +124,25 @@ const generateDummyWrestlers = (): Wrestler[] => {
       historyMaxLength: 0,
       timeInHeya: 24,
       injuryDuration: 0,
-      consecutiveLoseOrAbsent: 0
+      consecutiveLoseOrAbsent: 0,
+      stress: 0
     }
   ];
 };
 
 // Inner Component to use Hooks
 const GameScreen = () => {
-  const { currentDate, funds, wrestlers, setWrestlers, setHeyas, gameMode, bashoFinished, lastMonthBalance, yushoWinners, setYushoWinners, isInitialized } = useGame();
+  const { currentDate, funds, wrestlers, setWrestlers, setHeyas, gameMode, bashoFinished, lastMonthBalance, yushoWinners, setYushoWinners, isInitialized, okamiLevel, reputation } = useGame();
 
   if (!isInitialized) {
     return <IntroScreen />;
   }
 
-  const { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler } = useGameLoop();
+  const { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, upgradeOkami } = useGameLoop();
   const [selectedWrestler, setSelectedWrestler] = useState<Wrestler | null>(null);
   const [trainingType, setTrainingType] = useState<TrainingType>('shiko');
   const [showScout, setShowScout] = useState(false);
+  const [showManagement, setShowManagement] = useState(false);
 
   // Initialize Data once
   useEffect(() => {
@@ -221,6 +227,26 @@ const GameScreen = () => {
 
             <div className="w-px h-8 bg-white/30"></div>
 
+            {/* Okami & Management Button */}
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2 text-xs font-mono mb-1">
+                <span className="opacity-70">OKAMI LV:</span>
+                <span className="font-bold text-amber-300">{okamiLevel}</span>
+                <span className="opacity-50">|</span>
+                <span className="opacity-70">REP:</span>
+                <span className="font-bold text-white">{reputation}</span>
+              </div>
+              <button
+                onClick={() => setShowManagement(true)}
+                className="bg-[#8c1c22] hover:bg-[#a02027] text-white text-[10px] font-bold px-3 py-1 rounded border border-white/20 transition-colors uppercase tracking-wider"
+              >
+                Manage Stable
+              </button>
+            </div>
+
+            <div className="w-px h-8 bg-white/30"></div>
+
+
             {/* Action */}
             <div className="flex flex-col items-center gap-2">
               {gameMode === 'training' && (
@@ -247,6 +273,8 @@ const GameScreen = () => {
             </div>
           </div>
         </div>
+
+        {/* Removed Sub Header (Okami & Rep moved to top right) */}
       </header>
 
       {/* Main Content */}
@@ -381,6 +409,13 @@ const GameScreen = () => {
                       </div>
                       <span className="font-mono">{Math.floor(activeSelectedWrestler.stats.body)}</span>
                     </div>
+                    <div className="flex justify-between text-sm">
+                      <span>疲労</span>
+                      <div className="w-32 bg-slate-100 rounded-full h-2 mt-1.5 overflow-hidden">
+                        <div className="bg-blue-500 h-full transition-all duration-500" style={{ width: `${activeSelectedWrestler.stress || 0}%` }}></div>
+                      </div>
+                      <span className="font-mono">{Math.floor(activeSelectedWrestler.stress || 0)}</span>
+                    </div>
                   </div>
                   {/* Retire Button (Only for Player Wrestlers) */}
                   {selectedWrestler && selectedWrestler.heyaId === 'player_heya' && (
@@ -399,7 +434,7 @@ const GameScreen = () => {
                             setSelectedWrestler(null);
                           }
                         }}
-                        className="bg-stone-200 hover:bg-stone-300 text-stone-600 px-4 py-2 rounded text-sm font-bold w-full transition-colors"
+                        className="w-full bg-stone-200 hover:bg-stone-300 text-stone-600 px-4 py-2 rounded text-sm font-bold transition-colors"
                       >
                         引退勧告を行う
                       </button>
@@ -414,38 +449,62 @@ const GameScreen = () => {
               )}
             </div>
           </div>
+          {/* Removed Okami Management Panel from here */}
         </div>
-      </main>
+      </main >
 
       {/* Log Window Area */}
-      <LogWindow />
-      {/* Modal */}
-      {yushoWinners && (
-        <YushoModal
-          winners={yushoWinners}
-          onClose={() => setYushoWinners(null)}
-        />
-      )}
+      < LogWindow />
 
-      {bashoFinished && !yushoWinners && (
-        <BashoResultModal wrestlers={wrestlers} onClose={closeBashoModal} />
-      )}
-
-      {showScout && (
-        <ScoutPanel
-          candidates={candidates}
+      {/* Modals */}
+      {showManagement && (
+        <ManagementModal
+          okamiLevel={okamiLevel}
           funds={funds}
-          currentCount={playerWrestlers.length}
-          limit={MAX_PLAYERS_PER_HEYA}
-          onRecruit={(c, name) => {
-            recruitWrestler(c, name);
-            setShowScout(false);
+          lastMonthBalance={lastMonthBalance}
+          onUpgradeOkami={() => {
+            upgradeOkami();
+            // We keep modal open or close? Probably keep open to see effect/cost change
           }}
-          onInspect={inspectCandidate}
-          onClose={() => setShowScout(false)}
+          onClose={() => setShowManagement(false)}
         />
       )}
-    </div>
+
+      {
+        bashoFinished && (
+          <BashoResultModal
+            wrestlers={wrestlers}
+            onClose={closeBashoModal}
+          />
+        )
+      }
+
+      {
+        yushoWinners && bashoFinished === false && (
+          <YushoModal
+            winners={yushoWinners}
+            onClose={() => setYushoWinners(null)}
+          />
+        )
+      }
+
+      {
+        showScout && (
+          <ScoutPanel
+            candidates={candidates}
+            funds={funds}
+            currentCount={playerWrestlers.length}
+            limit={MAX_PLAYERS_PER_HEYA}
+            onRecruit={(c, name) => {
+              recruitWrestler(c, name);
+              setShowScout(false);
+            }}
+            onInspect={inspectCandidate}
+            onClose={() => setShowScout(false)}
+          />
+        )
+      }
+    </div >
   );
 };
 
