@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { TrainingType, Wrestler, Candidate } from '../types';
+import { matchMaker } from '../utils/matchmaker/MatchMaker';
 import { updateBanzuke } from '../utils/banzuke';
 import { generateCandidates } from '../utils/scouting';
 import { generateWrestler } from '../utils/dummyGenerator';
@@ -29,7 +30,8 @@ export const useGameLoop = () => {
         okamiLevel,
         reputation,
         setOkamiLevel,
-        setReputation
+        setReputation,
+        setTodaysMatchups
     } = useGame();
 
     const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -113,7 +115,10 @@ export const useGameLoop = () => {
                     // Apply Stress
                     let newStress = Math.min(100, Math.max(0, (w.stress || 0) + stressGain));
 
-                    return { ...w, stats: newStats, stress: newStress };
+                    // Reset nextBoutDay if Basho is starting
+                    const nextBoutDay = collisionDay !== -1 ? null : w.nextBoutDay;
+
+                    return { ...w, stats: newStats, stress: newStress, nextBoutDay };
                 });
 
                 // 3. Okami Relief (Daily x Days)
@@ -152,76 +157,88 @@ export const useGameLoop = () => {
             // --- TOURNAMENT MODE (Day by Day) ---
             daysToAdvance = 1;
 
-            let currentWrestlers = [...wrestlers];
+            const currentWrestlers = [...wrestlers];
+            const tournamentDay = currentDate.getDate() - 9; // 10th is Day 1
 
-            // Stress Gain during Basho (Win = -1, Lose = +2 ?)
-            // Okami Relief applies daily too.
+            // 1. Generate Matchups for Today
+            const todaysMatchups = matchMaker.generateMatchups(currentWrestlers, tournamentDay);
 
-            const tournamentDay = currentDate.getDate() - 9;
-            const lowerRanksFight = (tournamentDay % 2 !== 0) && (tournamentDay <= 13);
+            // 2. Decide Winners & Prepare Updates
+            const updates = new Map<string, { win: boolean, opponentId: string }>();
 
-            const activeFighters = currentWrestlers.filter(w => {
-                if (w.rank === 'MaeZumo') return false;
-                if (w.injuryStatus === 'injured') return false;
-                if (w.isSekitori) return true;
-                return lowerRanksFight;
+            todaysMatchups.forEach(matchup => {
+                const s1 = matchup.east.stats.body + matchup.east.stats.technique + matchup.east.stats.mind;
+                const s2 = matchup.west.stats.body + matchup.west.stats.technique + matchup.west.stats.mind;
+                const total = s1 + s2;
+                const eastChance = total > 0 ? s1 / total : 0.5;
+
+                // Random Outcome based on Stats
+                const eastWins = Math.random() < eastChance;
+
+                // Set Winner in Matchup Object (Mutation ok for generic usage/display)
+                matchup.winnerId = eastWins ? matchup.east.id : matchup.west.id;
+
+                updates.set(matchup.east.id, { win: eastWins, opponentId: matchup.west.id });
+                updates.set(matchup.west.id, { win: !eastWins, opponentId: matchup.east.id });
             });
 
-            activeFighters.sort((a, b) => b.currentBashoStats.wins - a.currentBashoStats.wins);
+            // Update Global State for Matchups (UI Display)
+            setTodaysMatchups([...todaysMatchups]);
 
-            const updates = new Map<string, { win: boolean }>();
-
-            for (let i = 0; i < activeFighters.length - 1; i += 2) {
-                let w1 = activeFighters[i];
-                let w2 = activeFighters[i + 1];
-
-                if (w1.heyaId === w2.heyaId) {
-                    for (let j = i + 2; j < activeFighters.length; j++) {
-                        if (activeFighters[j].heyaId !== w1.heyaId) {
-                            const temp = w2;
-                            activeFighters[i + 1] = activeFighters[j];
-                            activeFighters[j] = temp;
-                            w2 = activeFighters[i + 1];
-                            break;
-                        }
-                    }
-                }
-
-                const s1 = w1.stats.body + w1.stats.technique + w1.stats.mind;
-                const s2 = w2.stats.body + w2.stats.technique + w2.stats.mind;
-                const total = s1 + s2;
-                const w1Chance = s1 / total;
-
-                const r = Math.random();
-                const w1Wins = r < w1Chance;
-
-                updates.set(w1.id, { win: w1Wins });
-                updates.set(w2.id, { win: !w1Wins });
-            }
-
+            // 3. Update Wrestlers Stats
             let updatedWrestlers = currentWrestlers.map(w => {
                 const res = updates.get(w.id);
-                // Stress Logic for Match
-                let stressChange = 0;
-                if (res) {
-                    stressChange = res.win ? -2 : 3; // Win relieves, Lose stresses
-                }
 
                 // Okami Relief (Daily)
                 const okamiRelief = [0, 2, 4, 6, 8, 10][okamiLevel] || 2;
-                let newStress = Math.max(0, (w.stress || 0) + stressChange - okamiRelief);
+                let nextBoutDay = w.nextBoutDay;
+                let stressChange = 0;
+                let newStats = { ...w.currentBashoStats };
 
                 if (res) {
-                    return {
-                        ...w,
-                        stress: newStress,
-                        currentBashoStats: {
-                            wins: w.currentBashoStats.wins + (res.win ? 1 : 0),
-                            losses: w.currentBashoStats.losses + (res.win ? 0 : 1)
+                    stressChange = res.win ? -2 : 3;
+                    newStats.wins += res.win ? 1 : 0;
+                    newStats.losses += res.win ? 0 : 1;
+                    newStats.matchHistory = [...newStats.matchHistory, res.opponentId];
+
+                    // Schedule next bout for Makushita and below
+                    if (!w.isSekitori) {
+                        const matchesPlayed = newStats.wins + newStats.losses;
+                        const remainingMatches = 7 - matchesPlayed;
+                        const remainingDays = 15 - tournamentDay;
+
+                        // Default gap is 2 (Run - Rest - Run)
+                        let gap = 2;
+
+                        // Check if we have luxury to rest 2 days (gap=3)
+                        // Need: remainingMatches * 2 + 1 (buffer) <= remainingDays
+                        // e.g. 2 matches left, need 4 days. If 6 days left, can gap=3 once.
+                        if (remainingDays > (remainingMatches * 2 + 2)) {
+                            if (Math.random() < 0.5) gap = 3;
                         }
-                    };
+
+                        // If very tight, forced to verify if gap=2 is even possible is tricky here without lookahead.
+                        // But if we strictly follow "gap=2", we consume 2 days per match.
+                        // If remainingDays < remainingMatches * 2, we are in trouble.
+                        // Ideally "gap=1" (Consecutive) handles emergency.
+                        if (remainingDays < remainingMatches * 2) {
+                            gap = 1; // Emergency consecutive fight
+                        }
+
+                        nextBoutDay = tournamentDay + gap;
+                    } else {
+                        nextBoutDay = null; // Sekitori fight daily (or handled implicitly)
+                    }
                 }
-                return { ...w, stress: newStress };
+
+                let newStress = Math.max(0, (w.stress || 0) + stressChange - okamiRelief);
+
+                return {
+                    ...w,
+                    stress: newStress,
+                    currentBashoStats: newStats,
+                    nextBoutDay: nextBoutDay
+                };
             });
 
             setWrestlers(updatedWrestlers);
@@ -409,7 +426,8 @@ export const useGameLoop = () => {
             rank: 'MaeZumo',
             rankNumber: 1,
             history: [],
-            currentBashoStats: { wins: 0, losses: 0 },
+            currentBashoStats: { wins: 0, losses: 0, matchHistory: [] },
+            nextBoutDay: null,
             stress: 0 // Init stress
         };
 

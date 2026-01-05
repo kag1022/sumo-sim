@@ -183,7 +183,7 @@ export const updateBanzuke = (wrestlers: Wrestler[]): Wrestler[] => {
                 `${original.rank} ${original.currentBashoStats.wins}-${original.currentBashoStats.losses}`,
                 ...original.history
             ],
-            currentBashoStats: { wins: 0, losses: 0 }
+            currentBashoStats: { wins: 0, losses: 0, matchHistory: [] }
         };
     });
 };

@@ -43,8 +43,10 @@ export interface Wrestler {
     currentBashoStats: {
         wins: number;
         losses: number;
+        matchHistory: string[]; // IDs of opponents fought in this basho
     };
     // New Fields
+    nextBoutDay: number | null; // null if no match scheduled or ended
     potential: number; // 0-100 (Visible as Grade S-E)
     flexibility: number; // 0-100 (Hidden/Semi-hidden)
     weight: number; // kg
@@ -54,15 +56,23 @@ export interface Wrestler {
     // Retirement System Fields
     age: number;
     maxRank: Rank;
-    historyMaxLength: number; // To track timeInHeya approximately if not using date? 
-    // Let's use `timeInHeya` as months active
-    timeInHeya: number;
-    injuryDuration: number; // Weeks (or Days) injured consecutively
+    historyMaxLength: number;
+    timeInHeya: number; // Months active
+    injuryDuration: number; // Weeks (or Days)
     consecutiveLoseOrAbsent: number; // Bashos
     stress: number; // 0-100
 }
 
-export interface Candidate extends Omit<Wrestler, 'history' | 'currentBashoStats'> {
+export type Division = 'Makuuchi' | 'Juryo' | 'Makushita' | 'Sandanme' | 'Jonidan' | 'Jonokuchi';
+
+export interface Matchup {
+    east: Wrestler;
+    west: Wrestler;
+    winnerId: string | null;
+    division: Division;
+}
+
+export interface Candidate extends Omit<Wrestler, 'history' | 'currentBashoStats' | 'nextBoutDay'> {
     scoutCost: number;
     revealedStats: string[]; // Keys of fields that are revealed
 }

@@ -109,7 +109,8 @@ export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi'): Wrestler
         isSekitori: false,
         injuryStatus: 'healthy',
         history: [],
-        currentBashoStats: { wins: 0, losses: 0 },
+        currentBashoStats: { wins: 0, losses: 0, matchHistory: [] },
+        nextBoutDay: null,
         potential,
         flexibility: 10 + Math.floor(Math.random() * 90),
         weight: 100 + Math.floor(Math.random() * 60), // Young, lighter
@@ -145,11 +146,15 @@ export const generateFullRoster = (existingHeyas: Heya[]): Wrestler[] => {
 
     let globalRankCount = 0;
 
-    // Helper to get Heya and update count
-    const getHeya = (): Heya => {
-        // Pick random heya
-        const heya = heyas[Math.floor(Math.random() * heyas.length)];
+    // Balanced Heya Selection
+    let heyaIndex = 0;
+    // Shuffle heyas to ensure random starting point and distribution
+    const shuffledHeyas = [...heyas].sort(() => Math.random() - 0.5);
+
+    const getBalancedHeya = (): Heya => {
+        const heya = shuffledHeyas[heyaIndex];
         heya.wrestlerCount++;
+        heyaIndex = (heyaIndex + 1) % shuffledHeyas.length;
         return heya;
     }
 
@@ -158,7 +163,7 @@ export const generateFullRoster = (existingHeyas: Heya[]): Wrestler[] => {
             const isWest = i % 2 === 1;
             const rankNumber = Math.floor(i / 2) + startNumber;
 
-            const heya = getHeya();
+            const heya = getBalancedHeya();
             const name = generateShikona(heya.shikonaPrefix);
 
             // Base stats based on rank
@@ -195,7 +200,8 @@ export const generateFullRoster = (existingHeyas: Heya[]): Wrestler[] => {
                 isSekitori: ['Yokozuna', 'Ozeki', 'Sekiwake', 'Komusubi', 'Maegashira', 'Juryo'].includes(rank),
                 injuryStatus: 'healthy',
                 history: [],
-                currentBashoStats: { wins: 0, losses: 0 },
+                currentBashoStats: { wins: 0, losses: 0, matchHistory: [] },
+                nextBoutDay: null,
                 potential: 50 + Math.floor(Math.random() * 50),
                 flexibility: 10 + Math.floor(Math.random() * 90),
                 weight: 100 + Math.floor(Math.random() * 100),

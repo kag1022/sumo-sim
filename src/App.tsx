@@ -30,7 +30,8 @@ const generateDummyWrestlers = (): Wrestler[] => {
       isSekitori: true,
       injuryStatus: 'healthy',
       history: [],
-      currentBashoStats: { wins: 0, losses: 0 },
+      currentBashoStats: { wins: 0, losses: 0, matchHistory: [] },
+      nextBoutDay: null,
 
       potential: 100,
       flexibility: 100,
@@ -57,7 +58,8 @@ const generateDummyWrestlers = (): Wrestler[] => {
       isSekitori: true,
       injuryStatus: 'healthy',
       history: [],
-      currentBashoStats: { wins: 0, losses: 0 },
+      currentBashoStats: { wins: 0, losses: 0, matchHistory: [] },
+      nextBoutDay: null,
 
       potential: 90,
       flexibility: 80,
@@ -84,7 +86,8 @@ const generateDummyWrestlers = (): Wrestler[] => {
       isSekitori: true,
       injuryStatus: 'healthy',
       history: [],
-      currentBashoStats: { wins: 0, losses: 0 },
+      currentBashoStats: { wins: 0, losses: 0, matchHistory: [] },
+      nextBoutDay: null,
 
       potential: 85,
       flexibility: 60,
@@ -111,7 +114,8 @@ const generateDummyWrestlers = (): Wrestler[] => {
       isSekitori: false,
       injuryStatus: 'healthy',
       history: [],
-      currentBashoStats: { wins: 0, losses: 0 },
+      currentBashoStats: { wins: 0, losses: 0, matchHistory: [] },
+      nextBoutDay: null,
 
       potential: 70,
       flexibility: 40,

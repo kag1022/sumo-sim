@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Wrestler, LogEntry, GameMode, Heya } from '../types';
+import { Wrestler, LogEntry, GameMode, Heya, Matchup } from '../types';
 import { initializeGameData, InitialSettings } from '../utils/initialization';
 
 // ... existing imports
@@ -18,6 +18,7 @@ interface GameState {
     oyakataName: string | null;
     okamiLevel: number;
     reputation: number;
+    todaysMatchups: Matchup[];
 }
 
 interface GameContextProps extends GameState {
@@ -36,6 +37,8 @@ interface GameContextProps extends GameState {
     reputation: number;
     setOkamiLevel: (level: number) => void;
     setReputation: (rep: number) => void;
+    todaysMatchups: Matchup[];
+    setTodaysMatchups: React.Dispatch<React.SetStateAction<Matchup[]>>;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -59,6 +62,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Phase 19
     const [okamiLevel, setOkamiLevel] = useState<number>(1);
     const [reputation, setReputation] = useState<number>(50);
+    const [todaysMatchups, setTodaysMatchups] = useState<Matchup[]>([]);
 
     const setFunds: React.Dispatch<React.SetStateAction<number>> = setFundsState;
 
@@ -124,7 +128,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             okamiLevel,
             reputation,
             setOkamiLevel,
-            setReputation
+            setReputation,
+            todaysMatchups,
+            setTodaysMatchups
         }}>
             {children}
         </GameContext.Provider>
