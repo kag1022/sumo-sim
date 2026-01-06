@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Wrestler, Rank } from '../types';
-import { formatRank } from '../utils/formatting';
-import { RANK_VALUE_MAP } from '../utils/constants';
+import { Wrestler, Rank } from '../../../types';
+import { formatRank } from '../../../utils/formatting';
+import { RANK_VALUE_MAP } from '../../../utils/constants';
 
 interface BashoResultModalProps {
     wrestlers: Wrestler[];

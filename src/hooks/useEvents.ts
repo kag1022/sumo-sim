@@ -1,5 +1,5 @@
 import { Wrestler } from '../types';
-import { mitigateScandalImpact } from '../utils/okami';
+import { mitigateScandalImpact } from '../features/heya/logic/okami';
 
 export interface EventResult {
     updatedWrestlers: Wrestler[];

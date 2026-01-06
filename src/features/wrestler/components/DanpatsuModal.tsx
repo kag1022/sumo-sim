@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Wrestler } from '../types';
-import { formatRank } from '../utils/formatting';
+import { Wrestler } from '../../../types';
+import { formatRank } from '../../../utils/formatting';
 
 interface DanpatsuModalProps {
     wrestler: Wrestler;

@@ -1,4 +1,4 @@
-import { Wrestler } from '../types';
+import { Wrestler } from '../../../types';
 
 export interface IncomeReport {
     grant: number;    // Association Grant

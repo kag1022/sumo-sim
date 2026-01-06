@@ -1,5 +1,5 @@
 import React from 'react';
-import { getOkamiUpgradeCost, MAX_OKAMI_LEVEL } from '../utils/okami';
+import { getOkamiUpgradeCost, MAX_OKAMI_LEVEL } from '../logic/okami';
 
 interface ManagementModalProps {
     okamiLevel: number;

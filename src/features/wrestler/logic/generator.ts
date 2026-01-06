@@ -1,4 +1,4 @@
-import { Wrestler, Rank, Heya } from '../types';
+import { Wrestler, Rank, Heya } from '../../../types';
 // unused import removed
 
 // --- Name Generation Data ---

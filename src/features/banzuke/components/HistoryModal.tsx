@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { YushoRecord } from '../types';
+import { YushoRecord } from '../../../types';
 
 interface HistoryModalProps {
     history?: YushoRecord[]; // Optional/Default support
@@ -193,8 +193,8 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                         key={filter}
                                         onClick={() => setRankFilter(filter)}
                                         className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${rankFilter === filter
-                                                ? 'bg-amber-600 text-white border-amber-600 shadow-lg shadow-amber-900/50'
-                                                : 'bg-stone-800 text-stone-400 border-stone-700 hover:border-stone-500 hover:text-stone-200'
+                                            ? 'bg-amber-600 text-white border-amber-600 shadow-lg shadow-amber-900/50'
+                                            : 'bg-stone-800 text-stone-400 border-stone-700 hover:border-stone-500 hover:text-stone-200'
                                             }`}
                                     >
                                         {filter === 'Makuuchi' ? '幕内' : filter === 'Juryo' ? '十両' : filter === 'Makushita' ? '幕下以下' : '全て'}

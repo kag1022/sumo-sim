@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGame } from '../../../context/GameContext';
 
 const LogWindow: React.FC = () => {
     const { logs } = useGame();

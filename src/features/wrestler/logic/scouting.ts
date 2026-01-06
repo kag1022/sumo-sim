@@ -1,4 +1,4 @@
-import { Candidate } from '../types';
+import { Candidate } from '../../../types';
 
 const LAST_NAMES = [
     '若', '貴', '琴', '栃', '千代', '北', '豊', '朝', '旭', '玉',

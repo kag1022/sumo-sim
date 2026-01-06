@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Candidate } from '../types';
-import { getGrade } from '../utils/scouting';
-import { useGame } from '../context/GameContext'; // To get prefix if needed, or pass prop
+import { Candidate } from '../../../types';
+import { getGrade } from '../logic/scouting';
+import { useGame } from '../../../context/GameContext'; // To get prefix if needed, or pass prop
 
 interface ScoutPanelProps {
     candidates: Candidate[];

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wrestler } from '../types';
+import { Wrestler } from '../../../types';
 
 interface YushoModalProps {
     winners: Record<string, Wrestler>;

@@ -1,4 +1,4 @@
-import { Wrestler, Matchup, Rank } from '../../types';
+import { Wrestler, Matchup, Rank } from '../../../../types';
 import { MakuuchiStrategy } from './MakuuchiStrategy';
 import { JuryoStrategy } from './JuryoStrategy';
 import { MakushitaStrategy } from './MakushitaStrategy';

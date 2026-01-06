@@ -1,5 +1,5 @@
-import { Wrestler, Rank } from '../types';
-import { RANK_VALUE_MAP } from './constants';
+import { Wrestler, Rank } from '../../../types';
+import { RANK_VALUE_MAP } from '../../../utils/constants';
 
 export const calculateSeverance = (wrestler: Wrestler): number => {
     // 1. Max Rank Bonus

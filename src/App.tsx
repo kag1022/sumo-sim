@@ -1,25 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import WrestlerList from './components/WrestlerList';
-import LogWindow from './components/LogWindow';
-import BashoResultModal from './components/BashoResultModal';
-import YushoModal from './components/YushoModal';
-import ScoutPanel from './components/ScoutPanel';
+import WrestlerList from './features/wrestler/components/WrestlerList';
+import LogWindow from './features/match/components/LogWindow';
+import BashoResultModal from './features/banzuke/components/BashoResultModal';
+import YushoModal from './features/banzuke/components/YushoModal';
+import ScoutPanel from './features/wrestler/components/ScoutPanel';
 import { IntroScreen } from './components/IntroScreen';
-import ManagementModal from './components/ManagementModal';
+import ManagementModal from './features/heya/components/ManagementModal';
 import { TitleScreen } from './components/TitleScreen'; // New Import
-import { HistoryModal } from './components/HistoryModal'; // New Import
-import { DanpatsuModal } from './components/DanpatsuModal';
+import { HistoryModal } from './features/banzuke/components/HistoryModal'; // New Import
+import { DanpatsuModal } from './features/wrestler/components/DanpatsuModal';
 import { HelpModal } from './components/HelpModal';
 import { TrainingType, Wrestler } from './types';
 import { GameProvider, useGame } from './context/GameContext';
 import { useGameLoop } from './hooks/useGameLoop';
 import { formatHybridDate } from './utils/time';
-import { generateFullRoster, generateHeyas } from './utils/dummyGenerator';
-import { updateBanzuke } from './utils/banzuke';
+import { generateFullRoster, generateHeyas } from './features/wrestler/logic/generator';
+import { updateBanzuke } from './features/banzuke/logic/banzuke';
 import { formatRank } from './utils/formatting';
 import { MAX_PLAYERS_PER_HEYA } from './utils/constants';
-import { calculateSeverance } from './utils/retirement';
+import { calculateSeverance } from './features/wrestler/logic/retirement';
 
 // Dummy data generation
 const generateDummyWrestlers = (): Wrestler[] => {

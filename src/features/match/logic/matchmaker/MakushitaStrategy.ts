@@ -1,6 +1,6 @@
-import { Wrestler, Matchup, Division } from '../../types';
+import { Wrestler, Matchup, Division } from '../../../../types';
 import { IMatchmakingStrategy } from './types';
-import { getRankValue } from '../constants';
+import { getRankValue } from '../../../../utils/constants';
 
 export class MakushitaStrategy implements IMatchmakingStrategy {
     private division: Division;

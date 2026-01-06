@@ -1,8 +1,8 @@
-import { Wrestler, Rank, BashoLog } from '../types';
+import { Wrestler, Rank, BashoLog } from '../../../types';
 import {
     QUOTA_OZEKI_MIN, QUOTA_SEKIWAKE, QUOTA_KOMUSUBI,
     QUOTA_MAKUUCHI, QUOTA_JURYO, QUOTA_MAKUSHITA, QUOTA_SANDANME, QUOTA_JONIDAN
-} from './constants';
+} from '../../../utils/constants';
 
 // --- Scoring Constants ---
 const BASE_SCORE_YOKOZUNA = 20000; // Unreachable

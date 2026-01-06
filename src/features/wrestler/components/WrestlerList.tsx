@@ -1,6 +1,6 @@
 import React from 'react';
-import { Wrestler } from '../types';
-import { formatRank } from '../utils/formatting';
+import { Wrestler } from '../../../types';
+import { formatRank } from '../../../utils/formatting';
 
 interface WrestlerListProps {
     wrestlers: Wrestler[];

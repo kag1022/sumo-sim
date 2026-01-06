@@ -1,6 +1,6 @@
-import { Wrestler, Matchup } from '../../types';
+import { Wrestler, Matchup } from '../../../../types';
 import { IMatchmakingStrategy } from './types';
-import { getRankValue } from '../constants';
+import { getRankValue } from '../../../../utils/constants';
 
 export class MakuuchiStrategy implements IMatchmakingStrategy {
     generate(wrestlers: Wrestler[], day: number): Matchup[] {
