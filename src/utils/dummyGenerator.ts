@@ -12,51 +12,133 @@ const HEYA_PREFIXES = [
 // 部屋名のSuffix（〇〇部屋）
 const HEYA_SUFFIXES = ['山', '川', '海', '風', '里', '浦', '灘', '嶽', '野', '花'];
 
-// 力士名のSuffix（Prefixの後に続く文字）
-const SHIKONA_SUFFIXES = [
-    '龍', '鳳', '虎', '王', '花', '国', '里', '道', '剛', '力',
-    '山', '海', '川', '人', '樹', '真', '勝', '輝', '光', '天',
-    '錦', '富士', '桜', '椿', '嵐', '丸', '之助', '太郎', '衛門', '乃花',
-    '疾風', '飛翔', '大将', '勇気', '正義', '平和', '希望', '未来', '夢', '愛'
+// 力士名の Prefix (上) - 大幅に拡張
+const SHIKONA_PREFIXES = [
+    '若', '貴', '琴', '栃', '千代', '朝', '北', '豊', '正', '高',
+    '安', '大', '玉', '春', '輝', '遠', '妙', '阿', '隆', '竜',
+    '旭', '日', '魁', '美', '翔', '英', '武', '天', '海', '山',
+    '柏', '鵬', '鶴', '霧', '荒', '双', '照', '剣', '豪', '勢',
+    '錦', '御', '志', '清', '泉', '白', '紅', '碧', '蒼', '黒',
+    '金', '銀', '鋼', '鉄', '石', '岩', '雪', '氷', '炎', '光',
+    '影', '月', '星', '雷', '嵐', '風', '雲', '霞', '虹', '露',
+    '宝', '福', '寿', '祥', '瑞', '嘉', '慶', '吉', '幸', '栄',
+    '丹', '藤', '梅', '松', '竹', '桜', '楓', '蓮', '椿', '萩'
 ];
 
-export const generateHeyas = (count: number = 45): Heya[] => {
-    const heyas: Heya[] = [];
-    const usedNames = new Set<string>();
+// 力士名のSuffix（下） - 大幅に拡張
+const SHIKONA_SUFFIXES = [
+    '山', '川', '海', '里', '富士', '花', '国', '龍', '鵬', '錦',
+    '昇', '桜', '丸', '嵐', '風', '王', '鷹', '浪', '若', '城',
+    '疾風', '響', '岳', '灘', '関', '岩', '輝', '闘', '聖', '覇',
+    '光', '兜', '刃', '翼', '翔', '颯', '雅', '馬', '獅', '虎',
+    '豹', '龍', '鳳', '凰', '麟', '亀', '蛇', '雀', '鶴', '鷲',
+    '之助', '太郎', '衛門', '乃花', '之里', '之海', '之山', '乃風',
+    '道', '潮', '曙', '波', '洋', '州', '郷', '宮', '宿', '荘',
+    '堂', '殿', '院', '閣', '楼', '塔', '碑', '門', '壇', '台',
+    'ノ里', 'ノ山', 'ノ海', 'ノ花', 'ノ川', 'ノ国', 'ノ富士'
+];
 
-    for (let i = 0; i < count; i++) {
-        // Generate Unique Name
+// ユニーク四股名生成関数
+export const generateUniqueName = (usedNames: string[], heyaPrefix?: string, forcePrefix: boolean = false): string => {
+    const maxRetries = 100;
+    let attempts = 0;
+
+    while (attempts < maxRetries) {
         let name = '';
-        let prefix = '';
-        let tries = 0;
 
-        while (!name || usedNames.has(name)) {
-            prefix = HEYA_PREFIXES[Math.floor(Math.random() * HEYA_PREFIXES.length)];
-            const suffix = HEYA_SUFFIXES[Math.floor(Math.random() * HEYA_SUFFIXES.length)];
-            // Avoid "Mounatin Mountain" (Yama-yama)
-            if (prefix === suffix) continue;
-
-            // e.g. "高" + "砂" -> 高砂部屋 (Simulated)
-            // Just use Prefix + Suffix for room name
-            name = prefix + suffix;
-            tries++;
-            if (tries > 100) name = prefix + suffix + '変'; // Fallback
+        // 70%: heyaPrefix + Suffix パターン (forcePrefix=trueなら100%)
+        // 30%: ランダムPrefix + Suffix パターン
+        if (heyaPrefix && (forcePrefix || Math.random() < 0.7)) {
+            const suffix = SHIKONA_SUFFIXES[Math.floor(Math.random() * SHIKONA_SUFFIXES.length)];
+            name = heyaPrefix + suffix;
+        } else {
+            const prefix = SHIKONA_PREFIXES[Math.floor(Math.random() * SHIKONA_PREFIXES.length)];
+            const suffix = SHIKONA_SUFFIXES[Math.floor(Math.random() * SHIKONA_SUFFIXES.length)];
+            // 時々「〇〇ノ〇」パターン (3割)
+            if (Math.random() < 0.3 && !suffix.startsWith('ノ') && !suffix.startsWith('の')) {
+                const bridgeSuffixes = ['ノ里', 'ノ山', 'ノ海', 'ノ花', 'ノ富士'];
+                const bridge = bridgeSuffixes[Math.floor(Math.random() * bridgeSuffixes.length)];
+                name = prefix + bridge;
+            } else {
+                name = prefix + suffix;
+            }
         }
 
-        usedNames.add(name);
-
-        heyas.push({
-            id: `heya-${i}`,
-            name: name + '部屋',
-            shikonaPrefix: prefix,
-            strengthMod: 0.8 + Math.random() * 0.4, // 0.8 - 1.2
-            wrestlerCount: 0
-        });
+        if (!usedNames.includes(name)) {
+            return name;
+        }
+        attempts++;
     }
+
+    // Fallback: 「二代目」などを付加
+    const baseName = SHIKONA_PREFIXES[Math.floor(Math.random() * SHIKONA_PREFIXES.length)] +
+        SHIKONA_SUFFIXES[Math.floor(Math.random() * SHIKONA_SUFFIXES.length)];
+
+    const generations = ['二代目 ', '三代目 ', '四代目 ', '改 '];
+    for (const gen of generations) {
+        const fallbackName = gen + baseName;
+        if (!usedNames.includes(fallbackName)) {
+            return fallbackName;
+        }
+    }
+
+    // Ultimate fallback with timestamp
+    return `新人力士${Date.now().toString().slice(-6)}`;
+};
+
+// Generate Heyas (部屋 - Stables)
+export const generateHeyas = (): Heya[] => {
+    const heyas: Heya[] = [];
+    const usedHeyaNames = new Set<string>();
+
+    const tiers = [
+        { count: 3, mod: 1.5, level: 5, prefixes: ['雷', '若', '貴'] },
+        { count: 7, mod: 1.2, level: 4, prefixes: ['千代', '北', '琴', '春', '豊'] },
+        { count: 20, mod: 1.0, level: 3, prefixes: HEYA_PREFIXES },
+        { count: 15, mod: 0.8, level: 1, prefixes: HEYA_PREFIXES }
+    ];
+
+    let overallIndex = 0;
+
+    tiers.forEach(tier => {
+        for (let i = 0; i < tier.count; i++) {
+            let name = '';
+            let prefix = '';
+            let tries = 0;
+
+            const availablePrefixes = tier.prefixes;
+
+            while (!name || usedHeyaNames.has(name)) {
+                if (tries < 10) {
+                    prefix = availablePrefixes[Math.floor(Math.random() * availablePrefixes.length)];
+                } else {
+                    prefix = HEYA_PREFIXES[Math.floor(Math.random() * HEYA_PREFIXES.length)];
+                }
+
+                const suffix = HEYA_SUFFIXES[Math.floor(Math.random() * HEYA_SUFFIXES.length)];
+                if (prefix === suffix) continue;
+                name = prefix + suffix;
+                tries++;
+                if (tries > 100) name = prefix + suffix + '変';
+            }
+
+            usedHeyaNames.add(name);
+
+            heyas.push({
+                id: `heya-${overallIndex++}`,
+                name: name + '部屋',
+                shikonaPrefix: prefix,
+                strengthMod: tier.mod,
+                facilityLevel: tier.level,
+                wrestlerCount: 0
+            });
+        }
+    });
+
     return heyas;
 };
 
-// Generate Name based on Heya Prefix
+// Generate Name based on Heya Prefix (Legacy, now uses unique)
 const generateShikona = (prefix: string): string => {
     const suffix = SHIKONA_SUFFIXES[Math.floor(Math.random() * SHIKONA_SUFFIXES.length)];
     return prefix + suffix;
@@ -80,13 +162,16 @@ const generatePotential = (): number => {
     }
 };
 
-// Generate Single Wrestler Helper
-export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi'): Wrestler => {
-    const name = generateShikona(heya.shikonaPrefix);
+// Generate Single Wrestler Helper (with unique name support)
+export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi', usedNames?: string[]): Wrestler => {
+    const name = usedNames
+        ? generateUniqueName(usedNames, heya.shikonaPrefix)
+        : generateShikona(heya.shikonaPrefix);
+
+    if (usedNames) usedNames.push(name);
+
     const potential = generatePotential();
 
-    // Stats relative to Rank
-    // Initial stats for new recruits: around 20-30.
     const baseStat = rank === 'Jonokuchi' ? 15 : 40;
     const variation = () => Math.floor(Math.random() * 10);
 
@@ -104,7 +189,7 @@ export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi'): Wrestler
         name: name,
         rank,
         rankSide: 'East',
-        rankNumber: 1, // Default
+        rankNumber: 1,
         stats,
         isSekitori: false,
         injuryStatus: 'healthy',
@@ -113,10 +198,10 @@ export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi'): Wrestler
         nextBoutDay: null,
         potential,
         flexibility: 10 + Math.floor(Math.random() * 90),
-        weight: 100 + Math.floor(Math.random() * 60), // Young, lighter
+        weight: 100 + Math.floor(Math.random() * 60),
         height: 165 + Math.floor(Math.random() * 30),
         background: '一般入門',
-        age: 15, // Young recruit
+        age: 15,
         maxRank: rank,
         historyMaxLength: 0,
         timeInHeya: 0,
@@ -126,17 +211,17 @@ export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi'): Wrestler
     };
 };
 
-export const generateFullRoster = (existingHeyas: Heya[]): Wrestler[] => {
+// Generate Full Roster (with unique name registry)
+export const generateFullRoster = (existingHeyas: Heya[], usedNames: string[] = []): Wrestler[] => {
     const wrestlers: Wrestler[] = [];
     const heyas = existingHeyas;
 
-    // Weights for rank distribution (approximations)
     const quotas = {
         Yokozuna: 2,
         Ozeki: 4,
         Sekiwake: 4,
         Komusubi: 4,
-        Maegashira: 28, // Top Maegashira to Bottom
+        Maegashira: 28,
         Juryo: 28,
         Makushita: 120,
         Sandanme: 200,
@@ -146,9 +231,7 @@ export const generateFullRoster = (existingHeyas: Heya[]): Wrestler[] => {
 
     let globalRankCount = 0;
 
-    // Balanced Heya Selection
     let heyaIndex = 0;
-    // Shuffle heyas to ensure random starting point and distribution
     const shuffledHeyas = [...heyas].sort(() => Math.random() - 0.5);
 
     const getBalancedHeya = (): Heya => {
@@ -164,9 +247,9 @@ export const generateFullRoster = (existingHeyas: Heya[]): Wrestler[] => {
             const rankNumber = Math.floor(i / 2) + startNumber;
 
             const heya = getBalancedHeya();
-            const name = generateShikona(heya.shikonaPrefix);
+            const name = generateUniqueName(usedNames, heya.shikonaPrefix);
+            usedNames.push(name);
 
-            // Base stats based on rank
             let baseStat = 20;
             if (rank === 'Yokozuna') baseStat = 90;
             else if (rank === 'Ozeki') baseStat = 80;
@@ -177,10 +260,7 @@ export const generateFullRoster = (existingHeyas: Heya[]): Wrestler[] => {
             else if (rank === 'Makushita') baseStat = 40;
             else if (rank === 'Sandanme') baseStat = 30;
 
-            // Random variation +/- 10
             const variation = () => Math.floor(Math.random() * 20) - 10;
-
-            // Apply Heya Strength Mod
             const mod = heya.strengthMod;
 
             const stats = {
@@ -207,10 +287,10 @@ export const generateFullRoster = (existingHeyas: Heya[]): Wrestler[] => {
                 weight: 100 + Math.floor(Math.random() * 100),
                 height: 160 + Math.floor(Math.random() * 40),
                 background: '一般入門',
-                age: 18 + Math.floor(Math.random() * 15), // 18-33
+                age: 18 + Math.floor(Math.random() * 15),
                 maxRank: rank,
                 historyMaxLength: 0,
-                timeInHeya: Math.floor(Math.random() * 120), // 0-10 years
+                timeInHeya: Math.floor(Math.random() * 120),
                 injuryDuration: 0,
                 consecutiveLoseOrAbsent: 0,
                 stress: 0
@@ -227,7 +307,7 @@ export const generateFullRoster = (existingHeyas: Heya[]): Wrestler[] => {
     createBatch('Makushita', quotas.Makushita);
     createBatch('Sandanme', quotas.Sandanme);
     createBatch('Jonidan', quotas.Jonidan);
-    createBatch('Jonokuchi', 300); // Increased to fill population to ~950
+    createBatch('Jonokuchi', 300);
 
     return wrestlers;
 };

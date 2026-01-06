@@ -1,4 +1,5 @@
 import { Rank } from '../types';
+import i18n from '../i18n';
 
 const toKanjiNumeral = (num: number): string => {
     if (num === 0) return '';
@@ -45,41 +46,36 @@ const toKanjiNumeral = (num: number): string => {
 };
 
 export const formatRank = (rank: Rank, side?: 'East' | 'West', number?: number): string => {
-    const sideStr = side === 'West' ? '西' : '東';
+    const isJa = i18n.language === 'ja' || !i18n.language || i18n.language.startsWith('ja');
+    const rankStr = i18n.t(`rank.${rank}`);
+    const sideStr = side ? i18n.t(`rank.${side}`) : '';
 
     // Sanyaku (Named Ranks)
     if (['Yokozuna', 'Ozeki', 'Sekiwake', 'Komusubi'].includes(rank)) {
-        const rankMap: Record<string, string> = {
-            'Yokozuna': '横綱',
-            'Ozeki': '大関',
-            'Sekiwake': '関脇',
-            'Komusubi': '小結'
-        };
-        return `${sideStr}${rankMap[rank]}`;
+        return isJa ? `${sideStr}${rankStr}` : `${sideStr} ${rankStr}`.trim();
     }
 
-    // Maegashira and below
-    let rankName = '';
-    switch (rank) {
-        case 'Maegashira': rankName = '前頭'; break;
-        case 'Juryo': rankName = '十両'; break;
-        case 'Makushita': rankName = '幕下'; break;
-        case 'Sandanme': rankName = '三段目'; break;
-        case 'Jonidan': rankName = '序二段'; break;
-        case 'Jonokuchi': rankName = '序ノ口'; break;
-        case 'MaeZumo': return '前相撲'; // Special case, no side/number usually
-    }
+    if (rank === 'MaeZumo') return rankStr;
 
     // Number Handling
     let numStr = '';
     if (number) {
-        if (number === 1) {
-            numStr = '筆頭';
+        if (isJa) {
+            if (number === 1) {
+                numStr = '筆頭';
+            } else {
+                numStr = `${toKanjiNumeral(number)}枚目`;
+            }
         } else {
-            // Use Enhanced Kanji Logic
-            numStr = `${toKanjiNumeral(number)}枚目`;
+            numStr = ` ${number}`;
         }
     }
 
-    return `${sideStr}${rankName}${numStr}`;
+    // Formatting
+    if (isJa) {
+        return `${sideStr}${rankStr}${numStr}`;
+    } else {
+        // English: "East Maegashira 1"
+        return `${sideStr} ${rankStr}${numStr}`.trim();
+    }
 };

@@ -1,189 +1,260 @@
-import { Wrestler, Rank } from '../types';
-import { QUOTA_MAKUUCHI, QUOTA_JURYO, QUOTA_MAKUSHITA, RANK_VALUE_MAP } from './constants';
+import { Wrestler, Rank, BashoLog } from '../types';
+import {
+    QUOTA_OZEKI_MIN, QUOTA_SEKIWAKE, QUOTA_KOMUSUBI,
+    QUOTA_MAKUUCHI, QUOTA_JURYO, QUOTA_MAKUSHITA, QUOTA_SANDANME, QUOTA_JONIDAN
+} from './constants';
 
-// Coefficient for score calculation
-// Tuned for Base Scores: M (10,000) vs J (5,000) vs Ms (1,000)
-// Gap = 5000. 15 wins must bridge gap? No, 8-7 vs 7-8 swing is small.
-// But to Demote M->J, M score must drop below J.
-// M (10k) - 15*X < J (5k) + 15*X
-// 5000 < 30X => X > 166.
-// Let's use 350 for Sekitori (High variance)
-// For Makushita (1k) to reach Juryo (5k):
-// 1000 + 7*Y > 5000 => 7Y > 4000 => Y > 570.
-// Let's use 600 for Lower.
+// --- Scoring Constants ---
+const BASE_SCORE_YOKOZUNA = 20000; // Unreachable
+const BASE_SCORE_OZEKI = 10000;
+const BASE_SCORE_SEKIWAKE = 8000;
+const BASE_SCORE_KOMUSUBI = 7000;
+// Maegashira base scores are calculated dynamically
 
-const SCORE_COEFFICIENT_SEKITORI = 350;
-const SCORE_COEFFICIENT_MAKUSHITA_PRO = 700; // Special high coeff for Makushita to allow promotion
-const SCORE_COEFFICIENT_LOWER = 50; // Sandanme and below dont need massive jumps usually
+// Tuning Keys
+const WIN_COEFF_HIGH = 150; // Points per win-diff
 
-export const calculateBanzukeScore = (wrestler: Wrestler): number => {
-    const baseScore = RANK_VALUE_MAP[wrestler.rank] || 0;
+const getBaseScore = (rank: Rank, rankNum: number = 1): number => {
+    // Return approximate "Ladder" value.
+    if (rank === 'Yokozuna') return BASE_SCORE_YOKOZUNA;
+    if (rank === 'Ozeki') return BASE_SCORE_OZEKI;
+    if (rank === 'Sekiwake') return BASE_SCORE_SEKIWAKE;
+    if (rank === 'Komusubi') return BASE_SCORE_KOMUSUBI;
 
-    let positionalAdjustment = 0;
-    if (wrestler.rankNumber) {
-        positionalAdjustment = (100 - wrestler.rankNumber) * 1;
+    // Maegashira: 4000 ~ 6000
+    if (rank === 'Maegashira') return 6000 - (rankNum * 100);
+    // M1 = 5900, M10 = 5000, M17 = 4300.
+
+    // Juryo: 3000 ~ 3900
+    if (rank === 'Juryo') return 3900 - (rankNum * 70);
+    // J1 = 3830, J14 = 2920.
+
+    // Makushita: 1000 ~ 2900
+    if (rank === 'Makushita') return 2900 - (rankNum * 30);
+    // Ms1 = 2870, Ms60 = 1100.
+
+    // Sandanme & Below: Lower
+    if (rank === 'Sandanme') return 1000;
+    if (rank === 'Jonidan') return 500;
+    if (rank === 'Jonokuchi') return 100;
+    return 0;
+};
+
+// --- Main Helper Functions ---
+
+const calculateDraftScore = (w: Wrestler): number => {
+    // 1. Base Score from CURRENT status
+    const base = getBaseScore(w.rank, w.rankNumber);
+    const diff = w.currentBashoStats.wins - w.currentBashoStats.losses;
+
+    // Win Bonus for lower ranks to encourage rotation
+    let coeff = WIN_COEFF_HIGH;
+    // Boost for winning record in lower divs
+    if (!w.isSekitori) {
+        coeff = 200; // Higher mobility
     }
 
-    const { wins, losses } = wrestler.currentBashoStats;
-    const netWins = wins - losses;
-
-    let coefficient = SCORE_COEFFICIENT_SEKITORI;
-    if (wrestler.rank === 'Makushita') {
-        coefficient = SCORE_COEFFICIENT_MAKUSHITA_PRO;
-    } else if (!wrestler.isSekitori) {
-        coefficient = SCORE_COEFFICIENT_LOWER;
-    }
-
-    // Special Bonus for Perfect Record (Priority)
-    // Instead of Flag Sort, we give points.
-    let bonus = 0;
-
-
-    // SCORE CAP LOGIC
-    // Calculate raw score
-    let rawScore = baseScore + positionalAdjustment + (netWins * coefficient) + bonus;
-
-    // Safety Cap: If coming from Makushita/Lower, score must NOT exceed Juryo Ceiling (approx 9000?)
-    // Makuuchi Min is approx 10000 - (15*350=5250) = 4750.
-    // Wait, Makuuchi Base is 10000.
-    // M1 (10000) 0-15 => 4750.
-    // Makushita (1000) 7-0 => 1000 + 4900 = 5900.
-    // 5900 > 4750. So they CAN overtake Makuuchi 0-15.
-
-    // User Requirement: "Never Makuuchi".
-    // So we must Cap Makushita score at "Just below Makuuchi Min".
-    // Or simpler: Cap at "Juryo Top Score" ~ 9000?
-    // No, Makuuchi Floor is the limit.
-    // Let's Cap Makushita Score at 4500 (Below worst Makuuchi).
-
-    if (wrestler.rank === 'Makushita' || wrestler.rank === 'Sandanme' || wrestler.rank === 'Jonidan' || wrestler.rank === 'Jonokuchi') {
-        if (rawScore > 4500) {
-            rawScore = 4500;
-        }
-    }
-
-    return rawScore;
+    return base + (diff * coeff);
 };
 
 export const updateBanzuke = (wrestlers: Wrestler[]): Wrestler[] => {
-    // 1. Calculate Scores
-    const scoredWrestlers = wrestlers.map(w => {
-        const score = calculateBanzukeScore(w);
+    // Capture original ranks for history
+    const originalRanks = new Map(wrestlers.map(w => [w.id, {
+        rank: w.rank,
+        rankNumber: w.rankNumber,
+        rankSide: w.rankSide
+    }]));
+
+    // Pool all active wrestlers
+    const pool = wrestlers.map(w => ({ ...w })); // Shallow copy
+
+    // Lists for Fixed Status (Y/O/S/K)
+    const nextYokozuna: Wrestler[] = [];
+    const nextOzeki: Wrestler[] = [];
+    let candidates: Wrestler[] = [];
+
+    // --- Phase 1: Status Processing (Y/O) ---
+    pool.forEach(w => {
+        const { wins } = w.currentBashoStats;
+
+        // A. YOKOZUNA
+        if (w.rank === 'Yokozuna') {
+            // Immutable
+            nextYokozuna.push(w);
+            return;
+        }
+
+        // B. OZEKI
+        if (w.rank === 'Ozeki') {
+            if (wins >= 8) {
+                // Keep Ozeki, Clear Kadoban
+                w.isKadoban = false;
+                nextOzeki.push(w);
+            } else {
+                // Losing Record
+                if (w.isKadoban) {
+                    // DEMOTION: Fall to Sekiwake (Candidate Pool)
+                    // We must ensure they are placed HIGH in the candidate pool.
+                    // We'll set their special score later or just push to candidates.
+                    w.isKadoban = false;
+                    w.bantsukePriorRank = 'Ozeki'; // Mark for return rule
+                    candidates.push(w); // Will be sorted by score
+                } else {
+                    // KADOBAN: Stay Ozeki
+                    w.isKadoban = true;
+                    nextOzeki.push(w);
+                }
+            }
+            return;
+        }
+
+        // C. OZEKI RETURN RULE (For current Sekiwake who was Ozeki)
+        if (w.rank === 'Sekiwake' && w.bantsukePriorRank === 'Ozeki') {
+            if (wins >= 10) {
+                // Return to Ozeki!
+                w.bantsukePriorRank = null; // Clear flag
+                w.rank = 'Ozeki'; // Provisional
+                nextOzeki.push(w);
+                return;
+            }
+            // If failed return, usually clears after 1 basho? 
+            // Standard rule: Only valid for immediate next basho.
+            w.bantsukePriorRank = null;
+        }
+
+        // Reset Prior Rank if not used
+        if (w.rank !== 'Sekiwake') w.bantsukePriorRank = null;
+
+        // D. EVERYONE ELSE
+        candidates.push(w);
+    });
+
+
+    // --- Phase 2: Calculate Scores for Candidates ---
+    // Candidates include: Demoted Ozeki, Sekiwake, Komusubi, M, J, Ms...
+    candidates = candidates.map(w => {
+        let score = calculateDraftScore(w);
+
+        // Adjust for Demoted Ozeki (Soft landing at Sekiwake)
+        if (w.bantsukePriorRank === 'Ozeki' && w.rank === 'Ozeki') {
+            // Note: If they are demoted, they kept 'Ozeki' rank string in memory until now?
+            // No, in candidates.push(w), w is reference.
+            // But we didn't change w.rank in Phase 1 loop for demoted Ozeki.
+            // So w.rank is still 'Ozeki'.
+            // They should score as 'Sekiwake Top'.
+            score = BASE_SCORE_SEKIWAKE + 500;
+        }
+
         return { ...w, _tempScore: score };
     });
 
-    // 2. Sort by Score
-    scoredWrestlers.sort((a, b) => {
-        if (b._tempScore !== a._tempScore) {
-            return b._tempScore - a._tempScore;
+    // --- Phase 3: Sort Candidates ---
+    candidates.sort((a: any, b: any) => b._tempScore - a._tempScore);
+
+
+    // --- Phase 4: Fill the Void (Waterfall) ---
+
+    // 4a. Ozeki Filling (Min 2)
+    while (nextOzeki.length < QUOTA_OZEKI_MIN) {
+        const c = candidates.shift();
+        if (!c) break;
+        c.rank = 'Ozeki';
+        c.isKadoban = false;
+        c.bantsukePriorRank = null;
+        nextOzeki.push(c);
+    }
+
+    // Performance Promotion (Optional - skipped for strict adherence)
+
+    const nextSekiwake: Wrestler[] = [];
+    const nextKomusubi: Wrestler[] = [];
+    const nextMaegashira: Wrestler[] = [];
+    const nextJuryo: Wrestler[] = [];
+    const nextMakushita: Wrestler[] = [];
+    const nextSandanme: Wrestler[] = [];
+    const nextJonidan: Wrestler[] = [];
+    const nextJonokuchi: Wrestler[] = [];
+
+    // Helper: Fill List from Candidates
+    const fillList = (targetList: Wrestler[], count: number, rankName: Rank, sekitori: boolean) => {
+        for (let i = 0; i < count; i++) {
+            const w = candidates.shift();
+            if (!w) break;
+
+            w.rank = rankName;
+            w.isSekitori = sekitori;
+
+            // Assign Number/Side
+            w.rankNumber = Math.floor(i / 2) + 1;
+            w.rankSide = (i % 2 === 0) ? 'East' : 'West';
+
+            targetList.push(w);
         }
-        // Tie-breaker: Previous Rank
-        const rankA = RANK_VALUE_MAP[a.rank] || 0;
-        const rankB = RANK_VALUE_MAP[b.rank] || 0;
-        return rankB - rankA;
-    });
+    };
 
-    // 3. Allocate Ranks with CAP logic
-    let currentRankGroup = '';
-    let counter = 0;
+    // 4b. Sekiwake (Fixed 2)
+    fillList(nextSekiwake, QUOTA_SEKIWAKE, 'Sekiwake', true);
 
-    return scoredWrestlers.map((w, index) => {
-        let newRank: Rank;
-        let isSekitori = false;
+    // 4c. Komusubi (Fixed 2)
+    fillList(nextKomusubi, QUOTA_KOMUSUBI, 'Komusubi', true);
 
-        // --- Rank Determination ---
-        if (index < QUOTA_MAKUUCHI) {
-            newRank = 'Maegashira'; // Default
+    // 4d. Maegashira (Rest of Makuuchi Quota)
+    // Used slots so far:
+    const usedMakuuchi = nextYokozuna.length + nextOzeki.length + nextSekiwake.length + nextKomusubi.length;
+    const makuuchiSlots = Math.max(0, QUOTA_MAKUUCHI - usedMakuuchi);
+    fillList(nextMaegashira, makuuchiSlots, 'Maegashira', true);
 
-            // Restore Title if possible logic omitted for simplicity, 
-            // or we keep Title if they were already Title and score is high?
-            // For now, let's just use Maegashira to be safe against BUGS.
-            // (Unless we want to stick to preserving Sanyaku)
-            if (['Yokozuna', 'Ozeki', 'Sekiwake', 'Komusubi'].includes(w.rank)) {
-                // If they are in Makuuchi slots, keep rank? 
-                // Ideally we need specific slots for Y/O/S/K.
-                // Resetting to M is safer for Prototype "fix".
-                // But let's allow preserving if they are high up?
-                newRank = w.rank;
-            } else {
-                newRank = 'Maegashira';
-            }
+    // 4e. Juryo (28)
+    fillList(nextJuryo, QUOTA_JURYO, 'Juryo', true);
 
-            isSekitori = true;
-        } else if (index < QUOTA_MAKUUCHI + QUOTA_JURYO) {
-            newRank = 'Juryo';
-            isSekitori = true;
-        } else if (index < QUOTA_MAKUUCHI + QUOTA_JURYO + QUOTA_MAKUSHITA) {
-            newRank = 'Makushita';
-            isSekitori = false;
-        } else if (index < 700) {
-            newRank = 'Sandanme';
-            isSekitori = false;
-        } else if (index < 900) {
-            newRank = 'Jonidan';
-            isSekitori = false;
-        } else {
-            newRank = 'Jonokuchi';
-            isSekitori = false;
-        }
+    // 4f. Makushita (120)
+    fillList(nextMakushita, QUOTA_MAKUSHITA, 'Makushita', false);
 
-        const { _tempScore, ...original } = w;
+    // 4g. Sandanme (200)
+    fillList(nextSandanme, QUOTA_SANDANME, 'Sandanme', false);
 
-        // --- SAFETY CAP: Makushita or lower CANNOT go above Juryo ---
-        // Specifically check ORIGINAL rank.
-        const originalRankVal = RANK_VALUE_MAP[original.rank] || 0;
-        const makushitaVal = RANK_VALUE_MAP['Makushita'];
-        const juryoVal = RANK_VALUE_MAP['Juryo'];
-        const newRankVal = RANK_VALUE_MAP[newRank] || 0;
+    // 4h. Jonidan (200)
+    fillList(nextJonidan, QUOTA_JONIDAN, 'Jonidan', false);
 
-        // If coming from Makushita (or lower) AND Promoted to Maegashira+
-        if (originalRankVal <= makushitaVal && newRankVal > juryoVal) {
-            // Cap at Juryo
-            newRank = 'Juryo';
-            isSekitori = true;
-            // Force them to the bottom/top of Juryo?
-            // Since we are iterating strictly by index, if we change their rank here,
-            // they effectively displace someone? Or just have the wrong label but high slot?
-            // If index says "Makuuchi Slot 40", but we force "Juryo".
-            // Then we have 41 Makuuchi and 29 Juryo?
-            // This breaks Quota.
+    // 4i. Jonokuchi (Rest)
+    fillList(nextJonokuchi, candidates.length, 'Jonokuchi', false);
 
-            // However, ensuring the SORT order prevented this is key.
-            // With my Score logic:
-            // Makushita Max ~5900.
-            // Makuuchi Min ~4000 (if 0-15).
-            // Wait, Makuuchi Min (10000 - 15*350 = 4750).
-            // So Makushita (5900) CAN beat Makuuchi (4750).
-            // This is "Gekokujo" (Overthrow).
-            // User said: "Never Makuuchi".
+    // --- Phase 5: Recombine ---
+    const finalRoster = [
+        ...nextYokozuna,
+        ...nextOzeki,
+        ...nextSekiwake,
+        ...nextKomusubi,
+        ...nextMaegashira,
+        ...nextJuryo,
+        ...nextMakushita,
+        ...nextSandanme,
+        ...nextJonidan,
+        ...nextJonokuchi
+    ];
 
-            // If Sort put them in Makuuchi slot, we have a problem.
-            // We SHOULD have capped their score.
-            // BUT, modifying score is cleaner.
-        }
-
-        // --- Side / Number ---
-        const rankKey = newRank;
-        if (rankKey !== currentRankGroup) {
-            currentRankGroup = rankKey;
-            counter = 0;
-        }
-
-        const rankNumber = Math.floor(counter / 2) + 1;
-        const rankSide = counter % 2 === 0 ? 'East' : 'West';
-        counter++;
+    // Reset Stats
+    return finalRoster.map(w => {
+        const orig = originalRanks.get(w.id);
+        const log: BashoLog = {
+            bashoId: "Recent Basho",
+            rank: orig?.rank || 'MaeZumo',
+            rankNumber: orig?.rankNumber || 1,
+            rankSide: orig?.rankSide || 'East',
+            wins: w.currentBashoStats.wins,
+            losses: w.currentBashoStats.losses
+        };
 
         return {
-            ...original,
-            rank: newRank,
-            rankSide,
-            rankNumber,
-            isSekitori,
-            history: [
-                `${original.rank} ${original.currentBashoStats.wins}-${original.currentBashoStats.losses}`,
-                ...original.history
-            ],
-            currentBashoStats: { wins: 0, losses: 0, matchHistory: [] }
+            ...w,
+            currentBashoStats: { wins: 0, losses: 0, matchHistory: [] },
+            history: [...w.history, log]
         };
     });
+};
+
+
+
+export const calculateBanzukeScore = (_w: Wrestler): number => {
+    return 0; // Deprecated
 };

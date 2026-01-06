@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGame } from '../context/GameContext';
-import { TrainingType, Wrestler, Candidate } from '../types';
+import { TrainingType, Wrestler, Candidate, Heya, YushoRecord, SaveData, Division } from '../types';
 import { matchMaker } from '../utils/matchmaker/MatchMaker';
 import { updateBanzuke } from '../utils/banzuke';
 import { generateCandidates } from '../utils/scouting';
@@ -10,6 +10,9 @@ import { calculateIncome, calculateExpenses } from '../utils/economy';
 import { calculateSeverance, shouldUpdateMaxRank } from '../utils/retirement';
 import { getOkamiBudgetMultiplier, getOkamiUpgradeCost } from '../utils/okami';
 import { useEvents } from './useEvents';
+import { saveGame } from '../utils/storage';
+import { formatRank } from '../utils/formatting';
+import { formatHybridDate } from '../utils/time';
 
 export const useGameLoop = () => {
     const {
@@ -29,9 +32,21 @@ export const useGameLoop = () => {
         // Phase 19
         okamiLevel,
         reputation,
+        logs,
         setOkamiLevel,
         setReputation,
-        setTodaysMatchups
+        setTodaysMatchups,
+        trainingPoints,
+        setTrainingPoints,
+        // Added for Save/History
+        bashoFinished,
+        lastMonthBalance,
+        isInitialized,
+        oyakataName,
+        yushoHistory,
+        setYushoHistory,
+        setRetiringQueue,
+        usedNames
     } = useGame();
 
     const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -64,19 +79,31 @@ export const useGameLoop = () => {
                 addLog("本場所（初日）が始まります！", 'info');
             }
 
-            // Training logic
+            // Training & Passive Growth Logic
             let updatedWrestlers = [...wrestlers];
             if (daysToAdvance > 0) {
+                // Reset Training Points Weekly
+                setTrainingPoints(3);
+
+                // Create Heya Strength Map for performance
+                const heyaStrengthMap = new Map<string, number>();
+                heyas.forEach(h => heyaStrengthMap.set(h.id, h.strengthMod));
+
                 const updateStat = (current: number, gain: number, potential: number) => {
                     const potentialFactor = Math.max(0, (potential - current) / potential);
+                    // Passive growth is slower than active
                     return Math.min(potential, current + (gain * potentialFactor));
                 };
 
                 const applyDecay = (val: number) => {
+                    // Slower decay
                     return val > 80 ? val - (0.05 * daysToAdvance) : val;
                 };
 
                 updatedWrestlers = wrestlers.map(w => {
+                    // Skip injured
+                    if (w.injuryStatus === 'injured') return w;
+
                     let newStats = { ...w.stats };
                     let stressGain = 0;
 
@@ -85,31 +112,46 @@ export const useGameLoop = () => {
                     newStats.technique = applyDecay(newStats.technique);
                     newStats.body = applyDecay(newStats.body);
 
-                    // 2. Training Gain & Stress
+                    // 2. Passive Growth Calculation
+                    const heyaMod = heyaStrengthMap.get(w.heyaId) || 1.0;
                     const p = w.potential;
-                    const isHealthy = w.injuryStatus !== 'injured';
 
-                    if (isHealthy) {
+                    // Base growth per week (7 days) approx 0.5 - 1.0 adjusted by potential?
+                    // User said: (Base + Random) * StrengthMod * PotentialFactor
+                    // Let's define Base ~ 0.2 per day? = 1.4 per week.
+                    // Random ~ 0.0 - 0.5.
+
+                    const growthBase = (0.2 + Math.random() * 0.1) * daysToAdvance;
+                    const growth = growthBase * heyaMod;
+
+                    // Apply to all stats (General growth) or randomized focus?
+                    // General growth for passive.
+                    newStats.body = updateStat(newStats.body, growth, p);
+                    newStats.technique = updateStat(newStats.technique, growth, p);
+                    newStats.mind = updateStat(newStats.mind, growth, p);
+
+                    // Stress from training (Passive)
+                    stressGain = 0.5 * daysToAdvance;
+
+                    // If Player's selected "Weekly Policy" (trainingType), apply EXTRA bonus to Player Wrestlers?
+                    // The user instructions implies "Active Training" is the SPECIAL command.
+                    // The "Weekly Policy" (shiko/teppo etc) from previous UI might still be valid for Player's wrestlers as "Focus"?
+                    // Let's keep the Weekly Policy bonus for Player Heya wrestlers to maintain that feature.
+                    if (w.heyaId === 'player_heya') {
                         if (trainingType === 'shiko') {
-                            newStats.body = updateStat(newStats.body, 1.0 * daysToAdvance, p);
-                            newStats.mind = updateStat(newStats.mind, 0.2 * daysToAdvance, p);
-                            newStats.technique = updateStat(newStats.technique, 0.2 * daysToAdvance, p);
-                            stressGain = 2 * daysToAdvance;
+                            newStats.body = updateStat(newStats.body, 1.0 * daysToAdvance, p); // Extra focus
+                            stressGain += 1 * daysToAdvance;
                         } else if (trainingType === 'teppo') {
                             newStats.technique = updateStat(newStats.technique, 1.0 * daysToAdvance, p);
-                            newStats.mind = updateStat(newStats.mind, 0.2 * daysToAdvance, p);
-                            newStats.body = updateStat(newStats.body, 0.2 * daysToAdvance, p);
-                            stressGain = 2 * daysToAdvance;
+                            stressGain += 1 * daysToAdvance;
                         } else if (trainingType === 'moushi_ai') {
-                            newStats.mind = updateStat(newStats.mind, 0.6 * daysToAdvance, p);
-                            newStats.technique = updateStat(newStats.technique, 0.6 * daysToAdvance, p);
-                            newStats.body = updateStat(newStats.body, 0.6 * daysToAdvance, p);
-                            stressGain = 5 * daysToAdvance; // High stress
+                            newStats.body = updateStat(newStats.body, 0.5 * daysToAdvance, p);
+                            newStats.technique = updateStat(newStats.technique, 0.5 * daysToAdvance, p);
+                            newStats.mind = updateStat(newStats.mind, 0.5 * daysToAdvance, p);
+                            stressGain += 3 * daysToAdvance;
+                        } else if (trainingType === 'rest') {
+                            stressGain = -3 * daysToAdvance; // Rest
                         }
-                    }
-
-                    if (trainingType === 'rest') {
-                        stressGain = -5 * daysToAdvance; // Rest reduces stress
                     }
 
                     // Apply Stress
@@ -122,13 +164,6 @@ export const useGameLoop = () => {
                 });
 
                 // 3. Okami Relief (Daily x Days)
-                // Note: applyOkamiStressRelief is "per day" logic.
-                // We simplify by calling it once with total relief calculation or iterating?
-                // The util takes array. Let's do it manually here or update util.
-                // Util: "Stress - X". So we do "X * days".
-                // We'll reimplement inline for simplicity or loop.
-                // Re-using util properly:
-                // Actually let's just do it inline here to save loops.
                 const okamiReliefPerDay = [0, 2, 4, 6, 8, 10][okamiLevel] || 2;
                 const totalRelief = okamiReliefPerDay * daysToAdvance;
 
@@ -138,9 +173,6 @@ export const useGameLoop = () => {
                 }));
 
                 // 4. Random Events
-                // For simplicity, we run ONE event check per week (batch).
-                // Or daily? Daily is better for "Daily Life".
-                // But simplified: Batch check.
                 const eventResult = checkRandomEvents(updatedWrestlers, reputation, okamiLevel);
 
                 updatedWrestlers = eventResult.updatedWrestlers;
@@ -152,6 +184,9 @@ export const useGameLoop = () => {
                 eventResult.logs.forEach(l => addLog(l.message, l.type));
 
                 setWrestlers(updatedWrestlers);
+
+                // Auto-Save Weekly
+                triggerAutoSave({ wrestlers: updatedWrestlers, heyas, funds: funds + eventResult.fundsChange, reputation: Math.max(0, Math.min(100, reputation + eventResult.reputationChange)), okamiLevel });
             }
         } else {
             // --- TOURNAMENT MODE (Day by Day) ---
@@ -273,12 +308,28 @@ export const useGameLoop = () => {
 
                 if (Object.keys(winnersMap).length > 0) {
                     setYushoWinners(winnersMap);
+
+                    // --- Log Yusho History ---
+                    const newRecords: YushoRecord[] = Object.entries(winnersMap).map(([div, winner]) => {
+                        const heya = heyas.find(h => h.id === winner.heyaId);
+                        return {
+                            bashoId: formatHybridDate(currentDate, 'tournament'),
+                            division: div as Division, // cast string key to Division
+                            wrestlerName: winner.name,
+                            heyaName: heya ? heya.name : 'Unknown',
+                            rank: formatRank(winner.rank), // simplified format
+                            wins: winner.currentBashoStats.wins,
+                            losses: winner.currentBashoStats.losses
+                        };
+                    });
+                    setYushoHistory(prev => [...prev, ...newRecords]);
+
                     const makuuchiWinner = winnersMap['Makuuchi'];
                     if (makuuchiWinner) {
                         addLog(`幕内最高優勝: ${makuuchiWinner.name} (${makuuchiWinner.currentBashoStats.wins}勝${makuuchiWinner.currentBashoStats.losses}敗)`, 'info');
                         if (makuuchiWinner.heyaId === 'player_heya') {
                             setFunds(funds + 10000000); // Need to use callback if funds changed in event loop?
-                            // Actually funds logic is stable here.
+                            // actually funds logic is stable here.
                             addLog("優勝賞金 1,000万円を獲得しました！", 'info');
                         }
                     }
@@ -332,7 +383,7 @@ export const useGameLoop = () => {
                 for (let i = 0; i < retiredCount; i++) {
                     if (heyas.length > 0) {
                         const heya = heyas[Math.floor(Math.random() * heyas.length)];
-                        const rookie = generateWrestler(heya, 'Jonokuchi');
+                        const rookie = generateWrestler(heya, 'Jonokuchi', usedNames);
                         survivingWrestlers.push(rookie);
                     }
                 }
@@ -440,12 +491,36 @@ export const useGameLoop = () => {
         const wrestler = wrestlers.find(w => w.id === wrestlerId);
         if (!wrestler) return;
 
-        const severance = calculateSeverance(wrestler);
-        setFunds((prev: number) => prev + severance);
+        // New Logic: If Sekitori, queue for Danpatsu-shiki
+        if (wrestler.isSekitori) {
+            setRetiringQueue(prev => [...prev, wrestler]);
+            // Remove from active list immediately? 
+            // If we remove immediately, the modal needs the object.
+            // We pushed the object to queue, so it's safe.
+            setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
+            return;
+        }
+
+        // Non-Sekitori: Retire quietly
+        const severance = calculateSeverance(wrestler); // Assuming this creates small amount or 0
+        if (severance > 0) {
+            setFunds((prev: number) => prev + severance);
+        }
 
         setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
+        addLog(`【引退】${wrestler.name} (最高位: ${formatRank(wrestler.rank)}) が引退しました。`, 'warning');
+    };
 
-        addLog(`【引退】${wrestler.name} (最高位: ${wrestler.maxRank}) が引退しました。断髪式にて ¥${severance.toLocaleString()} のご祝儀を受け取りました。`, 'warning');
+    const completeRetirement = (wrestler: Wrestler) => {
+        const severance = calculateSeverance(wrestler);
+        if (severance > 0) {
+            setFunds((prev: number) => prev + severance);
+            addLog(`断髪式にて、協会より功労金 ¥${severance.toLocaleString()} が支払われました。`, 'info');
+        }
+        addLog(`【引退】${wrestler.name} の断髪式が執り行われ、マゲに別れを告げました。`, 'warning');
+
+        // Remove from queue
+        setRetiringQueue(prev => prev.filter(w => w.id !== wrestler.id));
     };
 
     const upgradeOkami = () => {
@@ -460,6 +535,120 @@ export const useGameLoop = () => {
         addLog(`女将さんのレベルが ${okamiLevel + 1} に上がりました！`, 'info');
     };
 
-    return { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, upgradeOkami };
+    // Special Training Logic
+    const doSpecialTraining = (wrestlerId: string, menuType: TrainingType | 'meditation') => {
+        if (trainingPoints <= 0) {
+            alert("指導力が不足しています");
+            return;
+        }
+
+        const wrestler = wrestlers.find(w => w.id === wrestlerId);
+        if (!wrestler) return;
+
+        if (wrestler.injuryStatus === 'injured') {
+            alert("怪我をしている力士は特訓できません");
+            return;
+        }
+
+        setTrainingPoints((prev: number) => prev - 1);
+
+        let newStats = { ...wrestler.stats };
+        let stressGain = 0;
+        let diffBody = 0, diffTech = 0, diffMind = 0;
+
+        const p = wrestler.potential;
+        const getEfficiency = (current: number) => Math.max(0.1, (p - current) / p);
+        const baseBoost = 2.0;
+
+        if (menuType === 'shiko') {
+            const gain = baseBoost * getEfficiency(newStats.body) * 2;
+            newStats.body = Math.min(p, newStats.body + gain);
+            diffBody = gain;
+            stressGain = 5;
+        } else if (menuType === 'teppo') {
+            const gainT = baseBoost * getEfficiency(newStats.technique);
+            const gainB = baseBoost * getEfficiency(newStats.body) * 0.5;
+            newStats.technique = Math.min(p, newStats.technique + gainT);
+            newStats.body = Math.min(p, newStats.body + gainB);
+            diffTech = gainT;
+            diffBody = gainB;
+            stressGain = 5;
+        } else if (menuType === 'moushi_ai') {
+            const gainT = baseBoost * getEfficiency(newStats.technique) * 1.5;
+            const gainM = baseBoost * getEfficiency(newStats.mind);
+            newStats.technique = Math.min(p, newStats.technique + gainT);
+            newStats.mind = Math.min(p, newStats.mind + gainM);
+            diffTech = gainT;
+            diffMind = gainM;
+            stressGain = 15;
+        } else if (menuType === 'meditation') {
+            const gainM = baseBoost * getEfficiency(newStats.mind) * 2;
+            newStats.mind = Math.min(p, newStats.mind + gainM);
+            diffMind = gainM;
+            stressGain = -20;
+        }
+
+        const newStress = Math.min(100, Math.max(0, (wrestler.stress || 0) + stressGain));
+
+        setWrestlers((prev: Wrestler[]) => prev.map((w: Wrestler) =>
+            w.id === wrestlerId
+                ? { ...w, stats: newStats, stress: newStress }
+                : w
+        ));
+
+        addLog(`${wrestler.name}が${menuType === 'shiko' ? '四股' :
+            menuType === 'teppo' ? '鉄砲' :
+                menuType === 'moushi_ai' ? '申し合い' : '瞑想'
+            }を行いました (心+${diffMind.toFixed(1)} 技+${diffTech.toFixed(1)} 体+${diffBody.toFixed(1)})`, 'info');
+    };
+
+    // History & Save Logic
+    const triggerAutoSave = (currentState: { wrestlers: Wrestler[], heyas: Heya[], funds: number, reputation: number, okamiLevel: number, history?: YushoRecord[], usedNames?: string[] }) => {
+        // We use the passed state to ensure we save the *latest* data after updates
+        const saveData: SaveData = {
+            version: 1,
+            timestamp: Date.now(),
+            gameState: {
+                currentDate: currentDate.toISOString(),
+                funds: currentState.funds,
+                gameMode,
+                bashoFinished,
+                lastMonthBalance,
+                isInitialized,
+                oyakataName: oyakataName,
+                okamiLevel: currentState.okamiLevel,
+                reputation: currentState.reputation,
+                trainingPoints
+            },
+            wrestlers: currentState.wrestlers,
+            heyas: currentState.heyas,
+            yushoHistory: yushoHistory.concat(currentState.history || []),
+            logs: logs,
+            usedNames: currentState.usedNames || []
+        };
+        saveGame(saveData);
+    };
+
+    const recordYushoHistory = (winners: Record<string, Wrestler>) => {
+        const bashoId = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月場所`;
+
+        const newRecords: YushoRecord[] = Object.entries(winners).map(([div, winner]) => {
+            const heya = heyas.find(h => h.id === winner.heyaId);
+            return {
+                bashoId,
+                division: div as Division,
+                wrestlerName: winner.name,
+                heyaName: heya ? heya.name : '不明',
+                rank: formatRank(winner.rank, winner.rankSide, winner.rankNumber),
+                wins: winner.currentBashoStats.wins,
+                losses: winner.currentBashoStats.losses
+            };
+        });
+
+        setYushoHistory(prev => [...prev, ...newRecords]);
+        return newRecords; // Return for saving
+    };
+
+    return { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining, triggerAutoSave, recordYushoHistory };
 };
 

@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import WrestlerList from './components/WrestlerList';
 import LogWindow from './components/LogWindow';
 import BashoResultModal from './components/BashoResultModal';
 import YushoModal from './components/YushoModal';
 import ScoutPanel from './components/ScoutPanel';
-import IntroScreen from './components/IntroScreen';
+import { IntroScreen } from './components/IntroScreen';
 import ManagementModal from './components/ManagementModal';
+import { TitleScreen } from './components/TitleScreen'; // New Import
+import { HistoryModal } from './components/HistoryModal'; // New Import
+import { DanpatsuModal } from './components/DanpatsuModal';
+import { HelpModal } from './components/HelpModal';
 import { TrainingType, Wrestler } from './types';
 import { GameProvider, useGame } from './context/GameContext';
 import { useGameLoop } from './hooks/useGameLoop';
@@ -134,25 +139,54 @@ const generateDummyWrestlers = (): Wrestler[] => {
   ];
 };
 
-// Inner Component to use Hooks
-const GameScreen = () => {
-  const { currentDate, funds, wrestlers, setWrestlers, setHeyas, gameMode, bashoFinished, lastMonthBalance, yushoWinners, setYushoWinners, isInitialized, okamiLevel, reputation } = useGame();
+// GameScreen was refactored into MainGameInterface and GameAppContent layout.
+// Removed to avoid confusion and unused vars.
+
+
+
+const GameAppContent = () => {
+  const { isInitialized, loadGameData } = useGame();
+  const [showIntro, setShowIntro] = useState(false);
 
   if (!isInitialized) {
-    return <IntroScreen />;
+    if (showIntro) {
+      return <IntroScreen onBack={() => setShowIntro(false)} />;
+    }
+    return (
+      <TitleScreen
+        onNewGame={() => setShowIntro(true)}
+        onLoadGame={(data) => loadGameData(data)}
+      />
+    );
   }
 
-  const { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, upgradeOkami } = useGameLoop();
+  return <MainGameInterface />;
+};
+
+const MainGameInterface = () => {
+  const { currentDate, funds, setFunds, wrestlers, setWrestlers, heyas, setHeyas, gameMode, bashoFinished, lastMonthBalance, yushoWinners, setYushoWinners, okamiLevel, reputation, trainingPoints, yushoHistory, retiringQueue } = useGame();
+  const { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining } = useGameLoop();
+  const { t, i18n } = useTranslation();
+
   const [selectedWrestler, setSelectedWrestler] = useState<Wrestler | null>(null);
-  const [trainingType, setTrainingType] = useState<TrainingType>('shiko');
   const [showScout, setShowScout] = useState(false);
   const [showManagement, setShowManagement] = useState(false);
+  const [trainingType, setTrainingType] = useState<TrainingType>('shiko');
+  const [showHistory, setShowHistory] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+
+  // ... rest of the main game UI ...
+  // Note: I will need to replace the massive block of UI code carefully or structure it.
+  // For this 'replace_file_content', I will focus on injecting the 'showHistory' state and the new Menu items.
+
+  // ...
+
 
   // Initialize Data once
   useEffect(() => {
     if (wrestlers.length === 0) {
       // 1. Generate Heyas
-      const newHeyas = generateHeyas(45);
+      const newHeyas = generateHeyas();
       setHeyas(newHeyas);
 
       // 2. Get Player Wrestlers (Ensure they have a valid heyaId or create a Player Heya)
@@ -196,19 +230,36 @@ const GameScreen = () => {
       <header className="bg-[#b7282e] text-white py-4 shadow-lg sticky top-0 z-50">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold font-serif tracking-widest leading-none">大相撲部屋経営</h1>
-            <p className="text-xs opacity-80 tracking-wide">Sumo Stable Management</p>
+            <h1 className="text-2xl font-bold font-serif tracking-widest leading-none">{t('app.title')}</h1>
+            <p className="text-xs opacity-80 tracking-wide">{t('app.subtitle')}</p>
           </div>
 
           <div className="flex items-center gap-6 bg-white/10 px-6 py-2 rounded-sm backdrop-blur-sm border border-white/20">
+            {/* Lang Toggle */}
+            <button
+              onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'ja' : 'en')}
+              className="px-2 py-1 bg-black/20 hover:bg-black/40 rounded text-[10px] font-bold border border-white/20 text-amber-300"
+            >
+              {i18n.language === 'en' ? 'EN' : 'JP'}
+            </button>
+
+            {/* Help Button */}
+            <button
+              onClick={() => setShowHelp(true)}
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white font-bold transition-all border border-white/10"
+              title={t('cmd.help')}
+            >
+              ?
+            </button>
+
             {/* Status Badge */}
             <div className={`px-2 py-1 rounded text-xs font-bold ${gameMode === 'tournament' ? 'bg-amber-400 text-amber-950' : 'bg-blue-800 text-blue-200'}`}>
-              {gameMode === 'tournament' ? '本場所中' : '育成期間'}
+              {gameMode === 'tournament' ? t('ui.tournament') : t('ui.training')}
             </div>
 
             {/* Date */}
             <div className="text-center">
-              <span className="block text-[10px] opacity-70">現在の日付</span>
+              <span className="block text-[10px] opacity-70">{t('ui.date')}</span>
               <span className="font-serif font-bold text-lg">{formatHybridDate(currentDate, gameMode)}</span>
             </div>
 
@@ -225,7 +276,7 @@ const GameScreen = () => {
                 ¥ {funds.toLocaleString()}
               </div>
               <div className="text-xs text-slate-400 uppercase tracking-widest mt-1">
-                Current Funds
+                {t('ui.funds')}
               </div>
             </div>
 
@@ -234,18 +285,27 @@ const GameScreen = () => {
             {/* Okami & Management Button */}
             <div className="flex flex-col items-end gap-1">
               <div className="flex items-center gap-2 text-xs font-mono mb-1">
-                <span className="opacity-70">OKAMI LV:</span>
+                <span className="opacity-70">{t('ui.okami')} LV:</span>
                 <span className="font-bold text-amber-300">{okamiLevel}</span>
                 <span className="opacity-50">|</span>
-                <span className="opacity-70">REP:</span>
+                <span className="opacity-70">{t('ui.reputation')}:</span>
                 <span className="font-bold text-white">{reputation}</span>
               </div>
-              <button
-                onClick={() => setShowManagement(true)}
-                className="bg-[#8c1c22] hover:bg-[#a02027] text-white text-[10px] font-bold px-3 py-1 rounded border border-white/20 transition-colors uppercase tracking-wider"
-              >
-                Manage Stable
-              </button>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowHistory(true)}
+                  className="bg-stone-700 hover:bg-stone-600 text-white text-[10px] font-bold px-3 py-1 rounded border border-white/20 transition-colors uppercase tracking-wider"
+                >
+                  {t('cmd.history')}
+                </button>
+                <button
+                  onClick={() => setShowManagement(true)}
+                  className="bg-[#8c1c22] hover:bg-[#a02027] text-white text-[10px] font-bold px-3 py-1 rounded border border-white/20 transition-colors uppercase tracking-wider"
+                >
+                  {t('cmd.manage')}
+                </button>
+              </div>
             </div>
 
             <div className="w-px h-8 bg-white/30"></div>
@@ -424,6 +484,45 @@ const GameScreen = () => {
                   {/* Retire Button (Only for Player Wrestlers) */}
                   {selectedWrestler && selectedWrestler.heyaId === 'player_heya' && (
                     <div className="mt-8 pt-8 border-t border-slate-200">
+                      {/* Special Training Section */}
+                      <div className="mb-8">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-bold text-slate-900">特別指導 (残り: {trainingPoints})</h4>
+                          <span className="text-xs text-slate-500">週に3回まで</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => doSpecialTraining(selectedWrestler.id, 'shiko')}
+                            disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured'}
+                            className="bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold py-2 px-1 rounded disabled:opacity-50 transition-colors"
+                          >
+                            四股 (体++)
+                          </button>
+                          <button
+                            onClick={() => doSpecialTraining(selectedWrestler.id, 'teppo')}
+                            disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured'}
+                            className="bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold py-2 px-1 rounded disabled:opacity-50 transition-colors"
+                          >
+                            鉄砲 (技+ 体+)
+                          </button>
+                          <button
+                            onClick={() => doSpecialTraining(selectedWrestler.id, 'moushi_ai')}
+                            disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured'}
+                            className="bg-red-100 hover:bg-red-200 text-red-900 text-xs font-bold py-2 px-1 rounded disabled:opacity-50 transition-colors"
+                          >
+                            申し合い (技++ 心+)
+                          </button>
+                          <button
+                            onClick={() => doSpecialTraining(selectedWrestler.id, 'meditation')}
+                            disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured'}
+                            className="bg-indigo-100 hover:bg-indigo-200 text-indigo-900 text-xs font-bold py-2 px-1 rounded disabled:opacity-50 transition-colors"
+                          >
+                            瞑想 (心++ 休)
+                          </button>
+                        </div>
+                      </div>
+
                       <h4 className="font-bold text-slate-900 mb-2">引退処理</h4>
                       <p className="text-xs text-slate-500 mb-4">
                         引退させると、最高位と在籍期間に応じた「ご祝儀」を受け取り、力士は部屋を去ります。
@@ -466,11 +565,30 @@ const GameScreen = () => {
           okamiLevel={okamiLevel}
           funds={funds}
           lastMonthBalance={lastMonthBalance}
+          currentHeyaLevel={heyas.find(h => h.id === 'player_heya')?.facilityLevel || 1}
           onUpgradeOkami={() => {
             upgradeOkami();
-            // We keep modal open or close? Probably keep open to see effect/cost change
+          }}
+          onUpgradeFacility={(level, cost, mod) => {
+            if (funds < cost) {
+              alert("資金が不足しています");
+              return;
+            }
+            setFunds(prev => prev - cost);
+            setHeyas(prev => prev.map(h =>
+              h.id === 'player_heya'
+                ? { ...h, facilityLevel: level, strengthMod: mod }
+                : h
+            ));
           }}
           onClose={() => setShowManagement(false)}
+        />
+      )}
+
+      {showHistory && (
+        <HistoryModal
+          history={yushoHistory}
+          onClose={() => setShowHistory(false)}
         />
       )}
 
@@ -482,7 +600,6 @@ const GameScreen = () => {
           />
         )
       }
-
       {
         yushoWinners && bashoFinished === false && (
           <YushoModal
@@ -491,6 +608,17 @@ const GameScreen = () => {
           />
         )
       }
+
+      {/* Retirement Ceremony Overlay */}
+      {retiringQueue.length > 0 && (
+        <DanpatsuModal
+          wrestler={retiringQueue[0]}
+          onSnip={() => completeRetirement(retiringQueue[0])}
+        />
+      )}
+
+      {/* Help Modal */}
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
       {
         showScout && (
@@ -515,7 +643,7 @@ const GameScreen = () => {
 function App() {
   return (
     <GameProvider>
-      <GameScreen />
+      <GameAppContent />
     </GameProvider>
   );
 }

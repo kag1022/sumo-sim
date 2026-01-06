@@ -26,7 +26,18 @@ export interface Heya {
     name: string;
     shikonaPrefix: string;
     strengthMod: number; // 0.8 to 1.2
+    facilityLevel: number; // 1-5
     wrestlerCount: number;
+}
+
+// New Type for History
+export interface BashoLog {
+    bashoId: string;
+    rank: Rank;
+    rankNumber: number;
+    rankSide: 'East' | 'West';
+    wins: number;
+    losses: number;
 }
 
 export interface Wrestler {
@@ -35,16 +46,19 @@ export interface Wrestler {
     name: string;
     rank: Rank;
     rankSide?: 'East' | 'West';
-    rankNumber?: number;
+    rankNumber?: number; // 1 = 1st, 2 = 2nd
     stats: WrestlerStats;
     isSekitori: boolean;
     injuryStatus: 'healthy' | 'injured';
-    history: string[];
+    history: BashoLog[]; // Updated type
     currentBashoStats: {
         wins: number;
         losses: number;
         matchHistory: string[]; // IDs of opponents fought in this basho
     };
+    // Status Fields
+    isKadoban?: boolean;
+    bantsukePriorRank?: Rank | null;
     // New Fields
     nextBoutDay: number | null; // null if no match scheduled or ended
     potential: number; // 0-100 (Visible as Grade S-E)
@@ -82,4 +96,36 @@ export interface LogEntry {
     date: string;
     message: string;
     type: 'info' | 'warning' | 'error';
+}
+
+export interface YushoRecord {
+    bashoId: string; // e.g., "Year 1 - Jan"
+    division: Division;
+    wrestlerName: string;
+    heyaName: string;
+    rank: string;
+    wins: number;
+    losses: number;
+}
+
+export interface SaveData {
+    version: number;
+    timestamp: number;
+    gameState: {
+        currentDate: string; // saved as ISO string
+        funds: number;
+        gameMode: GameMode;
+        bashoFinished: boolean;
+        lastMonthBalance: number | null;
+        isInitialized: boolean;
+        oyakataName: string | null;
+        okamiLevel: number;
+        reputation: number;
+        trainingPoints: number;
+    };
+    wrestlers: Wrestler[];
+    heyas: Heya[];
+    yushoHistory: YushoRecord[];
+    logs: LogEntry[];
+    usedNames: string[]; // Registry of all used shikona
 }

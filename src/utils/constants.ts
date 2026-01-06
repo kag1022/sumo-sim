@@ -1,8 +1,15 @@
 export const QUOTA_MAKUUCHI = 42;
 export const QUOTA_JURYO = 28;
 export const QUOTA_MAKUSHITA = 120;
+export const QUOTA_SANDANME = 200;
+export const QUOTA_JONIDAN = 200;
+export const QUOTA_JONOKUCHI = 9999;
 export const MAX_PLAYERS_PER_HEYA = 20;
-// export const QUOTA_SANDANME = 200; // Future use
+
+export const QUOTA_YOKOZUNA_MIN = 1;
+export const QUOTA_OZEKI_MIN = 2;
+export const QUOTA_SEKIWAKE = 2;
+export const QUOTA_KOMUSUBI = 2;
 
 export const RANK_VALUE_MAP: Record<string, number> = {
     "Yokozuna": 13000, // Boosted to keep above Ozeki

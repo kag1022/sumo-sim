@@ -1,14 +1,16 @@
 import { Wrestler, Heya, Rank } from '../types';
-import { generateHeyas, generateFullRoster } from './dummyGenerator';
+import { generateHeyas, generateFullRoster, generateUniqueName } from './dummyGenerator';
 
 export interface InitialSettings {
     oyakataName: string;
     stableName: string;
     shikonaPrefix: string;
     hometown: string;
+    location?: string;
+    specialty?: string;
 }
 
-// Helper to create a specific player wrestler
+// Helper to create a specific player wrestler (with unique name)
 const createPlayerWrestler = (
     id: string,
     heyaId: string,
@@ -17,14 +19,12 @@ const createPlayerWrestler = (
     rankNumber: number,
     age: number,
     potential: number,
-    currentStatAvg: number // Mind/Tech/Body average
+    currentStatAvg: number,
+    usedNames: string[] // Registry to check/update
 ): Wrestler => {
-    // Generate name: Prefix + Random Suffix
-    // We'll reuse a simple suffix list or logic here to avoid circular dependency if possible, 
-    // or just defined locally.
-    const suffixes = ['龍', '山', '海', '川', '里', '風', '花', '国', '王', '丸'];
-    const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
-    const name = prefix + suffix;
+    // Generate unique name using the shared registry
+    const name = generateUniqueName(usedNames, prefix, true); // Force prefix
+    usedNames.push(name); // Register immediately
 
     const stats = {
         mind: currentStatAvg,
@@ -61,9 +61,12 @@ const createPlayerWrestler = (
 };
 
 export const initializeGameData = (settings: InitialSettings) => {
+    // Initialize usedNames registry
+    const usedNames: string[] = [];
+
     // 1. Create CPU World
-    const cpuHeyas = generateHeyas(45);
-    const cpuWrestlers = generateFullRoster(cpuHeyas);
+    const cpuHeyas = generateHeyas();
+    const cpuWrestlers = generateFullRoster(cpuHeyas, usedNames);
 
     // 2. Create Player Heya
     const playerHeya: Heya = {
@@ -71,31 +74,30 @@ export const initializeGameData = (settings: InitialSettings) => {
         name: settings.stableName + (settings.stableName.endsWith('部屋') ? '' : '部屋'),
         shikonaPrefix: settings.shikonaPrefix,
         strengthMod: 1.0,
+        facilityLevel: 1,
         wrestlerCount: 4
     };
 
-    // 3. Create Player Wrestlers (Specific Specs)
-    const playerWrestlers: Wrestler[] = [];
+    // 3. Create Player Wrestlers (Specific Specs) - Pass usedNames to each call
+    const playerWrestlers = [
+        createPlayerWrestler('1', 'player_heya', settings.shikonaPrefix, 'Maegashira', 10, 28, 80, 65, usedNames),
+        createPlayerWrestler('2', 'player_heya', settings.shikonaPrefix, 'Makushita', 30, 24, 70, 45, usedNames),
+        createPlayerWrestler('3', 'player_heya', settings.shikonaPrefix, 'Jonidan', 50, 20, 90, 25, usedNames),
+        createPlayerWrestler('4', 'player_heya', settings.shikonaPrefix, 'Jonokuchi', 1, 15, 50, 15, usedNames)
+    ];
 
-    // 1. Veteran (Makushita 5, Age 28, Pot 60, Stat 55)
-    playerWrestlers.push(createPlayerWrestler('vet', 'player_heya', settings.shikonaPrefix, 'Makushita', 5, 28, 60, 55));
+    // Names already registered inside createPlayerWrestler, no need to push again
 
-    // 2. Regular (Sandanme 20, Age 24, Pot 70, Stat 40)
-    playerWrestlers.push(createPlayerWrestler('reg', 'player_heya', settings.shikonaPrefix, 'Sandanme', 20, 24, 70, 40));
-
-    // 3. Super Rookie (Jonokuchi 15, Age 18, Pot 95, Stat 20)
-    playerWrestlers.push(createPlayerWrestler('rook', 'player_heya', settings.shikonaPrefix, 'Jonokuchi', 15, 18, 95, 20));
-
-    // 4. Jobber (Jonidan 50, Age 22, Pot 45, Stat 30)
-    playerWrestlers.push(createPlayerWrestler('job', 'player_heya', settings.shikonaPrefix, 'Jonidan', 50, 22, 45, 30));
-
-    // Combine All
-    const allHeyas = [playerHeya, ...cpuHeyas];
+    // 4. Combine all wrestlers
     const allWrestlers = [...playerWrestlers, ...cpuWrestlers];
+
+    // 5. Combine all heyas
+    const allHeyas = [playerHeya, ...cpuHeyas];
 
     return {
         heyas: allHeyas,
         wrestlers: allWrestlers,
-        initialFunds: 10000000 // 10M JPY Start
+        initialFunds: 10000000, // 10M JPY Start
+        usedNames: usedNames
     };
 };

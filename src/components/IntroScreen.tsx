@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext';
 
-const IntroScreen: React.FC = () => {
+export const TitleLogo = () => (
+    <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center border-4 border-amber-500 shadow-lg mb-6 mx-auto">
+        <span className="text-[#b7282e] font-serif font-black text-4xl leading-none mt-1">力</span>
+    </div>
+);
+
+interface IntroScreenProps {
+    onBack?: () => void;
+}
+
+export const IntroScreen: React.FC<IntroScreenProps> = ({ onBack }) => {
     const { startGame } = useGame();
 
     const [oyakataName, setOyakataName] = useState('');
@@ -15,7 +25,9 @@ const IntroScreen: React.FC = () => {
             oyakataName,
             stableName,
             shikonaPrefix,
-            hometown
+            hometown,
+            specialty: 'power', // Default or add UI
+            location: hometown
         });
     };
 
@@ -25,13 +37,23 @@ const IntroScreen: React.FC = () => {
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1599571932148-8df0d5761c54?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-30" />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent" />
 
+            {onBack && (
+                <button
+                    onClick={onBack}
+                    className="absolute top-8 left-8 z-50 text-white/50 hover:text-white transition-colors flex items-center gap-2 font-bold font-mono text-sm"
+                >
+                    ← BACK TO TITLE
+                </button>
+            )}
+
             <div className="relative z-10 w-full max-w-md p-8 bg-black/40 backdrop-blur-lg border border-white/10 rounded-2xl shadow-2xl animate-fadeIn">
                 <div className="text-center mb-10">
-                    <h1 className="text-5xl font-black font-serif mb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-600 drop-shadow-sm">
+                    <TitleLogo />
+                    <h1 className="text-4xl font-black font-serif mb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-600 drop-shadow-sm">
                         相撲部屋経営
                     </h1>
-                    <p className="text-white/60 font-mono text-sm tracking-widest">
-                        SUMO STABLE SIMULATION
+                    <p className="text-white/60 font-mono text-xs tracking-widest">
+                        ESTABLISH YOUR STABLE
                     </p>
                 </div>
 
@@ -90,12 +112,10 @@ const IntroScreen: React.FC = () => {
                     </button>
 
                     <div className="text-center text-xs text-white/30 mt-4">
-                        ※一度決定すると後から変更できません
+                        ※スタート後の変更不可
                     </div>
                 </div>
             </div>
         </div>
     );
 };
-
-export default IntroScreen;

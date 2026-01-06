@@ -1,0 +1,6 @@
+src/utils/banzuke.ts(3,5): error TS6133: 'QUOTA_YOKOZUNA_MIN' is declared but its value is never read.
+src/utils/banzuke.ts(4,82): error TS6133: 'QUOTA_JONOKUCHI' is declared but its value is never read.
+src/utils/banzuke.ts(5,5): error TS6133: 'RANK_VALUE_MAP' is declared but its value is never read.
+src/utils/banzuke.ts(13,7): error TS6133: 'BASE_SCORE_MAEGASHIRA_TOP' is declared but its value is never read.
+src/utils/banzuke.ts(83,15): error TS6133: 'diff' is declared but its value is never read.
+src/utils/banzuke.ts(291,39): error TS6133: 'w' is declared but its value is never read.
