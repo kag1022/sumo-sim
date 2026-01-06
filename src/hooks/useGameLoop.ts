@@ -7,7 +7,7 @@ import { generateCandidates } from '../utils/scouting';
 import { generateWrestler } from '../utils/dummyGenerator';
 import { MAX_PLAYERS_PER_HEYA, getRankValue } from '../utils/constants';
 import { calculateIncome, calculateExpenses } from '../utils/economy';
-import { calculateSeverance, shouldUpdateMaxRank } from '../utils/retirement';
+import { calculateSeverance, shouldUpdateMaxRank, shouldRetire } from '../utils/retirement';
 import { getOkamiBudgetMultiplier, getOkamiUpgradeCost } from '../utils/okami';
 import { useEvents } from './useEvents';
 import { saveGame } from '../utils/storage';
@@ -202,10 +202,7 @@ export const useGameLoop = () => {
             const updates = new Map<string, { win: boolean, opponentId: string }>();
 
             todaysMatchups.forEach(matchup => {
-                const s1 = matchup.east.stats.body + matchup.east.stats.technique + matchup.east.stats.mind;
-                const s2 = matchup.west.stats.body + matchup.west.stats.technique + matchup.west.stats.mind;
-                const total = s1 + s2;
-                const eastChance = total > 0 ? s1 / total : 0.5;
+                const eastChance = matchMaker.calculateWinChance(matchup.east, matchup.west);
 
                 // Random Outcome based on Stats
                 const eastWins = Math.random() < eastChance;
@@ -349,15 +346,26 @@ export const useGameLoop = () => {
                 let retiredCount = 0;
 
                 nextWrestlers.forEach(w => {
-                    let shouldRetire = false;
+                    const retirementCheck = shouldRetire(w);
+                    let willRetire = false;
+
                     if (w.heyaId !== 'player_heya') {
-                        if (w.age >= 35 && ['Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi'].includes(w.rank)) shouldRetire = true;
-                        if (w.age >= 30 && ['Sandanme', 'Jonidan', 'Jonokuchi'].includes(w.rank) && w.injuryStatus === 'injured') shouldRetire = true;
-                        if (w.age >= 40) shouldRetire = true;
+                        if (retirementCheck.retire) willRetire = true;
+                    } else {
+                        // Player Logic
+                        if (retirementCheck.retire) {
+                            addLog(`${w.rank} ${w.name}: 引退の危機です (${retirementCheck.reason})`, 'warning');
+                            // Force Retire Yokozuna
+                            if (w.rank === 'Yokozuna') {
+                                willRetire = true;
+                                addLog(`${w.name}は横綱の品格を守るため引退を決意しました。`, 'error');
+                            }
+                        }
                     }
 
-                    if (shouldRetire) {
+                    if (willRetire) {
                         retiredCount++;
+                        // Trigger Retirement Ceremony Queue if distinct logic needed (Future task)
                     } else {
                         let newMax = w.maxRank;
                         if (shouldUpdateMaxRank(w.rank, w.maxRank)) {
@@ -450,6 +458,23 @@ export const useGameLoop = () => {
         setBashoFinished(false);
         setGameMode('training');
         addLog("新番付が発表されました。育成期間に入ります。", 'info');
+
+        // Construct Basho ID for history (e.g., "2025年1月場所")
+        const bashoId = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月場所`;
+
+        // Update Banzuke (Rank Promotion/Demotion)
+        const newWrestlers = updateBanzuke(wrestlers, bashoId);
+        setWrestlers(newWrestlers);
+
+        // Reset Matchups
+        setTodaysMatchups([]);
+
+        // Auto Save after Basho
+        triggerAutoSave({
+            wrestlers: newWrestlers,
+            heyas, funds, reputation, okamiLevel,
+            usedNames
+        });
     };
 
     const inspectCandidate = (cost: number): boolean => {

@@ -57,7 +57,8 @@ const calculateDraftScore = (w: Wrestler): number => {
     return base + (diff * coeff);
 };
 
-export const updateBanzuke = (wrestlers: Wrestler[]): Wrestler[] => {
+// 2. Update Banzuke
+export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent Basho"): Wrestler[] => {
     // Capture original ranks for history
     const originalRanks = new Map(wrestlers.map(w => [w.id, {
         rank: w.rank,
@@ -237,7 +238,7 @@ export const updateBanzuke = (wrestlers: Wrestler[]): Wrestler[] => {
     return finalRoster.map(w => {
         const orig = originalRanks.get(w.id);
         const log: BashoLog = {
-            bashoId: "Recent Basho",
+            bashoId: bashoId,
             rank: orig?.rank || 'MaeZumo',
             rankNumber: orig?.rankNumber || 1,
             rankSide: orig?.rankSide || 'East',

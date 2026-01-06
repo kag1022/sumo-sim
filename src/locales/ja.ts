@@ -49,6 +49,28 @@ export const ja = {
         app: {
             title: '大相撲部屋経営',
             subtitle: '～親方昇進物語～',
+        },
+        basho_result: {
+            title: '番付編成発表',
+            flash: '昇進ニュース',
+            division: '階級',
+            shikona: '四股名',
+            result: '成績',
+            trend: '変動',
+            header: '番付編成会議が終了しました。来場所の番付が決定しました。'
+        },
+        trend: {
+            up: '昇格',
+            down: '降格',
+            stay: '維持',
+            new: '新入'
+        },
+        news: {
+            promote_yokozuna: '【新横綱】',
+            promote_ozeki: '【新大関】',
+            promote_sanyaku: '【新三役】',
+            promote_makuuchi: '【新入幕】',
+            promote_juryo: '【新十両】'
         }
     }
 };

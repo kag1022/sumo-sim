@@ -49,6 +49,28 @@ export const en = {
         },
         app: {
             title: 'Grand Sumo Manager',
+        },
+        basho_result: {
+            title: 'Banzuke Announcement',
+            flash: 'Promotion News',
+            division: 'Division',
+            shikona: 'Shikona',
+            result: 'Result',
+            trend: 'Trend',
+            header: 'The Banzuke Formatting Meeting has concluded.'
+        },
+        trend: {
+            up: 'Promoted',
+            down: 'Demoted',
+            stay: 'Same',
+            new: 'New'
+        },
+        news: {
+            promote_yokozuna: '[New Yokozuna]',
+            promote_ozeki: '[New Ozeki]',
+            promote_sanyaku: '[New Sanyaku]',
+            promote_makuuchi: '[New Makuuchi]',
+            promote_juryo: '[New Juryo]'
         }
     }
 };
