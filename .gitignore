@@ -41,9 +41,7 @@ coverage/
 *.lcov
 .nyc_output/
 
-# デバッグログ
-logs/
-*.log
+
 
 # 他のゲームエンジンファイル（残骸防止）
 *.import

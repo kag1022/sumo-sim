@@ -24,6 +24,8 @@ export const RANK_VALUE_MAP: Record<string, number> = {
     "Jonokuchi": 100
 };
 
+export const ATTRIBUTE_ADVANTAGE_BONUS = 0.15;
+
 export const getRankValue = (rank: string): number => {
     // Determine broad category value
     // For M1, M2 etc logic, we need parsing. 

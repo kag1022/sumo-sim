@@ -58,7 +58,7 @@ const calculateDraftScore = (w: Wrestler): number => {
 };
 
 // 2. Update Banzuke
-export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent Basho"): Wrestler[] => {
+export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent Basho", currentYushoWinnerId: string | null = null, previousYushoWinnerId: string | null = null): Wrestler[] => {
     // Capture original ranks for history
     const originalRanks = new Map(wrestlers.map(w => [w.id, {
         rank: w.rank,
@@ -67,20 +67,19 @@ export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent B
     }]));
 
     // Pool all active wrestlers
-    const pool = wrestlers.map(w => ({ ...w })); // Shallow copy
+    const pool = wrestlers.map(w => ({ ...w }));
 
-    // Lists for Fixed Status (Y/O/S/K)
+    // Lists for Fixed Status (Y/O)
     const nextYokozuna: Wrestler[] = [];
-    const nextOzeki: Wrestler[] = [];
+    let nextOzeki: Wrestler[] = [];
     let candidates: Wrestler[] = [];
 
-    // --- Phase 1: Status Processing (Y/O) ---
+    // --- Phase 1: Status Maintenance (Step A) ---
     pool.forEach(w => {
         const { wins } = w.currentBashoStats;
 
         // A. YOKOZUNA
         if (w.rank === 'Yokozuna') {
-            // Immutable
             nextYokozuna.push(w);
             return;
         }
@@ -88,75 +87,156 @@ export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent B
         // B. OZEKI
         if (w.rank === 'Ozeki') {
             if (wins >= 8) {
-                // Keep Ozeki, Clear Kadoban
+                // Kachi-koshi: Stay Ozeki, Clear Kadoban
                 w.isKadoban = false;
                 nextOzeki.push(w);
             } else {
-                // Losing Record
+                // Make-koshi
                 if (w.isKadoban) {
-                    // DEMOTION: Fall to Sekiwake (Candidate Pool)
-                    // We must ensure they are placed HIGH in the candidate pool.
-                    // We'll set their special score later or just push to candidates.
+                    // DEMOTION: Fall to Sekiwake
                     w.isKadoban = false;
                     w.bantsukePriorRank = 'Ozeki'; // Mark for return rule
-                    candidates.push(w); // Will be sorted by score
+                    candidates.push(w);
                 } else {
-                    // KADOBAN: Stay Ozeki
+                    // NEW KADOBAN: Stay Ozeki
                     w.isKadoban = true;
+                    // Ensure Kadoban persists
                     nextOzeki.push(w);
                 }
             }
             return;
         }
 
-        // C. OZEKI RETURN RULE (For current Sekiwake who was Ozeki)
+        // C. OZEKI RETURN RULE (Sekiwake 10 wins)
         if (w.rank === 'Sekiwake' && w.bantsukePriorRank === 'Ozeki') {
             if (wins >= 10) {
-                // Return to Ozeki!
-                w.bantsukePriorRank = null; // Clear flag
-                w.rank = 'Ozeki'; // Provisional
+                w.bantsukePriorRank = null;
+                w.rank = 'Ozeki';
+                w.isKadoban = false;
                 nextOzeki.push(w);
                 return;
             }
-            // If failed return, usually clears after 1 basho? 
-            // Standard rule: Only valid for immediate next basho.
+            // Failed return, clear flag
             w.bantsukePriorRank = null;
         }
 
         // Reset Prior Rank if not used
         if (w.rank !== 'Sekiwake') w.bantsukePriorRank = null;
 
-        // D. EVERYONE ELSE
+        // D. OTHERS
         candidates.push(w);
     });
 
+    // --- Phase 2: Yokozuna Promotion (Step B) ---
+    // Rule: Two consecutive championships OR equivalent (e.g. 13+ wins).
+    // Must be Ozeki in previous basho (or newly promoted Ozeki? No, usually need to serve as Ozeki).
+    // Let's stick to: Previous Rank Ozeki.
 
-    // --- Phase 2: Calculate Scores for Candidates ---
-    // Candidates include: Demoted Ozeki, Sekiwake, Komusubi, M, J, Ms...
+    // Check remaining Ozekis for promotion
+    const promotedToYokozuna: Wrestler[] = [];
+    nextOzeki = nextOzeki.filter(w => {
+        // Condition: Two consecutive championships OR equivalent (e.g. 13+ wins under Ozeki/Sekiwake context).
+        // Since we are checking Ozeki promotion, they are ALREADY Ozeki in current basho (filtered by w.rank === 'Ozeki').
+        // We require previous basho to be Ozeki too? Or "Champion in Sekiwake" -> "Champion in Ozeki" = Promotion?
+        // Standard rule: 2 consecutive Yusho as Ozeki.
+
+        const lastBasho = w.history[w.history.length - 1];
+
+        // If no history, cannot determine previous rank/performance
+        if (!lastBasho) return true;
+
+        const isCurrentYusho = w.id === currentYushoWinnerId;
+        const isPrevYusho = w.id === previousYushoWinnerId;
+
+        // logic:
+        // Case 1: 13+ wins + 13+ wins (Legacy/Strict)
+        // Case 2: Yusho + Yusho (User request)
+        // Case 3: Yusho + 13 wins or 13 wins + Yusho
+
+        const currentHigh = w.currentBashoStats.wins >= 13;
+        const prevHigh = lastBasho.wins >= 13;
+
+        const currentOk = isCurrentYusho || currentHigh;
+        const prevOk = isPrevYusho || prevHigh;
+
+        // Must have been Ozeki previously too?
+        // "Ozeki rank for 2 bashos"
+        const rankOk = lastBasho.rank === 'Ozeki';
+
+
+
+        if (currentOk && prevOk && rankOk) {
+            w.rank = 'Yokozuna';
+            w.isKadoban = false;
+            nextYokozuna.push(w);
+            promotedToYokozuna.push(w);
+            return false; // Remove from nextOzeki
+        }
+        // Special Rescue: If Yokozuna < 1, promote best Ozeki? (Optional, skipping for strictness unless requested)
+        return true; // Keep in Ozeki
+    });
+
+    // --- Phase 2.5: Ozeki Promotion ---
+    // Rule: Recent 3 basho at Sanyaku (Sekiwake/Komusubi) with 33+ wins.
+    // We iterate 'candidates' (Non-Y/O) and check history.
+
+    const promotedToOzeki: Wrestler[] = [];
+    candidates = candidates.filter(w => {
+        const last1 = w.history[w.history.length - 1];
+        const last2 = w.history[w.history.length - 2];
+
+        // Need at least 2 history records (+ current basho makes 3)
+        if (!last1 || !last2) return true;
+
+        const isSanyaku = (r: string) => ['Sekiwake', 'Komusubi'].includes(r);
+
+        const r0 = w.rank; // Current Pre-update Rank (should be S or K)
+        const r1 = last1.rank;
+        const r2 = last2.rank;
+
+        // Must be Sanyaku in all 3 basho?
+        // User: "直近3場所で三役（関脇・小結）の地位にあり" -> Yes.
+        if (!isSanyaku(r0) || !isSanyaku(r1) || !isSanyaku(r2)) return true;
+
+        const wins0 = w.currentBashoStats.wins;
+        const wins1 = last1.wins;
+        const wins2 = last2.wins;
+        const totalWins = wins0 + wins1 + wins2;
+
+        if (totalWins >= 33) {
+            w.rank = 'Ozeki';
+            w.isKadoban = false;
+            nextOzeki.push(w);
+            promotedToOzeki.push(w);
+            return false; // Remove from candidates
+        }
+        return true;
+    });
+
+    // --- Phase 3: Calculate Scores for Candidates ---
     candidates = candidates.map(w => {
         let score = calculateDraftScore(w);
 
         // Adjust for Demoted Ozeki (Soft landing at Sekiwake)
+        // Ensure they have high score to take Sekiwake slot.
         if (w.bantsukePriorRank === 'Ozeki' && w.rank === 'Ozeki') {
-            // Note: If they are demoted, they kept 'Ozeki' rank string in memory until now?
-            // No, in candidates.push(w), w is reference.
-            // But we didn't change w.rank in Phase 1 loop for demoted Ozeki.
-            // So w.rank is still 'Ozeki'.
-            // They should score as 'Sekiwake Top'.
-            score = BASE_SCORE_SEKIWAKE + 500;
+            // They just fell.
+            score = BASE_SCORE_SEKIWAKE + 2000; // Force top of Sekiwake
         }
-
         return { ...w, _tempScore: score };
     });
 
-    // --- Phase 3: Sort Candidates ---
+    // Sort Candidates
     candidates.sort((a: any, b: any) => b._tempScore - a._tempScore);
 
-
-    // --- Phase 4: Fill the Void (Waterfall) ---
+    // --- Phase 4: Fill Quota (Step C) ---
 
     // 4a. Ozeki Filling (Min 2)
+    // If < 2, promote from candidates (Sekiwake usually)
+    // Condition: "Recent 3 basho 33 wins" approx -> Current 11 wins?
     while (nextOzeki.length < QUOTA_OZEKI_MIN) {
+        // Find best candidate with good record? 
+        // For simplicity: Best Score candidate (likely Sw/Ko with high wins)
         const c = candidates.shift();
         if (!c) break;
         c.rank = 'Ozeki';
@@ -164,8 +244,6 @@ export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent B
         c.bantsukePriorRank = null;
         nextOzeki.push(c);
     }
-
-    // Performance Promotion (Optional - skipped for strict adherence)
 
     const nextSekiwake: Wrestler[] = [];
     const nextKomusubi: Wrestler[] = [];
@@ -176,51 +254,75 @@ export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent B
     const nextJonidan: Wrestler[] = [];
     const nextJonokuchi: Wrestler[] = [];
 
-    // Helper: Fill List from Candidates
-    const fillList = (targetList: Wrestler[], count: number, rankName: Rank, sekitori: boolean) => {
+    // Helper: Fill List from Candidates with Side Assignment (Step D)
+    const fillListAndAssign = (targetList: Wrestler[], count: number, rankName: Rank, sekitori: boolean) => {
         for (let i = 0; i < count; i++) {
             const w = candidates.shift();
             if (!w) break;
 
             w.rank = rankName;
             w.isSekitori = sekitori;
-
-            // Assign Number/Side
-            w.rankNumber = Math.floor(i / 2) + 1;
-            w.rankSide = (i % 2 === 0) ? 'East' : 'West';
-
             targetList.push(w);
         }
     };
 
-    // 4b. Sekiwake (Fixed 2)
-    fillList(nextSekiwake, QUOTA_SEKIWAKE, 'Sekiwake', true);
+    fillListAndAssign(nextSekiwake, QUOTA_SEKIWAKE, 'Sekiwake', true);
+    fillListAndAssign(nextKomusubi, QUOTA_KOMUSUBI, 'Komusubi', true);
 
-    // 4c. Komusubi (Fixed 2)
-    fillList(nextKomusubi, QUOTA_KOMUSUBI, 'Komusubi', true);
-
-    // 4d. Maegashira (Rest of Makuuchi Quota)
-    // Used slots so far:
     const usedMakuuchi = nextYokozuna.length + nextOzeki.length + nextSekiwake.length + nextKomusubi.length;
-    const makuuchiSlots = Math.max(0, QUOTA_MAKUUCHI - usedMakuuchi);
-    fillList(nextMaegashira, makuuchiSlots, 'Maegashira', true);
+    fillListAndAssign(nextMaegashira, Math.max(0, QUOTA_MAKUUCHI - usedMakuuchi), 'Maegashira', true);
 
-    // 4e. Juryo (28)
-    fillList(nextJuryo, QUOTA_JURYO, 'Juryo', true);
+    fillListAndAssign(nextJuryo, QUOTA_JURYO, 'Juryo', true);
+    fillListAndAssign(nextMakushita, QUOTA_MAKUSHITA, 'Makushita', false);
+    fillListAndAssign(nextSandanme, QUOTA_SANDANME, 'Sandanme', false);
+    fillListAndAssign(nextJonidan, QUOTA_JONIDAN, 'Jonidan', false);
+    fillListAndAssign(nextJonokuchi, candidates.length, 'Jonokuchi', false); // Rest
 
-    // 4f. Makushita (120)
-    fillList(nextMakushita, QUOTA_MAKUSHITA, 'Makushita', false);
+    // --- Phase 5: Assign East/West Strictly (Step D) ---
+    const assignRows = (list: Wrestler[]) => {
+        list.forEach((w, i) => {
+            // 0=East, 1=West, 2=East, 3=West
+            w.rankSide = (i % 2 === 0) ? 'East' : 'West';
+            // 0,1 -> 1, 2,3 -> 2
+            w.rankNumber = Math.floor(i / 2) + 1;
+        });
+    };
 
-    // 4g. Sandanme (200)
-    fillList(nextSandanme, QUOTA_SANDANME, 'Sandanme', false);
+    // We must sort Fixed lists (Yokozuna/Ozeki) too! They were pushed in arrival order (random).
+    // Yokozuna sorting: By History? By Wins?
+    // Generally: East Yokozuna > West Yokozuna.
+    // If multiple, sort by 'status' or wins.
+    // Let's sort by current basho wins (Winner gets East).
+    const sortForAssignment = (list: Wrestler[]) => {
+        list.sort((a, b) => {
+            // 1. Wins (Higher is better)
+            if (a.currentBashoStats.wins !== b.currentBashoStats.wins)
+                return b.currentBashoStats.wins - a.currentBashoStats.wins;
+            // 2. Previous Rank Value (Higher is better)
+            // Use getBaseScore(a.rank) ? No, rank is same.
+            // Use previous rank/side?
+            // Use 'id' for stability
+            return a.id.localeCompare(b.id);
+        });
+    };
 
-    // 4h. Jonidan (200)
-    fillList(nextJonidan, QUOTA_JONIDAN, 'Jonidan', false);
+    sortForAssignment(nextYokozuna);
+    assignRows(nextYokozuna);
 
-    // 4i. Jonokuchi (Rest)
-    fillList(nextJonokuchi, candidates.length, 'Jonokuchi', false);
+    sortForAssignment(nextOzeki);
+    assignRows(nextOzeki);
 
-    // --- Phase 5: Recombine ---
+    // Candidates were already sorted by Score, so just assign.
+    assignRows(nextSekiwake);
+    assignRows(nextKomusubi);
+    assignRows(nextMaegashira);
+    assignRows(nextJuryo);
+    assignRows(nextMakushita);
+    assignRows(nextSandanme);
+    assignRows(nextJonidan);
+    assignRows(nextJonokuchi);
+
+    // --- Recombine ---
     const finalRoster = [
         ...nextYokozuna,
         ...nextOzeki,
@@ -234,9 +336,15 @@ export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent B
         ...nextJonokuchi
     ];
 
-    // Reset Stats
+    // Log History
     return finalRoster.map(w => {
         const orig = originalRanks.get(w.id);
+        // Persist isKadoban is already in 'w' object (modified in place/step A).
+        // BUT we need to make sure we return the 'w' that has it.
+        // finalRoster elements are from 'pool', which are shallow copies of 'wrestlers'.
+        // We modified 'w.isKadoban' on the pool objects.
+        // So simply returning them works.
+
         const log: BashoLog = {
             bashoId: bashoId,
             rank: orig?.rank || 'MaeZumo',

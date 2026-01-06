@@ -311,10 +311,11 @@ export const useGameLoop = () => {
                         const heya = heyas.find(h => h.id === winner.heyaId);
                         return {
                             bashoId: formatHybridDate(currentDate, 'tournament'),
-                            division: div as Division, // cast string key to Division
+                            division: div as Division,
+                            wrestlerId: winner.id,
                             wrestlerName: winner.name,
                             heyaName: heya ? heya.name : 'Unknown',
-                            rank: formatRank(winner.rank), // simplified format
+                            rank: formatRank(winner.rank),
                             wins: winner.currentBashoStats.wins,
                             losses: winner.currentBashoStats.losses
                         };
@@ -389,8 +390,11 @@ export const useGameLoop = () => {
                 });
 
                 for (let i = 0; i < retiredCount; i++) {
-                    if (heyas.length > 0) {
-                        const heya = heyas[Math.floor(Math.random() * heyas.length)];
+                    // NEW: Only auto-replenish CPU Heyas
+                    const cpuHeyas = heyas.filter(h => h.id !== 'player_heya');
+
+                    if (cpuHeyas.length > 0) {
+                        const heya = cpuHeyas[Math.floor(Math.random() * cpuHeyas.length)];
                         const rookie = generateWrestler(heya, 'Jonokuchi', usedNames);
                         survivingWrestlers.push(rookie);
                     }
@@ -462,8 +466,14 @@ export const useGameLoop = () => {
         // Construct Basho ID for history (e.g., "2025年1月場所")
         const bashoId = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月場所`;
 
+        // Get Yusho Winners (from history which should be updated by now)
+        // BUG FIX: yushoHistory contains all divisions. Must filter for Makuuchi.
+        const makuuchiHistory = yushoHistory.filter(r => r.division === 'Makuuchi');
+        const currentWinnerId = makuuchiHistory.length > 0 ? makuuchiHistory[makuuchiHistory.length - 1].wrestlerId : null;
+        const prevWinnerId = makuuchiHistory.length > 1 ? makuuchiHistory[makuuchiHistory.length - 2].wrestlerId : null;
+
         // Update Banzuke (Rank Promotion/Demotion)
-        const newWrestlers = updateBanzuke(wrestlers, bashoId);
+        const newWrestlers = updateBanzuke(wrestlers, bashoId, currentWinnerId, prevWinnerId);
         setWrestlers(newWrestlers);
 
         // Reset Matchups
@@ -662,9 +672,10 @@ export const useGameLoop = () => {
             return {
                 bashoId,
                 division: div as Division,
+                wrestlerId: winner.id,
                 wrestlerName: winner.name,
-                heyaName: heya ? heya.name : '不明',
-                rank: formatRank(winner.rank, winner.rankSide, winner.rankNumber),
+                heyaName: heya ? heya.name : 'Unknown',
+                rank: formatRank(winner.rank),
                 wins: winner.currentBashoStats.wins,
                 losses: winner.currentBashoStats.losses
             };

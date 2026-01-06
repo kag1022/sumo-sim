@@ -47,6 +47,7 @@ export interface Wrestler {
     rank: Rank;
     rankSide?: 'East' | 'West';
     rankNumber?: number; // 1 = 1st, 2 = 2nd
+    isKadoban?: boolean; // Ozeki Demotion Status
     stats: WrestlerStats;
     isSekitori: boolean;
     injuryStatus: 'healthy' | 'injured';
@@ -57,7 +58,7 @@ export interface Wrestler {
         matchHistory: string[]; // IDs of opponents fought in this basho
     };
     // Status Fields
-    isKadoban?: boolean;
+
     bantsukePriorRank?: Rank | null;
     // New Fields
     nextBoutDay: number | null; // null if no match scheduled or ended
@@ -101,6 +102,7 @@ export interface LogEntry {
 export interface YushoRecord {
     bashoId: string; // e.g., "Year 1 - Jan"
     division: Division;
+    wrestlerId: string;
     wrestlerName: string;
     heyaName: string;
     rank: string;
