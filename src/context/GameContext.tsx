@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Wrestler, LogEntry, GameMode, Heya, Matchup, YushoRecord, SaveData } from '../types';
+import { Wrestler, LogEntry, GamePhase, GameMode, Heya, Matchup, YushoRecord, SaveData } from '../types';
 import { initializeGameData, InitialSettings } from '../utils/initialization';
 
 // ... existing imports
@@ -10,7 +10,8 @@ interface GameState {
     wrestlers: Wrestler[];
     heyas: Heya[];
     logs: LogEntry[];
-    gameMode: GameMode;
+    gamePhase: GamePhase; // Renamed from gameMode
+    gameMode: GameMode; // New field for Establish/Inherit
     bashoFinished: boolean;
     yushoWinners: Record<string, Wrestler> | null;
     lastMonthBalance: number | null;
@@ -31,7 +32,8 @@ interface GameContextProps extends GameState {
     setHeyas: React.Dispatch<React.SetStateAction<Heya[]>>;
     advanceDate: (days: number) => void;
     addLog: (message: string, type?: 'info' | 'warning' | 'error') => void;
-    setGameMode: (mode: GameMode) => void;
+    setGamePhase: (phase: GamePhase) => void;
+    setGameMode: (mode: GameMode) => void; // New setter
     setBashoFinished: (finished: boolean) => void;
     setYushoWinners: (winners: Record<string, Wrestler> | null) => void;
     setLastMonthBalance: (amount: number) => void;
@@ -62,7 +64,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [wrestlers, setWrestlers] = useState<Wrestler[]>([]);
     const [heyas, setHeyas] = useState<Heya[]>([]);
     const [logs, setLogs] = useState<LogEntry[]>([]);
-    const [gameMode, setGameMode] = useState<GameMode>('training');
+    const [gamePhase, setGamePhase] = useState<GamePhase>('training');
+    const [gameMode, setGameMode] = useState<GameMode>('Establish'); // Default
     const [bashoFinished, setBashoFinished] = useState<boolean>(false);
     const [yushoWinners, setYushoWinners] = useState<Record<string, Wrestler> | null>(null);
     const [lastMonthBalance, setLastMonthBalance] = useState<number | null>(null);
@@ -95,6 +98,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setWrestlers(data.wrestlers);
         setFundsState(data.initialFunds);
         setOyakataName(settings.oyakataName);
+        if (settings.mode) {
+            setGameMode(settings.mode);
+        }
         setIsInitialized(true);
 
         // Initialize usedNames registry
@@ -131,7 +137,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setOkamiLevel(data.gameState.okamiLevel);
         setReputation(data.gameState.reputation);
         setTrainingPoints(data.gameState.trainingPoints);
-        setGameMode(data.gameState.gameMode);
+        setGamePhase(data.gameState.gamePhase || (data.gameState as any).gameMode); // Compat
+        // Check if gameMode exists (new save), else default to Establish or try to infer?
+        setGameMode(data.gameState.gameMode || 'Establish');
+
         setBashoFinished(data.gameState.bashoFinished);
         setLastMonthBalance(data.gameState.lastMonthBalance);
 
@@ -174,6 +183,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             wrestlers,
             heyas,
             logs,
+            gamePhase,
             gameMode,
             bashoFinished,
             yushoWinners,
@@ -182,6 +192,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setHeyas,
             advanceDate,
             addLog,
+            setGamePhase,
             setGameMode,
             setBashoFinished,
             setYushoWinners,

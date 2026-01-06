@@ -20,12 +20,13 @@ export const useGameLoop = () => {
         funds,
         wrestlers,
         heyas,
-        gameMode,
+        gamePhase, // Renamed
+        gameMode, // Added
         setFunds,
         setWrestlers,
         advanceDate,
         addLog,
-        setGameMode,
+        setGamePhase, // Renamed
         setBashoFinished,
         setYushoWinners,
         setLastMonthBalance,
@@ -56,7 +57,7 @@ export const useGameLoop = () => {
         let daysToAdvance = 0;
 
         // Check next state
-        if (gameMode === 'training') {
+        if (gamePhase === 'training') {
             // --- TRAINING MODE (Weekly) ---
             daysToAdvance = 7;
 
@@ -75,7 +76,7 @@ export const useGameLoop = () => {
 
             if (collisionDay !== -1) {
                 daysToAdvance = collisionDay - currentDate.getDate();
-                setGameMode('tournament');
+                setGamePhase('tournament'); // Renamed
                 addLog("本場所（初日）が始まります！", 'info');
             }
 
@@ -460,7 +461,7 @@ export const useGameLoop = () => {
 
     const closeBashoModal = () => {
         setBashoFinished(false);
-        setGameMode('training');
+        setGamePhase('training'); // Renamed
         addLog("新番付が発表されました。育成期間に入ります。", 'info');
 
         // Construct Basho ID for history (e.g., "2025年1月場所")
@@ -646,7 +647,8 @@ export const useGameLoop = () => {
             gameState: {
                 currentDate: currentDate.toISOString(),
                 funds: currentState.funds,
-                gameMode,
+                gamePhase, // Renamed
+                gameMode, // Added
                 bashoFinished,
                 lastMonthBalance,
                 isInitialized,

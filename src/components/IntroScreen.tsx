@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext';
+import { GameMode } from '../types';
 
 export const TitleLogo = () => (
     <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center border-4 border-amber-500 shadow-lg mb-6 mx-auto">
@@ -9,9 +10,10 @@ export const TitleLogo = () => (
 
 interface IntroScreenProps {
     onBack?: () => void;
+    initialMode: GameMode;
 }
 
-export const IntroScreen: React.FC<IntroScreenProps> = ({ onBack }) => {
+export const IntroScreen: React.FC<IntroScreenProps> = ({ onBack, initialMode }) => {
     const { startGame } = useGame();
 
     const [oyakataName, setOyakataName] = useState('');
@@ -27,7 +29,8 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onBack }) => {
             shikonaPrefix,
             hometown,
             specialty: 'power', // Default or add UI
-            location: hometown
+            location: hometown,
+            mode: initialMode
         });
     };
 

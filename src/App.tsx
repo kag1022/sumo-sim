@@ -11,7 +11,7 @@ import { TitleScreen } from './components/TitleScreen'; // New Import
 import { HistoryModal } from './features/banzuke/components/HistoryModal'; // New Import
 import { DanpatsuModal } from './features/wrestler/components/DanpatsuModal';
 import { HelpModal } from './components/HelpModal';
-import { TrainingType, Wrestler } from './types';
+import { TrainingType, Wrestler, GameMode } from './types';
 import { GameProvider, useGame } from './context/GameContext';
 import { useGameLoop } from './hooks/useGameLoop';
 import { formatHybridDate } from './utils/time';
@@ -147,14 +147,18 @@ const generateDummyWrestlers = (): Wrestler[] => {
 const GameAppContent = () => {
   const { isInitialized, loadGameData } = useGame();
   const [showIntro, setShowIntro] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<GameMode>('Establish');
 
   if (!isInitialized) {
     if (showIntro) {
-      return <IntroScreen onBack={() => setShowIntro(false)} />;
+      return <IntroScreen onBack={() => setShowIntro(false)} initialMode={selectedMode} />;
     }
     return (
       <TitleScreen
-        onNewGame={() => setShowIntro(true)}
+        onNewGame={(mode) => {
+          setSelectedMode(mode);
+          setShowIntro(true);
+        }}
         onLoadGame={(data) => loadGameData(data)}
       />
     );
@@ -164,7 +168,7 @@ const GameAppContent = () => {
 };
 
 const MainGameInterface = () => {
-  const { currentDate, funds, setFunds, wrestlers, setWrestlers, heyas, setHeyas, gameMode, bashoFinished, lastMonthBalance, yushoWinners, setYushoWinners, okamiLevel, reputation, trainingPoints, yushoHistory, retiringQueue } = useGame();
+  const { currentDate, funds, setFunds, wrestlers, setWrestlers, heyas, setHeyas, gamePhase, bashoFinished, lastMonthBalance, yushoWinners, setYushoWinners, okamiLevel, reputation, trainingPoints, yushoHistory, retiringQueue } = useGame();
   const { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining } = useGameLoop();
   const { t, i18n } = useTranslation();
 
@@ -253,14 +257,14 @@ const MainGameInterface = () => {
             </button>
 
             {/* Status Badge */}
-            <div className={`px-2 py-1 rounded text-xs font-bold ${gameMode === 'tournament' ? 'bg-amber-400 text-amber-950' : 'bg-blue-800 text-blue-200'}`}>
-              {gameMode === 'tournament' ? t('ui.tournament') : t('ui.training')}
+            <div className={`px-2 py-1 rounded text-xs font-bold ${gamePhase === 'tournament' ? 'bg-amber-400 text-amber-950' : 'bg-blue-800 text-blue-200'}`}>
+              {gamePhase === 'tournament' ? t('ui.tournament') : t('ui.training')}
             </div>
 
             {/* Date */}
             <div className="text-center">
               <span className="block text-[10px] opacity-70">{t('ui.date')}</span>
-              <span className="font-serif font-bold text-lg">{formatHybridDate(currentDate, gameMode)}</span>
+              <span className="font-serif font-bold text-lg">{formatHybridDate(currentDate, gamePhase)}</span>
             </div>
 
             <div className="w-px h-8 bg-white/30"></div>
@@ -313,7 +317,7 @@ const MainGameInterface = () => {
 
             {/* Action */}
             <div className="flex flex-col items-center gap-2">
-              {gameMode === 'training' && (
+              {gamePhase === 'training' && (
                 <button
                   onClick={() => setShowScout(true)}
                   className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1 rounded text-xs font-bold border border-slate-500 transition-all active:scale-95"
@@ -326,12 +330,12 @@ const MainGameInterface = () => {
                 onClick={handleAdvance}
                 className={`
                                     px-6 py-2 rounded shadow-md font-bold transition-all active:scale-95 flex items-center gap-2
-                                    ${gameMode === 'tournament'
+                                    ${gamePhase === 'tournament'
                     ? 'bg-red-600 hover:bg-red-500 text-white border border-red-400'
                     : 'bg-amber-400 hover:bg-amber-300 text-amber-950'}
                                 `}
               >
-                <span>{gameMode === 'tournament' ? '翌日へ' : '翌週へ'}</span>
+                <span>{gamePhase === 'tournament' ? '翌日へ' : '翌週へ'}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
               </button>
             </div>
@@ -348,7 +352,7 @@ const MainGameInterface = () => {
           <div className="flex-1 w-full space-y-4 flex flex-col h-full overflow-hidden">
 
             {/* Training Control Panel */}
-            <div className={`transition-opacity duration-500 shrink-0 ${gameMode === 'tournament' ? 'opacity-50 pointer-events-none grayscale' : 'opacity-100'}`}>
+            <div className={`transition-opacity duration-500 shrink-0 ${gamePhase === 'tournament' ? 'opacity-50 pointer-events-none grayscale' : 'opacity-100'}`}>
               <div className="bg-white p-4 rounded shadow-sm border border-slate-200">
                 <h3 className="font-serif font-bold text-lg mb-3 flex items-center gap-2">
                   <span className="w-1 h-6 bg-[#b7282e]"></span>
@@ -431,7 +435,7 @@ const MainGameInterface = () => {
                       </div>
                     )}
                     {/* Current Basho Stats (if active) */}
-                    {gameMode === 'tournament' && (
+                    {gamePhase === 'tournament' && (
                       <div className="mt-4 p-2 bg-slate-100 rounded font-mono text-xl font-bold text-center">
                         {activeSelectedWrestler.currentBashoStats.wins} 勝 {activeSelectedWrestler.currentBashoStats.losses} 敗
                       </div>

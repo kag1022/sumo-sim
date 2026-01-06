@@ -1,4 +1,4 @@
-import { Wrestler, Heya, Rank } from '../types';
+import { Wrestler, Heya, Rank, GameMode } from '../types';
 import { generateHeyas, generateFullRoster, generateUniqueName } from '../features/wrestler/logic/generator';
 
 export interface InitialSettings {
@@ -8,6 +8,7 @@ export interface InitialSettings {
     hometown: string;
     location?: string;
     specialty?: string;
+    mode: GameMode; // Added
 }
 
 // Helper to create a specific player wrestler (with unique name)
@@ -69,24 +70,54 @@ export const initializeGameData = (settings: InitialSettings) => {
     const cpuWrestlers = generateFullRoster(cpuHeyas, usedNames);
 
     // 2. Create Player Heya
+    // Determine player roster based on Mode
+    let playerWrestlers: Wrestler[] = [];
+    let initialFunds = 10000000;
+
+    if (settings.mode === 'Establish') {
+        // A. Establish Mode (Hard / Start-up)
+        // Funds: 3M
+        // Roster: 1 Rookie (High Potential)
+        initialFunds = 3000000;
+
+        // High potential rookie (MaeZumo or Jonokuchi)
+        const rookie = createPlayerWrestler(
+            '1', 'player_heya', settings.shikonaPrefix,
+            'Jonokuchi', 30, // Rank
+            18, 90, 40, // Age, Potential, Stats
+            usedNames
+        );
+        playerWrestlers = [rookie];
+
+    } else {
+        // B. Inherit Mode (Normal / Legacy)
+        // Funds: 15M
+        // Roster: ~6 Wrestlers (Mixed)
+        initialFunds = 15000000;
+
+        playerWrestlers = [
+            // 1. Head (Makushita)
+            createPlayerWrestler('1', 'player_heya', settings.shikonaPrefix, 'Makushita', 10, 26, 75, 60, usedNames),
+            // 2. Sandanme
+            createPlayerWrestler('2', 'player_heya', settings.shikonaPrefix, 'Sandanme', 20, 24, 70, 45, usedNames),
+            createPlayerWrestler('3', 'player_heya', settings.shikonaPrefix, 'Sandanme', 80, 22, 80, 40, usedNames),
+            // 3. Jonidan
+            createPlayerWrestler('4', 'player_heya', settings.shikonaPrefix, 'Jonidan', 15, 20, 60, 30, usedNames),
+            createPlayerWrestler('5', 'player_heya', settings.shikonaPrefix, 'Jonidan', 85, 19, 70, 25, usedNames),
+            // 4. Jonokuchi
+            createPlayerWrestler('6', 'player_heya', settings.shikonaPrefix, 'Jonokuchi', 10, 18, 50, 20, usedNames),
+        ];
+    }
+
+    // Create Player Heya Struct
     const playerHeya: Heya = {
         id: 'player_heya',
         name: settings.stableName + (settings.stableName.endsWith('部屋') ? '' : '部屋'),
         shikonaPrefix: settings.shikonaPrefix,
         strengthMod: 1.0,
         facilityLevel: 1,
-        wrestlerCount: 4
+        wrestlerCount: playerWrestlers.length
     };
-
-    // 3. Create Player Wrestlers (Specific Specs) - Pass usedNames to each call
-    const playerWrestlers = [
-        createPlayerWrestler('1', 'player_heya', settings.shikonaPrefix, 'Maegashira', 10, 28, 80, 65, usedNames),
-        createPlayerWrestler('2', 'player_heya', settings.shikonaPrefix, 'Makushita', 30, 24, 70, 45, usedNames),
-        createPlayerWrestler('3', 'player_heya', settings.shikonaPrefix, 'Jonidan', 50, 20, 90, 25, usedNames),
-        createPlayerWrestler('4', 'player_heya', settings.shikonaPrefix, 'Jonokuchi', 1, 15, 50, 15, usedNames)
-    ];
-
-    // Names already registered inside createPlayerWrestler, no need to push again
 
     // 4. Combine all wrestlers
     const allWrestlers = [...playerWrestlers, ...cpuWrestlers];
@@ -97,7 +128,7 @@ export const initializeGameData = (settings: InitialSettings) => {
     return {
         heyas: allHeyas,
         wrestlers: allWrestlers,
-        initialFunds: 10000000, // 10M JPY Start
+        initialFunds: initialFunds,
         usedNames: usedNames
     };
 };

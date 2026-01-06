@@ -1,3 +1,5 @@
+import { GamePhase } from '../types';
+
 export const formatDateJP = (date: Date): string => {
     return date.toLocaleDateString('ja-JP', {
         year: 'numeric',
@@ -12,7 +14,7 @@ export const getWeekNumber = (date: Date): number => {
     return Math.floor((day - 1) / 7) + 1;
 };
 
-export const formatHybridDate = (date: Date, mode: 'training' | 'tournament'): string => {
+export const formatHybridDate = (date: Date, mode: GamePhase): string => {
     if (mode === 'tournament') {
         return date.toLocaleDateString('ja-JP', {
             month: 'long',

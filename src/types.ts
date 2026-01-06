@@ -13,7 +13,8 @@ export type Rank =
 
 export type TrainingType = 'shiko' | 'teppo' | 'moushi_ai' | 'rest';
 
-export type GameMode = 'training' | 'tournament';
+export type GamePhase = 'training' | 'tournament';
+export type GameMode = 'Establish' | 'Inherit';
 
 export interface WrestlerStats {
     mind: number;
@@ -116,7 +117,8 @@ export interface SaveData {
     gameState: {
         currentDate: string; // saved as ISO string
         funds: number;
-        gameMode: GameMode;
+        gamePhase: GamePhase; // Renamed from gameMode
+        gameMode: GameMode; // New field
         bashoFinished: boolean;
         lastMonthBalance: number | null;
         isInitialized: boolean;
