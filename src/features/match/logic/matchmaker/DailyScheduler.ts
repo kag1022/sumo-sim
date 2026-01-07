@@ -253,7 +253,43 @@ export const generateDailyMatches = (allWrestlers: Wrestler[], day: number): Mat
 
     // 1. 関取（幕内・十両）統合プール
     const sekitoriPool = [...divisions['Makuuchi'], ...divisions['Juryo']];
-    todaysMatches.push(...scheduleSekitoriMatches(sekitoriPool, day));
+    const todaysSekitoriMatches = scheduleSekitoriMatches(sekitoriPool, day);
+
+    // Apply Tags
+    const taggedMatches = todaysSekitoriMatches.map((m, index) => {
+        const tags: string[] = [];
+
+        // 1. Kinboshi Challenge (Maegashira vs Yokozuna)
+        const isKinboshi = (w1: Wrestler, w2: Wrestler) =>
+            (w1.rank === 'Maegashira' && w2.rank === 'Yokozuna') ||
+            (w2.rank === 'Maegashira' && w1.rank === 'Yokozuna');
+
+        if (isKinboshi(m.east, m.west)) {
+            tags.push('KinboshiChallenge');
+        }
+
+        // 2. Senshuraku (Musubi no Ichiban) - Last match of Day 15
+        if (day === 15 && index === todaysSekitoriMatches.length - 1) {
+            tags.push('Senshuraku');
+        }
+
+        // 3. Title Bout (Day 13+, Top 3 contenders)
+        // Note: Identifying top 3 requires full wrestler list context, which we have.
+        // We'll approximate for now or assume logic should be robust.
+        // To be safe, we can check if both have very high wins (e.g. within 2 of max possible).
+        if (day >= 13) {
+            const winsA = m.east.currentBashoStats.wins;
+            const winsB = m.west.currentBashoStats.wins;
+            const threshold = day - 3; // e.g. Day 13 requires 10+ wins
+            if (winsA >= threshold && winsB >= threshold) {
+                tags.push('TitleBout');
+            }
+        }
+
+        return { ...m, tags };
+    });
+
+    todaysMatches.push(...taggedMatches);
 
     // 2. 幕下以下 (スイス式・出場調整あり)
     todaysMatches.push(...scheduleLowerDivisionMatches(divisions['Makushita'], day));

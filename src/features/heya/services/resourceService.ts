@@ -17,6 +17,7 @@ export const processMonthlyResources = (
     wrestlers: Wrestler[],
     heyas: Heya[],
     okamiLevel: number,
+    reputation: number,
     autoRecruitAllowed: boolean
 ): ResourceUpdateResult => {
     const logs: string[] = [];
@@ -61,9 +62,15 @@ export const processMonthlyResources = (
         logs.push(`【収支報告】女将さんの功績により、経費 ${savedPercentage}% を節約しました。`);
     }
 
+    // 3. Supporter Income
+    const supporterIncome = reputation * 10000;
+    if (supporterIncome > 0) {
+        logs.push(`後援会より 支援金 ¥${supporterIncome.toLocaleString()} を受領しました。`);
+    }
+
     return {
         updatedWrestlers: survivingWrestlers,
-        fundsChange: netBalance,
+        fundsChange: netBalance + supporterIncome,
         logs
     };
 };

@@ -22,7 +22,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
     const [customName, setCustomName] = useState('');
     const INSPECTION_FEE = 300000;
 
-    const { heyas } = useGame();
+    const { heyas, reputation } = useGame();
     const playerHeya = heyas.find(h => h.id === 'player_heya');
     const stablePrefix = playerHeya ? playerHeya.shikonaPrefix : '';
 
@@ -190,6 +190,25 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                             <h2 className="text-3xl font-black font-serif text-slate-900 tracking-tight">新弟子スカウト</h2>
                         </div>
                         <p className="text-xs text-slate-500 font-bold tracking-[0.15em] uppercase pl-1">Recruitment & Scouting</p>
+                    </div>
+
+                    {/* Reputation Rank Display */}
+                    <div className="flex-1 flex justify-center items-end pb-1">
+                        <div className="bg-stone-50 px-6 py-2 rounded-sm border border-stone-200 text-center">
+                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">CURRENT RANK</div>
+                            <div className="flex items-baseline gap-2 justify-center">
+                                <span className={`font-serif font-black text-3xl leading-none ${getGrade(reputation) === 'S' ? 'text-amber-500 drop-shadow-sm' : getGrade(reputation) === 'A' ? 'text-[#b7282e]' : getGrade(reputation) === 'B' ? 'text-blue-600' : 'text-slate-400'}`}>
+                                    {getGrade(reputation)}
+                                </span>
+                                <span className="font-bold text-slate-600 text-sm">ランク</span>
+                                <span className="text-xs text-slate-400 ml-1">(評判 {reputation})</span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-1 font-bold">
+                                {getGrade(reputation) === 'S' ? '至高のブランド' :
+                                    getGrade(reputation) === 'A' ? '名門部屋' :
+                                        getGrade(reputation) === 'B' ? '中堅部屋' : '新興部屋'}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="text-right">

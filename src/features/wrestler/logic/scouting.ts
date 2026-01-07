@@ -28,11 +28,39 @@ const generateName = (): string => {
     return `${l}${f}`;
 };
 
-export const generateCandidates = (count: number): Candidate[] => {
+export const generateCandidates = (count: number, reputation: number): Candidate[] => {
     const candidates: Candidate[] = [];
 
+    // Reputation Rank Logic
+    let minPot = 40;
+    let maxPot = 80;
+    let gemChance = 0; // "Gem" = High potential guaranteed
+
+    if (reputation >= 90) {
+        // Rank S
+        minPot = 80; maxPot = 100; gemChance = 0.3;
+    } else if (reputation >= 60) {
+        // Rank A
+        minPot = 70; maxPot = 95; gemChance = 0.15;
+    } else if (reputation >= 30) {
+        // Rank B
+        minPot = 60; maxPot = 90; gemChance = 0.05;
+    } else {
+        // Rank C
+        minPot = 50; maxPot = 80; gemChance = 0;
+    }
+
     for (let i = 0; i < count; i++) {
-        const potential = Math.floor(Math.random() * 60) + 40; // 40-100
+        let potential: number;
+
+        if (Math.random() < gemChance) {
+            // Gem Candidate (Super Rookie)
+            potential = 90 + Math.floor(Math.random() * 11); // 90-100
+        } else {
+            // Normal Range based on Rank
+            potential = minPot + Math.floor(Math.random() * (maxPot - minPot + 1));
+        }
+
         const flexibility = Math.floor(Math.random() * 80) + 10; // 10-90
 
         const mind = 10 + Math.floor(Math.random() * 15);
@@ -42,20 +70,13 @@ export const generateCandidates = (count: number): Candidate[] => {
         const height = 165 + Math.floor(Math.random() * 35); // 165-200
         const weight = 80 + Math.floor(Math.random() * 80); // 80-160
 
-        // Cost calculation
-        const scoutCost = 500000 + (potential * 1000) + (weight * 500);
+        // Cost calculation (Scaling with potential)
+        const scoutCost = 500000 + (potential * 2000) + (weight * 500); // Increased cost for high potential
         const roundedCost = Math.floor(scoutCost / 10000) * 10000;
-
-        // Reveal Logic based on Price
-        // Higher price = More info? 
-        // User Idea: "Higher cost candidates have more info revealed"
-        // Let's implement:
-        // > 700k -> Reveal Flexibility
-        // > 1M -> Reveal Potential too (rare)
 
         const revealedStats: string[] = [];
         if (roundedCost >= 700000) revealedStats.push('flexibility');
-        if (roundedCost >= 900000) revealedStats.push('potential');
+        if (roundedCost >= 1200000) revealedStats.push('potential');
 
         candidates.push({
             id: `candidate-${Date.now()}-${i}`,
@@ -72,8 +93,7 @@ export const generateCandidates = (count: number): Candidate[] => {
             background: BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)],
             scoutCost: roundedCost,
             revealedStats,
-            // New Init for Candidates (Fresh Recruits)
-            age: 15 + Math.floor(Math.random() * 4), // 15-18
+            age: 15 + Math.floor(Math.random() * 4),
             maxRank: 'Jonokuchi',
             historyMaxLength: 0,
             timeInHeya: 0,

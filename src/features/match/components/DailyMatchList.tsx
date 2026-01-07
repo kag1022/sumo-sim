@@ -42,64 +42,111 @@ const DailyMatchList: React.FC<DailyMatchListProps> = ({ matchups }) => {
                     const westWin = m.winnerId === m.west.id;
                     const finished = m.winnerId !== null;
 
+                    const isKinboshi = m.tags?.includes('KinboshiChallenge');
+                    const isTitle = m.tags?.includes('TitleBout');
+                    const isSenshuraku = m.tags?.includes('Senshuraku');
+
+                    // Dynamic Styling
+                    let containerClass = "hover:bg-slate-50 border-l-4 border-l-transparent pl-2";
+                    let infoBadge = null;
+
+                    if (hasPlayer) {
+                        containerClass = "bg-amber-50/60 border-l-4 border-l-amber-400 pl-2";
+                    }
+
+                    if (isKinboshi) {
+                        containerClass = hasPlayer
+                            ? "bg-amber-100 border-l-4 border-l-yellow-500 pl-2"
+                            : "bg-yellow-50 border-l-4 border-l-yellow-400 pl-2";
+                        infoBadge = <span className="ml-1 text-[9px] bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded shadow-sm font-bold tracking-tighter">★金星挑戦</span>;
+                    } else if (isTitle) {
+                        containerClass = hasPlayer
+                            ? "bg-red-50 border-l-4 border-l-red-500 pl-2"
+                            : "bg-red-50/40 border-l-4 border-l-red-500 pl-2";
+                        infoBadge = <span className="ml-1 text-[9px] bg-red-600 text-white px-1.5 py-0.5 rounded shadow-sm font-bold tracking-tighter">🔥優勝争い</span>;
+                    } else if (isSenshuraku) {
+                        containerClass += " border-b-2 border-b-slate-800";
+                        infoBadge = <span className="ml-1 text-[9px] bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold tracking-wider">結び</span>;
+                    }
+
                     return (
                         <div
                             key={idx}
                             className={`
-                                flex items-center justify-between text-xs py-2.5 px-3 border-b border-slate-100 last:border-0
-                                transition-colors
-                                ${hasPlayer
-                                    ? 'bg-amber-50 border-l-4 border-l-amber-400 pl-2'
-                                    : 'hover:bg-slate-50 border-l-4 border-l-transparent pl-2'}
+                                flex flex-col justify-center text-xs py-3 px-3 border-b border-slate-200/60 last:border-0
+                                transition-colors relative min-h-[64px]
+                                ${containerClass}
                             `}
                         >
-                            {/* East */}
-                            <div className={`flex-1 text-right flex flex-col justify-center items-end gap-0.5 ${eastWin ? 'text-slate-900' : 'text-slate-500'} ${westWin ? 'opacity-40 grayscale' : ''}`}>
-                                <div className="flex items-center gap-2 justify-end">
-                                    <span className={`font-serif ${isPlayerEast ? 'font-bold text-slate-900 underline decoration-amber-400 decoration-2 underline-offset-2' : ''} ${eastWin ? 'font-bold' : ''}`}>
-                                        {m.east.name}
-                                    </span>
-                                    <span className="text-[10px] w-5 text-center bg-slate-100 rounded-sm text-slate-500 font-mono self-center">
-                                        {formatShortRank(m.east.rank)}
-                                    </span>
-                                    <span className={`w-4 text-center font-bold ${eastWin ? 'text-[#b7282e]' : 'invisible'}`}>○</span>
+                            {/* Match Info Header (Absolute Top-Right or Inline) */}
+                            {infoBadge && (
+                                <div className="absolute top-1 right-2 opacity-90">
+                                    {infoBadge}
                                 </div>
-                                {/* Skills */}
-                                {m.east.skills && m.east.skills.length > 0 && (
-                                    <div className="flex gap-0.5 justify-end flex-wrap max-w-[120px]">
-                                        {m.east.skills.map(s => <div key={s} className="scale-75 origin-right"><SkillBadge skill={s} /></div>)}
+                            )}
+
+                            <div className="flex items-center justify-between w-full mt-1">
+                                {/* East Wrestler */}
+                                <div className={`flex-1 text-right flex flex-col justify-center items-end gap-1 ${eastWin ? 'text-slate-900' : 'text-slate-400'} transition-all duration-300`}>
+                                    <div className="flex items-center gap-2 justify-end">
+                                        <div className="flex flex-col items-end">
+                                            <span className={`font-serif text-[13px] leading-none ${isPlayerEast ? 'font-bold text-slate-900 border-b-2 border-amber-400 pb-0.5' : ''} ${eastWin ? 'font-bold' : ''}`}>
+                                                {m.east.name}
+                                            </span>
+                                            <div className="flex gap-2 items-center mt-0.5 text-[9px] text-slate-400 font-mono">
+                                                <span>{m.east.currentBashoStats.wins}勝 {m.east.currentBashoStats.losses}敗</span>
+                                                <span>{formatShortRank(m.east.rank)}</span>
+                                            </div>
+                                        </div>
+                                        <div className={`w-6 h-6 flex items-center justify-center rounded-full text-sm font-bold shadow-sm border ${eastWin ? 'bg-white border-[#b7282e] text-[#b7282e]' : 'bg-slate-50 border-slate-100 text-transparent'}`}>
+                                            {eastWin && '○'}
+                                        </div>
                                     </div>
-                                )}
-                            </div>
-
-                            {/* Center Status */}
-                            <div className="mx-1 w-14 text-center shrink-0 flex justify-center self-center">
-                                {finished ? (
-                                    <span className="text-[9px] text-slate-400 block truncate font-serif bg-slate-100 px-1 rounded-sm min-w-[36px]">
-                                        {m.kimarite || '決り手'}
-                                    </span>
-                                ) : (
-                                    <span className="text-[10px] text-slate-200 font-bold">vs</span>
-                                )}
-                            </div>
-
-                            {/* West */}
-                            <div className={`flex-1 text-left flex flex-col justify-center items-start gap-0.5 ${westWin ? 'text-slate-900' : 'text-slate-500'} ${eastWin ? 'opacity-40 grayscale' : ''}`}>
-                                <div className="flex items-center gap-2 justify-start">
-                                    <span className={`w-4 text-center font-bold ${westWin ? 'text-[#b7282e]' : 'invisible'}`}>○</span>
-                                    <span className="text-[10px] w-5 text-center bg-slate-100 rounded-sm text-slate-500 font-mono self-center">
-                                        {formatShortRank(m.west.rank)}
-                                    </span>
-                                    <span className={`font-serif ${isPlayerWest ? 'font-bold text-slate-900 underline decoration-amber-400 decoration-2 underline-offset-2' : ''} ${westWin ? 'font-bold' : ''}`}>
-                                        {m.west.name}
-                                    </span>
+                                    {/* Skills */}
+                                    {m.east.skills && m.east.skills.length > 0 && (
+                                        <div className="flex gap-0.5 justify-end flex-wrap max-w-[140px] opacity-80 hover:opacity-100">
+                                            {m.east.skills.map(s => <div key={s} className="scale-[0.8] origin-right"><SkillBadge skill={s} /></div>)}
+                                        </div>
+                                    )}
                                 </div>
-                                {/* Skills */}
-                                {m.west.skills && m.west.skills.length > 0 && (
-                                    <div className="flex gap-0.5 justify-start flex-wrap max-w-[120px]">
-                                        {m.west.skills.map(s => <div key={s} className="scale-75 origin-left"><SkillBadge skill={s} /></div>)}
+
+                                {/* Center Status (VS or Kimarite) */}
+                                <div className="mx-2 w-16 text-center shrink-0 flex flex-col justify-center items-center z-10">
+                                    {finished ? (
+                                        <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
+                                            <span className="text-[10px] text-slate-500 font-serif leading-tight">決まり手</span>
+                                            <span className="text-[10px] text-slate-700 font-bold font-serif whitespace-nowrap bg-slate-100/80 px-2 py-0.5 rounded border border-slate-200 shadow-sm mt-0.5 min-w-[48px]">
+                                                {m.kimarite || '寄り切り'}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-xs text-slate-300 font-bold font-mono tracking-widest">VS</span>
+                                    )}
+                                </div>
+
+                                {/* West Wrestler */}
+                                <div className={`flex-1 text-left flex flex-col justify-center items-start gap-1 ${westWin ? 'text-slate-900' : 'text-slate-400'} transition-all duration-300`}>
+                                    <div className="flex items-center gap-2 justify-start">
+                                        <div className={`w-6 h-6 flex items-center justify-center rounded-full text-sm font-bold shadow-sm border ${westWin ? 'bg-white border-[#b7282e] text-[#b7282e]' : 'bg-slate-50 border-slate-100 text-transparent'}`}>
+                                            {westWin && '○'}
+                                        </div>
+                                        <div className="flex flex-col items-start">
+                                            <span className={`font-serif text-[13px] leading-none ${isPlayerWest ? 'font-bold text-slate-900 border-b-2 border-amber-400 pb-0.5' : ''} ${westWin ? 'font-bold' : ''}`}>
+                                                {m.west.name}
+                                            </span>
+                                            <div className="flex gap-2 items-center mt-0.5 text-[9px] text-slate-400 font-mono">
+                                                <span>{formatShortRank(m.west.rank)}</span>
+                                                <span>{m.west.currentBashoStats.wins}勝 {m.west.currentBashoStats.losses}敗</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                )}
+                                    {/* Skills */}
+                                    {m.west.skills && m.west.skills.length > 0 && (
+                                        <div className="flex gap-0.5 justify-start flex-wrap max-w-[140px] opacity-80 hover:opacity-100">
+                                            {m.west.skills.map(s => <div key={s} className="scale-[0.8] origin-left"><SkillBadge skill={s} /></div>)}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     );

@@ -109,6 +109,7 @@ export interface MatchPair {
     east: Wrestler;
     west: Wrestler;
     division: Division;
+    tags?: string[]; // 'KinboshiChallenge', 'TitleBout', 'Senshuraku'
 }
 
 export interface MatchResult {
@@ -128,6 +129,7 @@ export interface Matchup {
     division: Division;
     kimarite?: string; // Optional result string
     triggeredSkills?: SkillType[]; // Skills that affected the outcome
+    tags?: string[];
 }
 
 export interface Candidate extends Omit<Wrestler, 'history' | 'currentBashoStats' | 'nextBoutDay'> {

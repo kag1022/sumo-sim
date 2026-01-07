@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Wrestler, LogEntry, GamePhase, GameMode, Heya, Matchup, YushoRecord, SaveData } from '../types';
+import { GameEvent } from '../features/events/types';
 import { initializeGameData, InitialSettings } from '../features/game/logic/initialization';
 
 // ... existing imports
@@ -12,6 +13,7 @@ interface GameState {
     logs: LogEntry[];
     gamePhase: GamePhase; // Renamed from gameMode
     gameMode: GameMode; // New field for Establish/Inherit
+    activeEvent: GameEvent | null; // Random Event
     bashoFinished: boolean;
     yushoWinners: Record<string, Wrestler> | null;
     lastMonthBalance: number | null;
@@ -36,6 +38,7 @@ interface GameContextProps extends GameState {
     addLog: (message: string, type?: 'info' | 'warning' | 'error') => void;
     setGamePhase: (phase: GamePhase) => void;
     setGameMode: (mode: GameMode) => void; // New setter
+    setActiveEvent: (event: GameEvent | null) => void;
     setBashoFinished: (finished: boolean) => void;
     setYushoWinners: (winners: Record<string, Wrestler> | null) => void;
     setLastMonthBalance: (amount: number) => void;
@@ -74,6 +77,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [gamePhase, setGamePhase] = useState<GamePhase>('training');
     const [gameMode, setGameMode] = useState<GameMode>('Establish'); // Default
+    const [activeEvent, setActiveEvent] = useState<GameEvent | null>(null);
     const [bashoFinished, setBashoFinished] = useState<boolean>(false);
     const [yushoWinners, setYushoWinners] = useState<Record<string, Wrestler> | null>(null);
     const [lastMonthBalance, setLastMonthBalance] = useState<number | null>(null);
@@ -197,6 +201,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             logs,
             gamePhase,
             gameMode,
+            activeEvent,
             bashoFinished,
             yushoWinners,
             setFunds,
@@ -206,6 +211,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addLog,
             setGamePhase,
             setGameMode,
+            setActiveEvent,
             setBashoFinished,
             setYushoWinners,
             lastMonthBalance,

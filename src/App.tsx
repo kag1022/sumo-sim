@@ -13,6 +13,7 @@ import { DanpatsuModal } from './features/wrestler/components/DanpatsuModal';
 import { RetirementConsultationModal } from './components/RetirementConsultationModal';
 import { HelpModal } from './components/HelpModal';
 import DailyMatchList from './features/match/components/DailyMatchList';
+import { EventModal } from './features/events/components/EventModal';
 import Button from './components/ui/Button';
 import { TrainingType, Wrestler, GameMode } from './types';
 import { GameProvider, useGame } from './context/GameContext';
@@ -723,6 +724,8 @@ const MainGameInterface = () => {
           />
         ) : null;
       })()}
+
+      <EventModal />
 
       {
         showScout && (

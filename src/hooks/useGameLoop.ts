@@ -9,7 +9,8 @@ import { generateWrestler } from '../features/wrestler/logic/generator';
 import { MAX_PLAYERS_PER_HEYA } from '../utils/constants';
 import { calculateSeverance } from '../features/wrestler/logic/retirement';
 import { getOkamiUpgradeCost } from '../features/heya/logic/okami';
-import { useEvents } from './useEvents';
+// import { useEvents } from './useEvents'; // Replaced by new EventEngine
+import { checkForWeeklyEvent } from '../features/events/logic/eventEngine';
 import { saveGame } from '../utils/storage';
 import { formatRank } from '../utils/formatting';
 import { formatHybridDate } from '../utils/time';
@@ -57,11 +58,12 @@ export const useGameLoop = () => {
         matchesProcessed,
         setMatchesProcessed,
         retiringQueue,
-        autoRecruitAllowed
+        autoRecruitAllowed,
+        setActiveEvent
     } = useGame();
 
     const [candidates, setCandidates] = useState<Candidate[]>([]);
-    const { checkRandomEvents } = useEvents();
+    // const { checkRandomEvents } = useEvents();
 
     const advanceTime = (trainingType: TrainingType) => {
         let daysToAdvance = 0;
@@ -72,7 +74,7 @@ export const useGameLoop = () => {
             // --- TRAINING MODE (Weekly) ---
             daysToAdvance = 7;
 
-            setCandidates(generateCandidates(3));
+            setCandidates(generateCandidates(3, reputation)); // Passed reputation
 
             const targetDate = new Date(currentDate);
             targetDate.setDate(targetDate.getDate() + 7);
@@ -212,18 +214,47 @@ export const useGameLoop = () => {
             setWrestlers(result.updatedWrestlers);
             nextWrestlersState = result.updatedWrestlers;
 
+            if (result.fundsChange !== 0) {
+                setFunds(prev => prev + result.fundsChange);
+            }
+            if (result.reputationChange !== 0) {
+                setReputation(Math.max(0, Math.min(100, reputation + result.reputationChange)));
+            }
+
             result.logs.forEach(l => addLog(l, 'info'));
 
             setMatchesProcessed(true);
         }
 
-        // Common Updates (Events)
-        const eventResult = checkRandomEvents(nextWrestlersState, reputation, okamiLevel);
-        setFunds(prev => prev + eventResult.fundsChange);
-        setReputation(Math.min(100, Math.max(0, reputation + eventResult.reputationChange)));
+        // Common Updates (Events) - BLOCKED: Old system replaced by new Modal Events
+        // const eventResult = checkRandomEvents(nextWrestlersState, reputation, okamiLevel);
+        // setFunds(prev => prev + eventResult.fundsChange);
+        // setReputation(Math.min(100, Math.max(0, reputation + eventResult.reputationChange)));
+        // nextWrestlersState = eventResult.updatedWrestlers;
 
-        nextWrestlersState = eventResult.updatedWrestlers;
         setWrestlers(nextWrestlersState);
+
+        // NEW EVENT SYSTEM (Weekly Only? Or whenever advanceTime is called?)
+        // Prompt says: "After advanceTime (Weekly Progression)".
+        // gamePhase === 'training' is weekly. 'tournament' is daily.
+        // Let's enable it for BOTH or just Training?
+        // "Events occurring randomly during weekly progression" -> Implies Training Phase.
+        // But "Scandal" etc can happen anytime.
+        // Let's stick to "After advanceTime calls" which covers both. 
+        // But maybe lower chance in tournament or disable?
+        // User prompt: `advanceTime` (週進行) の処理が終わった直後に... 
+        // "Weekly progression" specifically mentioned.
+        // I will limit it to `gamePhase === 'training'` for now to match "Weekly" description, or maybe 15% chance per week is intended.
+        // Daily tournament = 15 days. 15 * 15% is high.
+
+        if (gamePhase === 'training') {
+            const newEvent = checkForWeeklyEvent(funds, reputation, currentDate);
+            if (newEvent) {
+                setActiveEvent(newEvent);
+                // Note: The modal will handle applying effects. 
+                // We don't need to do anything else here.
+            }
+        }
 
         // Advance Date
         if (daysToAdvance > 0) {
@@ -293,6 +324,7 @@ export const useGameLoop = () => {
             currentWrestlers,
             heyas,
             okamiLevel,
+            reputation,
             autoRecruitAllowed
         );
 
