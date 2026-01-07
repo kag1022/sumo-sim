@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Candidate } from '../../../types';
 import { getGrade } from '../logic/scouting';
-import { useGame } from '../../../context/GameContext'; // To get prefix if needed, or pass prop
+import { useGame } from '../../../context/GameContext';
 
 interface ScoutPanelProps {
     candidates: Candidate[];
@@ -9,7 +10,7 @@ interface ScoutPanelProps {
     currentCount: number;
     limit: number;
     onRecruit: (candidate: Candidate, customName?: string) => void;
-    onInspect: (cost: number) => void; // New callback for paying inspection fee
+    onInspect: (cost: number) => void;
     onClose: () => void;
 }
 
@@ -34,7 +35,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
         // Start Exam UI
         setIsExamining(true);
         setSelectedCandidate(candidate);
-        setCustomName(candidate.name); // Default
+        setCustomName(candidate.name);
 
         // Simulate Exam Delay
         setTimeout(() => {
@@ -45,7 +46,6 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
     const handleConfirmJoin = () => {
         if (selectedCandidate) {
             onRecruit(selectedCandidate, customName);
-            // Reset
             setSelectedCandidate(null);
             setIsExamining(false);
             setExamPassed(false);
@@ -53,8 +53,6 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
     };
 
     const handleCancel = () => {
-        // Just close modal, but fee is already paid (invested).
-        // Player chose not to recruit after seeing stats.
         setSelectedCandidate(null);
         setIsExamining(false);
         setExamPassed(false);
@@ -62,99 +60,114 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
 
     const getFlexibilityText = (val: number, revealed: boolean) => {
         if (!revealed) return "未測定";
-        if (val >= 80) return "非常に柔らかい (怪我しにくい)";
+        if (val >= 80) return "非常に柔らかい";
         if (val >= 60) return "柔軟性あり";
         if (val >= 40) return "普通";
-        return "体が硬そうだ... (怪我注意)";
+        return "硬い";
     };
 
     const renderPotential = (val: number, revealed: boolean, large: boolean = false) => {
-        if (!revealed) return <span className="text-slate-400 font-bold">???</span>;
+        if (!revealed) return <span className="text-stone-300 font-bold">???</span>;
         const grade = getGrade(val);
-        let color = "text-slate-500";
-        if (grade === 'S') color = "text-amber-500";
-        if (grade === 'A') color = "text-red-500";
-        if (grade === 'B') color = "text-blue-500";
-        return <span className={`font-bold ${color} ${large ? 'text-4xl' : 'text-xl'}`}>{grade}</span>;
+        let color = "text-stone-500";
+        if (grade === 'S') color = "text-[#b7282e]";
+        if (grade === 'A') color = "text-amber-600";
+        if (grade === 'B') color = "text-amber-500";
+        return <span className={`font-black font-serif ${color} ${large ? 'text-5xl' : 'text-xl'}`}>{grade}</span>;
     };
 
-    // --- Modal Content (Revealed Info) ---
+    // --- Modal Content (Recruitment Form) ---
     const renderModal = () => {
         if (!selectedCandidate) return null;
 
         return (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-md animate-fadeIn">
-                <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden border border-amber-500/30">
+            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn p-4">
+                <div className="bg-[#fcf9f2] rounded-sm shadow-2xl max-w-lg w-full overflow-hidden border-2 border-slate-300 relative">
+
+                    {/* Paper Texture Overlay */}
+                    <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
+
+                    {/* Header: File Tab Style */}
+                    <div className="bg-[#b7282e] p-4 text-center border-b-4 border-[#8c1c22]">
+                        <h3 className="text-2xl font-black font-serif text-white tracking-widest">新弟子検査票</h3>
+                        <div className="text-white/60 text-[10px] font-bold mt-1 uppercase tracking-[0.2em]">Inspection Record</div>
+                    </div>
+
                     {!examPassed ? (
-                        <div className="p-12 text-center">
-                            <h3 className="text-2xl font-serif font-bold text-slate-800 mb-4">新弟子検査中...</h3>
-                            <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                            <p className="text-slate-500 animate-pulse">体格・健康状態を確認しています</p>
+                        <div className="p-16 text-center">
+                            <div className="w-20 h-20 border-8 border-stone-200 border-t-[#b7282e] rounded-full animate-spin mx-auto mb-8" />
+                            <h3 className="text-xl font-serif font-bold text-slate-700 mb-2">検査中...</h3>
+                            <p className="text-slate-400 text-sm">体格・健康状態を確認しています</p>
                         </div>
                     ) : (
-                        <div className="animate-fadeIn">
-                            {/* Header */}
-                            <div className="bg-amber-500 p-4 text-center">
-                                <h3 className="text-2xl font-black text-white tracking-widest">合格</h3>
-                                <div className="text-white/80 text-xs font-bold mt-1">NEW DISCIPLE</div>
+                        <div className="p-8 animate-fadeIn">
+                            {/* Stamp */}
+                            <div className="absolute top-20 right-8 w-24 h-24 border-4 border-[#b7282e] rounded-full flex flex-col items-center justify-center -rotate-12 opacity-80 mask-stamp">
+                                <span className="text-[#b7282e] font-black font-serif text-3xl">合格</span>
+                                <span className="text-[#b7282e] text-[10px] font-bold uppercase border-t border-[#b7282e] w-16 text-center mt-1">PASSED</span>
                             </div>
 
-                            <div className="p-8">
-                                <div className="text-center mb-6">
-                                    <h4 className="text-slate-500 text-sm font-bold mb-1">
-                                        {selectedCandidate.background} / {selectedCandidate.age}歳
-                                    </h4>
-                                    <div className="flex justify-center gap-6 text-slate-700 font-mono font-bold mb-4">
-                                        <span>{selectedCandidate.height}cm</span>
-                                        <span>{selectedCandidate.weight}kg</span>
-                                    </div>
-
-                                    {/* NOW REVEALED STATS */}
-                                    <div className="flex justify-center items-center gap-2 mb-2">
-                                        <span className="text-sm font-bold text-slate-400">素質</span>
-                                        {renderPotential(selectedCandidate.potential, true, true)}
-                                    </div>
-                                    <div className="flex justify-center items-center gap-2 mb-4 text-sm text-slate-600">
-                                        <span>柔軟性: {getFlexibilityText(selectedCandidate.flexibility, true)}</span>
-                                    </div>
-
-                                    <p className="text-xs text-slate-400">
-                                        来場所まで「前相撲」として修行します。
-                                    </p>
+                            {/* Candidate Info Grid */}
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-8 text-stone-700 text-sm border-b-2 border-stone-200 pb-6 border-dashed">
+                                <div>
+                                    <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">NAME</div>
+                                    <div className="font-serif font-bold text-xl leading-none">{selectedCandidate.name}</div>
                                 </div>
-
-                                <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
-                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">
-                                        四股名 (Shikona)
-                                        <span className="ml-2 text-amber-600 font-normal normal-case">
-                                            ※当部屋の冠文字は「{stablePrefix}」です
-                                        </span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-white border border-slate-300 rounded-lg px-4 py-3 text-slate-900 font-serif font-bold text-xl focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all text-center"
-                                        placeholder="例: 朝青龍"
-                                        value={customName}
-                                        onChange={(e) => setCustomName(e.target.value)}
-                                        autoFocus
-                                    />
+                                <div>
+                                    <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">AGE / ORIGIN</div>
+                                    <div className="font-bold">{selectedCandidate.age}歳 / {selectedCandidate.background}</div>
                                 </div>
-
-                                <div className="mt-8 flex gap-3">
-                                    <button
-                                        onClick={handleCancel}
-                                        className="flex-1 py-3 px-4 rounded-lg font-bold text-slate-500 hover:bg-slate-100 transition-colors"
-                                    >
-                                        今は入門させない
-                                    </button>
-                                    <button
-                                        onClick={handleConfirmJoin}
-                                        disabled={!customName}
-                                        className="flex-1 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg transform transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        入門を許可する
-                                    </button>
+                                <div>
+                                    <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">PHYSIQUE</div>
+                                    <div className="font-mono font-bold text-lg">{selectedCandidate.height}cm / {selectedCandidate.weight}kg</div>
                                 </div>
+                                <div className="col-span-2 mt-2 bg-stone-100 p-3 rounded-sm border border-stone-200">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <div className="text-[10px] font-bold text-stone-500 uppercase">POTENTIAL</div>
+                                            {renderPotential(selectedCandidate.potential, true, true)}
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-[10px] font-bold text-stone-500 uppercase">FLEXIBILITY</div>
+                                            <div className="font-bold text-stone-700">{getFlexibilityText(selectedCandidate.flexibility, true)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Naming Section */}
+                            <div className="mb-8">
+                                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">
+                                    四股名登録 (SHIKONA)
+                                    <span className="ml-2 text-[#b7282e] font-normal normal-case text-[10px]">
+                                        ※部屋冠文字: {stablePrefix}
+                                    </span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-white border-b-2 border-stone-300 px-4 py-2 text-slate-900 font-serif font-bold text-2xl focus:outline-none focus:border-[#b7282e] transition-colors text-center placeholder:text-stone-200"
+                                    placeholder="例: 朝青龍"
+                                    value={customName}
+                                    onChange={(e) => setCustomName(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={handleCancel}
+                                    className="flex-1 py-3 px-4 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-sm transition-colors border border-transparent hover:border-slate-200"
+                                >
+                                    見送る
+                                </button>
+                                <button
+                                    onClick={handleConfirmJoin}
+                                    disabled={!customName}
+                                    className="flex-1 bg-[#b7282e] text-white font-bold py-3 px-4 rounded-sm shadow-md hover:bg-[#a01e23] hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    <span>入門承認</span>
+                                    <span className="text-xs">→</span>
+                                </button>
                             </div>
                         </div>
                     )}
@@ -164,102 +177,133 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             {isExamining && renderModal()}
 
-            <div className="bg-[#fcf9f2] w-full max-w-5xl h-[90vh] rounded shadow-2xl overflow-hidden flex flex-col border border-stone-600">
-                {/* Header */}
-                <div className="bg-slate-800 text-white p-4 flex justify-between items-center shrink-0">
+            <div className="bg-[#fcf9f2] w-full max-w-6xl h-[90vh] rounded-sm shadow-2xl overflow-hidden flex flex-col border border-stone-400 relative">
+
+                {/* Header Section */}
+                <div className="bg-white p-6 shrink-0 border-b border-stone-300 flex justify-between items-end shadow-sm z-10">
                     <div>
-                        <h2 className="text-2xl font-bold font-serif">新弟子検査・スカウト</h2>
-                        <p className="text-xs opacity-70">Recruit Inspection & Scouting</p>
-                    </div>
-                    <div className="text-right">
-                        <div className="text-sm">所持金</div>
-                        <div className={`font-mono font-bold text-xl ${funds < 0 ? 'text-red-300' : 'text-amber-300'}`}>
-                            {funds.toLocaleString()} <span className="text-sm text-white">円</span>
+                        <div className="flex items-center gap-3 mb-1">
+                            <span className="bg-[#b7282e] text-white text-xs font-bold px-2 py-0.5 rounded-sm">人事部</span>
+                            <h2 className="text-3xl font-black font-serif text-slate-900 tracking-tight">新弟子スカウト</h2>
                         </div>
-                        <div className="text-xs mt-1">
-                            所属人数: {currentCount} / {limit}
+                        <p className="text-xs text-slate-500 font-bold tracking-[0.15em] uppercase pl-1">Recruitment & Scouting</p>
+                    </div>
+
+                    <div className="text-right">
+                        <div className="flex items-end gap-4 mb-1">
+                            <div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-right">FUNDS</div>
+                                <div className={`font-mono font-bold text-2xl leading-none ${funds < 0 ? 'text-red-600' : 'text-slate-800'}`}>
+                                    ¥{funds.toLocaleString()}
+                                </div>
+                            </div>
+                            <div className="w-px h-8 bg-stone-200"></div>
+                            <div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-right">MEMBERS</div>
+                                <div className="font-mono font-bold text-xl leading-none text-slate-600">
+                                    {currentCount} <span className="text-sm text-slate-400">/ {limit}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 bg-stone-100">
+                {/* Content Grid */}
+                <div className="flex-1 overflow-y-auto p-8 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]">
                     {candidates.length === 0 ? (
-                        <div className="h-full flex items-center justify-center text-slate-500 font-bold text-lg">
-                            今週のスカウト候補はいません。来週をお待ちください。
+                        <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                            <div className="text-6xl mb-4 opacity-50">🍃</div>
+                            <div className="font-serif font-bold text-xl mb-2">候補者なし</div>
+                            <p className="text-sm">来週のスカウト報告をお待ちください</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {candidates.map(c => {
                                 const canAffordFee = funds >= INSPECTION_FEE;
                                 const isFull = currentCount >= limit;
-                                // In Global List, stats are HIDDEN.
                                 const isRevealed = false;
 
                                 return (
-                                    <div key={c.id} className="bg-white rounded-lg shadow-md border-t-8 border-slate-700 overflow-hidden flex flex-col group hover:shadow-xl transition-shadow">
-                                        <div className="p-4 flex-1">
-                                            {/* Header Info */}
-                                            <div className="mb-4">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <span className="inline-block bg-slate-200 text-slate-600 text-[10px] px-2 py-1 rounded mb-1 font-bold">
-                                                            {c.background}
-                                                        </span>
-                                                        <h3 className="text-2xl font-bold font-serif text-slate-900 leading-tight">
-                                                            {c.name} (候補)
-                                                        </h3>
-                                                    </div>
+                                    <div key={c.id} className="bg-white rounded-sm shadow-sm hover:shadow-xl transition-all duration-300 group ring-1 ring-slate-200 hover:ring-[#b7282e] flex flex-col relative overflow-hidden">
+
+                                        {/* Top Accent Line */}
+                                        <div className="absolute top-0 left-0 w-full h-1 bg-slate-200 group-hover:bg-[#b7282e] transition-colors"></div>
+
+                                        <div className="p-5 flex-1 flex flex-col">
+                                            {/* Header */}
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <span className="inline-block bg-slate-100 text-slate-500 text-[10px] font-bold px-1.5 py-0.5 rounded-sm mb-1 uppercase tracking-wider border border-slate-200">
+                                                        {c.background}
+                                                    </span>
+                                                    <h3 className="text-xl font-bold font-serif text-slate-900 leading-tight group-hover:text-[#b7282e] transition-colors">
+                                                        {c.name}
+                                                    </h3>
                                                 </div>
-                                                <div className="mt-2 text-sm text-slate-600 flex gap-4 font-mono font-bold">
-                                                    <span>{c.height}cm</span>
-                                                    <span>{c.weight}kg</span>
-                                                    <span>{c.age}歳</span>
+                                                <div className="text-right">
+                                                    <div className="text-2xl font-black text-slate-200 font-serif leading-none italic select-none">??</div>
                                                 </div>
                                             </div>
 
-                                            {/* Stats Grid (HIDDEN) */}
-                                            <div className="space-y-3 bg-slate-50 p-3 rounded">
-                                                <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                                                    <span className="text-sm font-bold text-slate-500">素質</span>
+                                            {/* Body Stats */}
+                                            <div className="flex items-center gap-4 text-sm font-mono font-bold text-slate-600 mb-6 pb-4 border-b border-dashed border-slate-100">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] text-slate-400 font-sans uppercase">HEIGHT</span>
+                                                    {c.height}cm
+                                                </div>
+                                                <div className="w-px h-6 bg-slate-100"></div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] text-slate-400 font-sans uppercase">WEIGHT</span>
+                                                    {c.weight}kg
+                                                </div>
+                                                <div className="w-px h-6 bg-slate-100"></div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] text-slate-400 font-sans uppercase">AGE</span>
+                                                    {c.age}
+                                                </div>
+                                            </div>
+
+                                            {/* Hidden Potential Hint */}
+                                            <div className="space-y-2 mb-4 flex-1">
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="font-bold text-slate-400">素質</span>
                                                     {renderPotential(c.potential, isRevealed)}
                                                 </div>
-                                                <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                                                    <span className="text-sm font-bold text-slate-500">柔軟性</span>
-                                                    <span className={`text-sm font-bold text-slate-400`}>
-                                                        {getFlexibilityText(c.flexibility, isRevealed)}
-                                                    </span>
-                                                </div>
-                                                <div className="flex justify-between items-center pt-1">
-                                                    <span className="text-sm font-bold text-slate-500">初期能力</span>
-                                                    <div className="text-xs font-mono space-x-2 text-slate-400">
-                                                        <span>未測定</span>
-                                                    </div>
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="font-bold text-slate-400">柔軟性</span>
+                                                    <span className="font-bold text-stone-300">???</span>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Footer Action */}
-                                        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                                            <div className="font-mono font-bold text-lg text-slate-700">
-                                                {c.scoutCost > 0 ? c.scoutCost.toLocaleString() : '???'}<span className="text-xs ml-1">円</span>
-                                                <div className="text-[10px] text-slate-400 font-normal">移籍/契約金</div>
+                                            {/* Cost Display */}
+                                            <div className="text-right mb-4">
+                                                <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">CONTRACT FEE</div>
+                                                <div className="font-mono font-bold text-lg text-slate-700">
+                                                    ¥{c.scoutCost.toLocaleString()}
+                                                </div>
                                             </div>
+
+                                            {/* Action Button */}
                                             <button
                                                 onClick={() => handleInspectClick(c)}
                                                 disabled={!canAffordFee || isFull}
                                                 className={`
-                                                    px-4 py-2 rounded font-bold shadow-sm transition-all text-sm
+                                                    w-full py-3 rounded-sm font-bold text-sm shadow-sm transition-all flex justify-center items-center gap-2 group/btn
                                                     ${!canAffordFee || isFull
-                                                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                                                        : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95'
+                                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                                        : 'bg-slate-800 text-white hover:bg-[#b7282e] hover:shadow-md'
                                                     }
                                                 `}
                                             >
-                                                {isFull ? '満員' : !canAffordFee ? '資金不足' : `検査を行う (¥${INSPECTION_FEE.toLocaleString()})`}
+                                                <span>{isFull ? '満員' : !canAffordFee ? '資金不足' : '検査へ進む'}</span>
+                                                {canAffordFee && !isFull && (
+                                                    <span className="text-[10px] font-normal opacity-70 group-hover/btn:opacity-100">
+                                                        (¥{(INSPECTION_FEE / 10000)}万)
+                                                    </span>
+                                                )}
                                             </button>
                                         </div>
                                     </div>
@@ -270,9 +314,9 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 bg-stone-200 border-t border-stone-300 text-center shrink-0">
-                    <button onClick={onClose} className="font-bold text-slate-600 hover:text-slate-900 hover:underline">
-                        閉じる
+                <div className="p-4 bg-white border-t border-stone-200 text-center shrink-0 z-10">
+                    <button onClick={onClose} className="font-bold text-slate-500 hover:text-slate-800 transition-colors text-sm tracking-widest border-b border-transparent hover:border-slate-800 pb-0.5">
+                        CLOSE PANEL
                     </button>
                 </div>
             </div>

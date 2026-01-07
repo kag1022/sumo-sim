@@ -13,7 +13,6 @@ const getDivision = (rank: Rank): string => {
     return rank;
 };
 
-
 /**
  * 番付スコアを取得（ペアリング用）
  */
@@ -38,8 +37,8 @@ const getBanzukeScore = (w: Wrestler): number => {
 };
 
 /**
- * 幕内・十両のマッチング生成
- * @param wrestlers 対象力士
+ * 全関取（幕内・十両）の統合マッチング生成
+ * @param wrestlers 関取全リスト
  * @param day 何日目か (1-15)
  */
 const scheduleSekitoriMatches = (wrestlers: Wrestler[], day: number): MatchPair[] => {
@@ -49,8 +48,9 @@ const scheduleSekitoriMatches = (wrestlers: Wrestler[], day: number): MatchPair[
     // ソート基準の切り替え
     let sortedWrestlers = [...wrestlers];
 
+    // Day 1-10: 番付順（基本）
+    // 自然と「幕内下位 vs 十両上位」のような入替戦が発生する
     if (day <= 10) {
-        // Day 1-10: 番付順（基本）
         sortedWrestlers.sort((a, b) => getBanzukeScore(b) - getBanzukeScore(a));
     } else {
         // Day 11-15: 勝星順（優勝争い優先）
@@ -76,17 +76,23 @@ const scheduleSekitoriMatches = (wrestlers: Wrestler[], day: number): MatchPair[
             // 既に対戦済みかチェック
             if (east.currentBashoStats.matchHistory.includes(west.id)) continue;
 
+            // 同部屋チェック（優勝決定戦以外は当たらない）
+            if (east.heyaId === west.heyaId) continue;
+
             // ペアリング成立
             matches.push({
                 east,
                 west,
-                division: getDivision(east.rank) as Division
+                division: 'Makuuchi' // 混合戦の場合は上位のDivision名義にするか、eastのDivision
             });
             pairedIds.add(east.id);
             pairedIds.add(west.id);
             break;
         }
     }
+
+    // あぶれた力士への対応（奇数の場合など）
+    // 現状はマッチメイクなし（休み）とするが、将来的には幕下から吸い上げるロジックが必要
 
     return matches;
 };
@@ -100,9 +106,6 @@ const scheduleLowerDivisionMatches = (wrestlers: Wrestler[], day: number): Match
     const matches: MatchPair[] = [];
 
     // 出場資格のある力士を抽出
-    // 条件1: 試合数が7未満
-    // 条件2: 勝負がついていない (まだ7勝も7敗もしていない)
-    // 条件3: 「今日出場番」の力士 (Dayの奇数偶数と、リスト内インデックス等で分散)
     const eligiblePool = wrestlers.filter(w => {
         const stats = w.currentBashoStats;
         const totalBouts = stats.wins + stats.losses;
@@ -116,14 +119,6 @@ const scheduleLowerDivisionMatches = (wrestlers: Wrestler[], day: number): Match
         return true;
     });
 
-    // 今日戦う力士を選抜 (単純化のため、eligiblePoolを成績順にソートし、上からペアリングしていく)
-    // ただし、全員が毎日戦うわけではないので、何らかの間引きが必要。
-    // 「前回いつ戦ったか」の情報がないため、ランダム性や簡易ロジックで分散させる。
-    // ここでは「出場可能な力士を一括でプールし、スイス式で可能な限り組む」アプローチをとるが、
-    // まだ試合数が少ない人を優先するなどの重み付けをする。
-
-    // 優先度スコア = (7 - 試合数) * 100 + ランダム(0-99)
-    // これにより、試合消化が遅れている力士が優先的に選ばれる
     const prioritized = eligiblePool.map(w => ({
         wrestler: w,
         priority: (7 - (w.currentBashoStats.wins + w.currentBashoStats.losses)) * 100 + Math.random() * 50
@@ -131,11 +126,6 @@ const scheduleLowerDivisionMatches = (wrestlers: Wrestler[], day: number): Match
 
     // 候補リスト
     const candidates = prioritized.map(p => p.wrestler);
-
-    // 成績順（スイス式）でソートしてペアリング
-    // ※優先度で選出しつつも、ペアリング自体は成績が近い者同士で行いたい
-    // そのため、ここでは「今日出場させる候補」を先に確定させるのが理想だが、
-    // 人数が奇数になる問題などがあるため、candidates全体から成績順にマッチングを試みる。
 
     candidates.sort((a, b) => {
         const scoreA = a.currentBashoStats.wins - a.currentBashoStats.losses;
@@ -157,6 +147,7 @@ const scheduleLowerDivisionMatches = (wrestlers: Wrestler[], day: number): Match
 
             // 既に対戦済みチェック
             if (east.currentBashoStats.matchHistory.includes(west.id)) continue;
+            if (east.heyaId === west.heyaId) continue;
 
             // ペアリング成立
             matches.push({
@@ -202,13 +193,11 @@ export const generateDailyMatches = (allWrestlers: Wrestler[], day: number): Mat
 
     const todaysMatches: MatchPair[] = [];
 
-    // 1. 幕内・十両 (毎日)
-    todaysMatches.push(...scheduleSekitoriMatches(divisions['Makuuchi'], day));
-    todaysMatches.push(...scheduleSekitoriMatches(divisions['Juryo'], day));
+    // 1. 関取（幕内・十両）統合プール
+    const sekitoriPool = [...divisions['Makuuchi'], ...divisions['Juryo']];
+    todaysMatches.push(...scheduleSekitoriMatches(sekitoriPool, day));
 
     // 2. 幕下以下 (スイス式・出場調整あり)
-    // 幕下以下は人数が多いので、すべての階級でマッチングを行う
-    // ただし、15日間で7番なので、出場率は約50%以下
     todaysMatches.push(...scheduleLowerDivisionMatches(divisions['Makushita'], day));
     todaysMatches.push(...scheduleLowerDivisionMatches(divisions['Sandanme'], day));
     todaysMatches.push(...scheduleLowerDivisionMatches(divisions['Jonidan'], day));

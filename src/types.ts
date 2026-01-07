@@ -124,6 +124,7 @@ export interface Matchup {
     west: Wrestler;
     winnerId: string | null;
     division: Division;
+    kimarite?: string; // Optional result string
 }
 
 export interface Candidate extends Omit<Wrestler, 'history' | 'currentBashoStats' | 'nextBoutDay'> {
@@ -149,24 +150,27 @@ export interface YushoRecord {
     losses: number;
 }
 
+export interface GameState {
+    currentDate: string; // saved as ISO string
+    funds: number;
+    gamePhase: GamePhase;
+    gameMode: GameMode;
+    bashoFinished: boolean;
+    lastMonthBalance: number | null;
+    isInitialized: boolean;
+    oyakataName: string | null;
+    okamiLevel: number;
+    reputation: number;
+    trainingPoints: number;
+    matchesProcessed: boolean;
+    todaysMatchups: Matchup[];
+    autoRecruitAllowed: boolean;
+}
+
 export interface SaveData {
     version: number;
     timestamp: number;
-    gameState: {
-        currentDate: string; // saved as ISO string
-        funds: number;
-        gamePhase: GamePhase; // Renamed from gameMode
-        gameMode: GameMode; // New field
-        bashoFinished: boolean;
-        lastMonthBalance: number | null;
-        isInitialized: boolean;
-        oyakataName: string | null;
-        okamiLevel: number;
-        reputation: number;
-        trainingPoints: number;
-        matchesProcessed: boolean;
-        todaysMatchups: Matchup[];
-    };
+    gameState: GameState;
     wrestlers: Wrestler[];
     heyas: Heya[];
     yushoHistory: YushoRecord[];

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Wrestler } from '../../../types';
 import { formatRank } from '../../../utils/formatting';
@@ -18,93 +19,75 @@ const WrestlerList: React.FC<WrestlerListProps> = ({ wrestlers, onSelect }) => {
     });
 
     return (
-        <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar p-1">
             {sortedWrestlers.map((wrestler) => (
                 <div
                     key={wrestler.id}
                     onClick={() => onSelect(wrestler)}
                     className={`
-                        relative flex items-center p-3 rounded-md cursor-pointer transition-all hover:scale-[1.01] hover:shadow-md
+                        relative flex items-center p-3 rounded-sm cursor-pointer transition-all duration-200 group
                         ${wrestler.rank === 'MaeZumo'
-                            ? 'bg-stone-200 border border-stone-300 opacity-80'
+                            ? 'bg-stone-50 border border-stone-200 opacity-70 grayscale'
                             : wrestler.isSekitori
-                                ? 'bg-gradient-to-r from-[#fcf9f2] to-amber-50 border border-amber-200'
-                                : 'bg-white border border-slate-200'
+                                ? 'bg-white border-l-4 border-l-[#b7282e] border-y border-r border-slate-200 shadow-sm'
+                                : 'bg-white border border-slate-200 shadow-sm'
                         }
+                        hover:shadow-md hover:border-slate-300 hover:scale-[1.01]
+                        focus:outline-none focus:ring-2 focus:ring-amber-400
                     `}
                 >
                     {/* Rank Badge */}
                     <div className={`
-                        w-16 flex-shrink-0 text-center font-bold font-serif
-                        ${wrestler.isSekitori ? 'text-amber-800' : 'text-slate-600'}
+                        w-14 flex-shrink-0 text-center font-bold font-serif flex flex-col items-center justify-center border-r border-slate-100 pr-2
+                        ${wrestler.isSekitori ? 'text-[#b7282e]' : 'text-slate-500'}
                     `}>
-                        <div className="text-[10px] opacity-70">
+                        <div className="text-[9px] opacity-60 leading-none mb-1">
                             番付
                         </div>
-                        <div className="text-sm leading-tight">
-                            {/* Simplified Badge: Just Rank Type or Side? */}
-                            {/* Let's show Kanji Rank Type short e.g. "横綱" */}
+                        <div className="text-base leading-none">
                             {formatRank(wrestler.rank).split(/(\d|筆)/)[0].replace(/[東西]/g, '')}
                         </div>
                     </div>
 
                     {/* Info */}
-                    <div className="ml-4 flex-1">
-                        <div className="flex justify-between items-baseline">
-                            <h3 className={`font-serif font-bold text-lg ${wrestler.isSekitori ? 'text-slate-900' : 'text-slate-700'}`}>
+                    <div className="ml-3 flex-1 min-w-0">
+                        <div className="flex justify-between items-baseline mb-1">
+                            <h3 className={`font-serif font-bold text-base truncate ${wrestler.isSekitori ? 'text-slate-900' : 'text-slate-700'}`}>
                                 {wrestler.name}
-                                <span className={`ml-2 text-sm font-normal ${wrestler.age >= 35 ? 'text-red-500 font-bold' :
-                                    wrestler.age >= 30 ? 'text-amber-500' :
-                                        'text-slate-400'
-                                    }`}>
-                                    ({wrestler.age}歳)
-                                </span>
                             </h3>
-                            {/* Full Formatted Rank */}
-                            <span className="font-serif text-sm font-bold text-stone-600 mr-2">
-                                {formatRank(wrestler.rank, wrestler.rankSide, wrestler.rankNumber)}
+                            {/* Age Badge */}
+                            <span className={`text-[10px] font-mono px-1.5 rounded-sm ${wrestler.age >= 30 ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 text-slate-500'}`}>
+                                {wrestler.age}歳
                             </span>
                         </div>
 
-                        {/* Status / History Stub */}
-                        <div className="flex items-center gap-4 mt-1 text-xs text-slate-500 font-mono">
-                            <span>心 {Math.floor(wrestler.stats.mind)}</span>
-                            <span>技 {Math.floor(wrestler.stats.technique)}</span>
-                            <span>体 {Math.floor(wrestler.stats.body)}</span>
+                        {/* Sub Info Row */}
+                        <div className="flex items-center gap-3 text-[10px] text-slate-500 font-mono">
+                            {/* Full Rank for Detail */}
+                            <span className="text-slate-400 font-sans">
+                                {formatRank(wrestler.rank, wrestler.rankSide, wrestler.rankNumber)}
+                            </span>
 
-                            {/* Stress Bar */}
-                            <div className="flex items-center gap-1 ml-2" title="ストレス">
-                                <span className="text-[10px]">ス</span>
-                                <div className="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                    <div
-                                        className={`h-full transition-all duration-300 ${(wrestler.stress || 0) > 80 ? 'bg-red-500' :
-                                            (wrestler.stress || 0) > 50 ? 'bg-amber-400' : 'bg-blue-400'
-                                            }`}
-                                        style={{ width: `${wrestler.stress || 0}%` }}
-                                    />
-                                </div>
+                            {/* Stats Stub - simplified for list */}
+                            <div className="flex gap-1 ml-auto opacity-70 group-hover:opacity-100 transition-opacity">
+                                <span title="心">心{Math.floor(wrestler.stats.mind)}</span>
+                                <span title="技">技{Math.floor(wrestler.stats.technique)}</span>
+                                <span title="体">体{Math.floor(wrestler.stats.body)}</span>
                             </div>
-
-                            {/* Current Basho Stats (if active) */}
-                            {wrestler.currentBashoStats.wins + wrestler.currentBashoStats.losses > 0 && (
-                                <span className="ml-auto font-bold text-slate-800 bg-slate-100 px-2 rounded">
-                                    {wrestler.currentBashoStats.wins}勝 {wrestler.currentBashoStats.losses}敗
-                                </span>
-                            )}
                         </div>
 
                         {/* Skill Badges */}
                         {wrestler.skills && wrestler.skills.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                                {wrestler.skills.map((skill) => (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                {wrestler.skills.slice(0, 3).map((skill) => (
                                     <span
                                         key={skill}
-                                        className="px-2 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-bold rounded border border-purple-200 cursor-help transition-colors hover:bg-purple-200"
-                                        title={SKILL_INFO[skill]?.description || skill}
+                                        className="px-1.5 py-0.5 bg-purple-50 text-purple-800 text-[9px] font-bold rounded-sm border border-purple-100"
                                     >
                                         {SKILL_INFO[skill]?.name || skill}
                                     </span>
                                 ))}
+                                {wrestler.skills.length > 3 && <span className="text-[9px] text-slate-400">+{wrestler.skills.length - 3}</span>}
                             </div>
                         )}
                     </div>
@@ -112,13 +95,10 @@ const WrestlerList: React.FC<WrestlerListProps> = ({ wrestlers, onSelect }) => {
                     {/* Injury Overlay */}
                     {wrestler.injuryStatus === 'injured' && (
                         <>
-                            <div className="absolute inset-0 bg-red-50/80 grayscale-[0.3] rounded-md pointer-events-none border-2 border-red-200" />
-                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center p-2 rounded pointer-events-none max-w-[90%]">
-                                <span className="border-4 border-red-600 text-red-600 font-serif font-black text-2xl px-4 py-1 opacity-90 rotate-[-8deg] bg-white/90 shadow-lg whitespace-nowrap">
-                                    休 場
-                                </span>
-                                <span className="mt-2 text-xs font-bold text-red-700 bg-white/90 px-2 py-0.5 rounded shadow-sm">
-                                    全治 {(wrestler.injuryDuration || 0)} 週間
+                            <div className="absolute inset-0 bg-white/60 pointer-events-none rounded-sm z-10" />
+                            <div className="absolute right-2 top-2 z-20">
+                                <span className="inline-block border-2 border-red-500 text-red-500 font-serif font-bold text-xs px-2 py-0.5 rounded-sm bg-white shadow-sm transform rotate-[-5deg]">
+                                    休場 {wrestler.injuryDuration}w
                                 </span>
                             </div>
                         </>

@@ -1,5 +1,6 @@
-import { Wrestler, Matchup } from '../../../../types';
+
+import { Wrestler } from '../../../../types';
 
 export interface IMatchmakingStrategy {
-    generate(wrestlers: Wrestler[], day: number): Matchup[];
+    calculateWinChance(east: Wrestler, west: Wrestler): number;
 }

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Wrestler, LogEntry, GamePhase, GameMode, Heya, Matchup, YushoRecord, SaveData } from '../types';
-import { initializeGameData, InitialSettings } from '../utils/initialization';
+import { initializeGameData, InitialSettings } from '../features/game/logic/initialization';
 
 // ... existing imports
 
@@ -59,6 +59,8 @@ interface GameContextProps extends GameState {
     setConsultingWrestlerId: React.Dispatch<React.SetStateAction<string | null>>;
     matchesProcessed: boolean;
     setMatchesProcessed: React.Dispatch<React.SetStateAction<boolean>>;
+    autoRecruitAllowed: boolean;
+    setAutoRecruitAllowed: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -89,6 +91,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [usedNames, setUsedNames] = useState<string[]>([]);
     const [consultingWrestlerId, setConsultingWrestlerId] = useState<string | null>(null);
     const [matchesProcessed, setMatchesProcessed] = useState<boolean>(false);
+    const [autoRecruitAllowed, setAutoRecruitAllowed] = useState<boolean>(true);
 
     const registerName = (name: string) => {
         setUsedNames(prev => [...prev, name]);
@@ -151,6 +154,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setBashoFinished(data.gameState.bashoFinished);
         setLastMonthBalance(data.gameState.lastMonthBalance);
+        setAutoRecruitAllowed(data.gameState.autoRecruitAllowed ?? true);
 
         // Restore Arrays
         setWrestlers(data.wrestlers);
@@ -229,7 +233,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             consultingWrestlerId,
             setConsultingWrestlerId,
             matchesProcessed,
-            setMatchesProcessed
+            setMatchesProcessed,
+            autoRecruitAllowed,
+            setAutoRecruitAllowed
         }}>
             {children}
         </GameContext.Provider>

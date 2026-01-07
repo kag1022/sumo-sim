@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Wrestler } from '../../../types';
 
@@ -21,48 +22,74 @@ const YushoModal: React.FC<YushoModalProps> = ({ winners, onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fadeIn">
-            <div className="bg-white/10 border border-amber-500/50 rounded-xl p-6 max-w-2xl w-full text-center relative overflow-hidden shadow-[0_0_100px_rgba(255,215,0,0.3)] flex flex-col max-h-[90vh]">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-amber-500/10 to-transparent pointer-events-none" />
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fadeIn">
+            {/* Main Card */}
+            <div className="relative max-w-xl w-full bg-[#fcf9f2] rounded-sm shadow-2xl p-8 flex flex-col items-center border-[12px] border-[#b7282e] outline outline-4 outline-white outline-offset-[-14px]">
 
-                <div className="mb-4">
-                    <h2 className="text-4xl font-serif font-bold text-amber-400 drop-shadow-md">各段優勝</h2>
-                    <div className="text-white/60 text-sm font-mono mt-1">CHAMPIONSHIP RESULTS</div>
+                {/* Corner Ornaments */}
+                <div className="absolute top-2 left-2 w-16 h-16 border-t-[1px] border-l-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
+                <div className="absolute top-2 right-2 w-16 h-16 border-t-[1px] border-r-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
+                <div className="absolute bottom-2 left-2 w-16 h-16 border-b-[1px] border-l-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
+                <div className="absolute bottom-2 right-2 w-16 h-16 border-b-[1px] border-r-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
+
+                {/* Header */}
+                <div className="mb-8 text-center">
+                    <h2 className="text-5xl font-black font-serif text-[#b7282e] mb-2 tracking-widest drop-shadow-sm">各段優勝</h2>
+                    <div className="h-px w-32 bg-slate-300 mx-auto"></div>
+                    <div className="text-slate-400 text-xs font-serif mt-2 tracking-[0.3em] uppercase">Championship Results</div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto space-y-3 px-2">
+                {/* Winners List */}
+                <div className="w-full space-y-4 mb-4">
                     {divisionOrder.map(div => {
                         const winner = winners[div];
                         if (!winner) return null;
                         const isPlayer = winner.heyaId === 'player_heya';
+                        const isMakuuchi = div === 'Makuuchi';
 
                         return (
                             <div key={div} className={`
-                                flex justify-between items-center p-4 rounded-lg
-                                ${div === 'Makuuchi' ? 'bg-amber-500/20 border border-amber-500/50 mb-4 scale-105' : 'bg-white/5 border border-white/10'}
-                                ${isPlayer ? 'bg-red-900/40 border-red-500/50' : ''}
+                                flex justify-between items-center py-3 border-b border-slate-200 border-dashed last:border-0
+                                ${isMakuuchi ? 'py-6 border-slate-300 border-solid' : 'opacity-80'}
                             `}>
-                                <div className="text-left">
-                                    <div className="text-xs text-amber-200/80 font-bold mb-1">{divisionName(div)}</div>
-                                    <div className="text-2xl font-black font-serif text-white leading-none">{winner.name}</div>
-                                    <div className="text-xs text-white/50 mt-1">{winner.rank} | {isPlayer ? '貴方の部屋' : '他部屋'}</div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-xl font-mono font-bold text-amber-400">
-                                        {winner.currentBashoStats.wins}勝{winner.currentBashoStats.losses}敗
+                                <div className="text-left flex items-center gap-4">
+                                    <div className={`
+                                        text-xs font-bold px-2 py-1 rounded-sm w-16 text-center
+                                        ${isMakuuchi ? 'bg-[#b7282e] text-white' : 'bg-slate-100 text-slate-500'}
+                                     `}>
+                                        {divisionName(div)}
                                     </div>
-                                    {div === 'Makuuchi' && <div className="text-xs text-amber-200">🏆 優勝</div>}
+                                    <div>
+                                        <div className={`font-serif leading-none ${isMakuuchi ? 'text-3xl font-bold text-slate-900' : 'text-lg font-bold text-slate-700'}`}>
+                                            {winner.name}
+                                        </div>
+                                        {isPlayer && <div className="text-[10px] text-amber-600 font-bold mt-1">あなたの部屋</div>}
+                                    </div>
+                                </div>
+
+                                <div className="text-right">
+                                    <div className={`font-mono font-bold leading-none ${isMakuuchi ? 'text-2xl text-[#b7282e]' : 'text-slate-600'}`}>
+                                        {winner.currentBashoStats.wins}
+                                        <span className="text-sm ml-0.5 text-slate-400">勝</span>
+                                        {winner.currentBashoStats.losses}
+                                        <span className="text-sm ml-0.5 text-slate-400">敗</span>
+                                    </div>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
 
+                {/* Footer Stamp/Button */}
                 <div className="mt-8">
-                    <button onClick={onClose} className="bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 px-12 rounded-full shadow-lg transition-transform transform hover:scale-105 active:scale-95 text-xl">
-                        次へ
+                    <button
+                        onClick={onClose}
+                        className="group relative overflow-hidden bg-slate-900 text-white font-serif font-bold text-lg py-3 px-12 rounded-sm shadow-lg hover:shadow-xl hover:bg-[#b7282e] transition-all duration-300"
+                    >
+                        <span className="relative z-10">次へ</span>
                     </button>
                 </div>
+
             </div>
         </div>
     );

@@ -1,5 +1,5 @@
-import { Wrestler, Heya, Rank, GameMode } from '../types';
-import { generateHeyas, generateFullRoster, generateUniqueName } from '../features/wrestler/logic/generator';
+import { Wrestler, Heya, Rank, GameMode } from '../../../types';
+import { generateHeyas, generateFullRoster, generateUniqueName } from '../../wrestler/logic/generator';
 
 export interface InitialSettings {
     oyakataName: string;

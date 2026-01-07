@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wrestler, Rank } from '../../../types';
@@ -51,48 +52,60 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
     const activeList = activeTab === 'Makuuchi' ? makuuchi : activeTab === 'Juryo' ? juryo : lower;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fadeIn">
-            <div className="bg-[#fcf9f2] w-full max-w-5xl max-h-[95vh] rounded-xl shadow-2xl overflow-hidden flex flex-col border border-stone-600">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
+            <div className="bg-[#fcf9f2] w-full max-w-5xl max-h-[90vh] rounded-sm shadow-2xl overflow-hidden flex flex-col border border-stone-300">
 
                 {/* Header */}
-                <div className="bg-[#b7282e] text-white p-4 shrink-0 relative overflow-hidden flex justify-between items-center shadow-lg z-10">
-                    <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/japanese-sayagata.png')] opacity-20"></div>
-                    <div>
-                        <h2 className="text-4xl font-black font-serif tracking-tighter italic transform -skew-x-6 relative z-10 text-shadow-lg leading-none">
+                <div className="bg-white p-6 shrink-0 border-b-4 border-[#b7282e] flex justify-between items-end relative overflow-hidden">
+                    {/* Watermark */}
+                    <span className="absolute -bottom-4 -right-4 text-9xl text-stone-50 font-serif opacity-50 select-none z-0">番付</span>
+
+                    <div className="relative z-10">
+                        <h2 className="text-3xl font-black font-serif text-[#b7282e] tracking-tight mb-1 flex items-center gap-3">
+                            <span className="w-2 h-8 bg-[#b7282e]"></span>
                             {t('basho_result.title')}
                         </h2>
-                        <p className="text-xs font-bold tracking-widest opacity-90 mt-1 pl-1">OFFICIAL BANZUKE ANNOUNCEMENT</p>
+                        <p className="text-xs font-bold text-slate-500 tracking-[0.2em] pl-5">OFFICIAL BANZUKE ANNOUNCEMENT</p>
                     </div>
+
+                    <button
+                        onClick={onClose}
+                        className="relative z-10 bg-slate-800 text-white px-6 py-2 rounded-sm text-sm font-bold hover:bg-slate-700 transition-colors shadow-md"
+                    >
+                        {t('cmd.close')}
+                    </button>
                 </div>
 
                 {/* Flash News */}
                 {promoted.length > 0 && (
-                    <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 shrink-0 shadow-inner overflow-x-auto custom-scrollbar">
+                    <div className="bg-slate-100 p-3 shrink-0 border-b border-slate-200 overflow-x-auto custom-scrollbar">
                         <div className="flex gap-4">
-                            <div className="flex-shrink-0 flex items-center bg-red-600 text-white px-3 py-1 rounded font-bold text-sm shadow animate-pulse">
-                                {t('basho_result.flash')}<br />NEWS
+                            <div className="flex-shrink-0 flex flex-col items-center justify-center bg-red-600 text-white px-3 py-1 rounded-sm font-bold text-[10px] shadow leading-tight text-center">
+                                <span>FLASH</span>
+                                <span>NEWS</span>
                             </div>
                             {promoted.slice(0, 10).map(w => {
                                 const last = w.history[w.history.length - 1];
-                                // Use any to bypass strict type check for now if Rank is elusive
                                 const oldRank = last ? last.rank : ('MaeZumo' as any);
 
                                 let tag = t('trend.up');
-                                if (w.rank === 'Yokozuna' && oldRank !== 'Yokozuna') tag = t('news.promote_yokozuna');
-                                else if (w.rank === 'Ozeki' && oldRank !== 'Ozeki') tag = t('news.promote_ozeki');
+                                let tagColor = 'text-amber-600 bg-amber-50 border-amber-200';
+
+                                if (w.rank === 'Yokozuna' && oldRank !== 'Yokozuna') { tag = t('news.promote_yokozuna'); tagColor = 'text-purple-700 bg-purple-50 border-purple-200'; }
+                                else if (w.rank === 'Ozeki' && oldRank !== 'Ozeki') { tag = t('news.promote_ozeki'); tagColor = 'text-red-700 bg-red-50 border-red-200'; }
                                 else if (['Sekiwake', 'Komusubi'].includes(w.rank) && !['Sekiwake', 'Komusubi', 'Ozeki', 'Yokozuna'].includes(oldRank)) tag = t('news.promote_sanyaku');
-                                else if (w.rank === 'Maegashira' && ['Juryo', 'Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi', 'MaeZumo'].includes(oldRank)) tag = t('news.promote_makuuchi');
+                                else if (w.rank === 'Maegashira' && ['Juryo', 'Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi', 'MaeZumo'].includes(oldRank)) { tag = t('news.promote_makuuchi'); tagColor = 'text-indigo-700 bg-indigo-50 border-indigo-200'; }
                                 else if (w.rank === 'Juryo' && ['Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi', 'MaeZumo'].includes(oldRank)) tag = t('news.promote_juryo');
 
                                 return (
-                                    <div key={w.id} className="bg-white/10 border border-white/20 rounded-md p-2 min-w-[140px] flex items-center gap-3 hover:bg-white/20 transition-colors">
-                                        <div className="w-10 h-10 rounded-full bg-amber-200 border-2 border-amber-400 flex items-center justify-center text-amber-900 font-bold text-lg">
+                                    <div key={w.id} className="bg-white border border-slate-200 rounded-sm p-1.5 min-w-[160px] flex items-center gap-3 shadow-sm">
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-serif font-bold text-sm">
                                             {w.name[0]}
                                         </div>
-                                        <div>
-                                            <div className="text-[10px] text-amber-300 font-bold uppercase tracking-wider">{tag}</div>
-                                            <div className="text-sm font-bold text-white leading-tight">{t(`rank.${w.rank}`) || w.rank}</div>
-                                            <div className="text-[10px] text-white/50">{t('trend.up')} from {t(`rank.${oldRank}`) || oldRank}</div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 border px-1 rounded-sm inline-block ${tagColor}`}>{tag}</div>
+                                            <div className="text-xs font-bold text-slate-800 leading-tight truncate font-serif">{w.name}</div>
+                                            <div className="text-[9px] text-slate-400 truncate">{t(`rank.${oldRank}`) || oldRank} → {t(`rank.${w.rank}`) || w.rank}</div>
                                         </div>
                                     </div>
                                 );
@@ -102,14 +115,14 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
                 )}
 
                 {/* Tabs */}
-                <div className="flex bg-stone-200 border-b border-stone-300 font-bold text-sm shrink-0">
+                <div className="flex bg-white border-b border-slate-200 font-bold text-sm shrink-0 px-4 pt-4 gap-2 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
                     {['Makuuchi', 'Juryo', 'Lower'].map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
-                            className={`px-8 py-3 flex-1 transition-colors ${activeTab === tab
-                                ? 'bg-[#fcf9f2] text-[#b7282e] border-t-4 border-[#b7282e]'
-                                : 'text-stone-500 hover:bg-stone-300 hover:text-stone-700'}`}
+                            className={`px-6 py-2 rounded-t-sm border-t border-x border-b-0 transition-all ${activeTab === tab
+                                ? 'bg-[#fcf9f2] text-[#b7282e] border-slate-300 border-b-[#fcf9f2] -mb-px pt-3 pb-2.5'
+                                : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100'}`}
                         >
                             {tab === 'Makuuchi' ? t('rank.Maegashira') : tab === 'Juryo' ? t('rank.Juryo') : t('basho_result.division')}
                         </button>
@@ -117,15 +130,14 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
                 </div>
 
                 {/* List */}
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-stone-50">
-                    <div className="grid grid-cols-1 gap-2">
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#fcf9f2]">
+                    {/* Paper Texture Overlay */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {activeList.map((w) => {
                             const last = w.history[w.history.length - 1];
                             const oldRank = last ? last.rank : ('MaeZumo' as any);
 
                             const newVal = getRankScore(w.rank, w.rankNumber || 1, w.rankSide || 'East');
-                            // Casting oldRank to Rank for getRankScore if needed, or getRankScore accepts string? 
-                            // getRankScore defined as (rank: Rank...). 'MaeZumo' as any works.
                             const oldVal = getRankScore(oldRank, last ? (last.rankNumber || 1) : 1, last ? (last.rankSide || 'East') : 'East');
 
                             let status = 'stay';
@@ -137,75 +149,56 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
                             const oldRankStr = formatRank(oldRank, last ? last.rankSide : 'East', last ? last.rankNumber : 1);
 
                             return (
-                                <div key={w.id} className={`flex items-center gap-4 p-3 rounded-lg border shadow-sm transition-all hover:shadow-md ${status === 'up' ? 'bg-red-50 border-red-200' :
-                                    status === 'down' ? 'bg-blue-50 border-blue-200' :
-                                        'bg-white border-stone-200'
-                                    }`}>
-                                    {/* Icon */}
-                                    <div className="w-8 flex justify-center font-bold text-lg">
-                                        {status === 'up' && <span className="text-red-600">▲</span>}
-                                        {status === 'down' && <span className="text-blue-600">▼</span>}
-                                        {status === 'stay' && <span className="text-stone-400">-</span>}
-                                        {status === 'new' && <span className="text-amber-500 text-xs text-center border border-amber-500 rounded px-1">NEW</span>}
+                                <div key={w.id} className={`
+                                    relative flex items-center p-3 rounded-sm border shadow-sm transition-all hover:shadow-md
+                                    ${w.heyaId === 'player_heya' ? 'bg-amber-50/50 border-amber-200 ring-1 ring-amber-300' : 'bg-white border-slate-200'}
+                                `}>
+                                    {/* Vertical Rank Line */}
+                                    <div className={`
+                                        absolute left-0 top-0 bottom-0 w-1 rounded-l-sm
+                                        ${status === 'up' ? 'bg-red-500' : status === 'down' ? 'bg-blue-400' : 'bg-slate-200'}
+                                    `}></div>
+
+                                    {/* Rank Change Indicator */}
+                                    <div className="w-8 flex flex-col items-center justify-center pl-2">
+                                        {status === 'up' && <span className="text-red-500 text-xs shadow-sm bg-white rounded-full p-0.5">▲</span>}
+                                        {status === 'down' && <span className="text-blue-400 text-xs shadow-sm bg-white rounded-full p-0.5">▼</span>}
+                                        {status === 'stay' && <span className="text-slate-300 text-xs">-</span>}
+                                        {status === 'new' && <span className="text-[9px] font-bold text-amber-500 border border-amber-500 px-1 rounded-sm bg-white">新</span>}
                                     </div>
 
-                                    {/* Rank */}
-                                    <div className="w-32 text-right">
-                                        <div className={`font-bold font-serif leading-tight ${['Yokozuna', 'Ozeki'].includes(w.rank) ? 'text-[#b7282e] text-lg' : 'text-stone-800'
-                                            }`}>
-                                            {formatRank(w.rank, w.rankSide, w.rankNumber)}
-                                        </div>
-                                        {status === 'up' && last && (
-                                            <div className="text-[10px] text-red-500 font-bold opacity-75">
-                                                {t('trend.up')} {oldRankStr}
-                                            </div>
-                                        )}
-                                        {status === 'down' && last && (
-                                            <div className="text-[10px] text-blue-500 font-bold opacity-75">
-                                                {t('trend.down')} {oldRankStr}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Name */}
-                                    <div className="flex-1 flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-inner ${w.heyaId === 'player_heya'
-                                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                                            : 'bg-stone-200 text-stone-600'
-                                            }`}>
-                                            {w.name[0]}
-                                        </div>
-                                        <div>
-                                            <div className={`font-bold ${w.heyaId === 'player_heya' ? 'text-amber-700' : 'text-stone-800'}`}>
+                                    {/* Detail */}
+                                    <div className="flex-1 min-w-0 ml-2">
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <div className="font-bold font-serif text-slate-900 truncate pr-2" title={w.name}>
                                                 {w.name}
                                             </div>
-                                            <div className="text-xs text-stone-500">
-                                                {w.heyaId === 'player_heya' ? t('app.subtitle') : 'CPU'}
+                                            <div className="text-[10px] text-slate-400 font-mono">
+                                                {last ? `${last.wins}-${last.losses}` : '---'}
                                             </div>
+                                        </div>
+
+                                        <div className="flex justify-between items-center text-xs">
+                                            <div className={`font-serif font-bold leading-none ${['Yokozuna', 'Ozeki'].includes(w.rank) ? 'text-[#b7282e]' : 'text-slate-600'}`}>
+                                                {formatRank(w.rank, w.rankSide, w.rankNumber)}
+                                            </div>
+
+                                            {/* Diff */}
+                                            {(status === 'up' || status === 'down') && oldRank !== 'MaeZumo' && (
+                                                <div className={`text-[9px] font-mono px-1 rounded-sm ${status === 'up' ? 'text-red-600 bg-red-50' : 'text-blue-500 bg-blue-50'}`}>
+                                                    from {t(`rank.${oldRank}`)[0]}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {/* Stats */}
-                                    {last && (
-                                        <div className="text-right text-stone-600 font-mono text-sm px-4">
-                                            {last.wins} - {last.losses}
-                                        </div>
+                                    {w.heyaId === 'player_heya' && (
+                                        <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-white"></div>
                                     )}
-
                                 </div>
                             );
                         })}
                     </div>
-                </div>
-
-                {/* Footer */}
-                <div className="bg-stone-200 p-4 border-t border-stone-300 flex justify-end">
-                    <button
-                        onClick={onClose}
-                        className="bg-[#b7282e] text-white px-8 py-2 rounded shadow hover:bg-[#a01e23] transition-colors font-bold"
-                    >
-                        {t('cmd.close')}
-                    </button>
                 </div>
 
             </div>
