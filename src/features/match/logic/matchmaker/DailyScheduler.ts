@@ -37,6 +37,47 @@ const getBanzukeScore = (w: Wrestler): number => {
 };
 
 /**
+ * 対戦制約判定
+ * @param p1 力士1
+ * @param p2 力士2
+ * @param day 何日目か
+ * @param relaxConstraintB ルールB（上位陣温存）を無視するかどうか
+ */
+const isValidMatch = (p1: Wrestler, p2: Wrestler, day: number, relaxConstraintB: boolean = false): boolean => {
+    // 1. 同部屋禁止 (Existing)
+    if (p1.heyaId === p2.heyaId) return false;
+
+    // 2. 対戦済み禁止 (Existing)
+    if (p1.currentBashoStats.matchHistory.includes(p2.id)) return false;
+
+    // --- 新ルール ---
+
+    // A. 階級の壁 (Rank Barrier)
+    // 幕内上位 (M5以上) vs 十両 は禁止
+    const isHighRank = (w: Wrestler) => {
+        if (['Yokozuna', 'Ozeki', 'Sekiwake', 'Komusubi'].includes(w.rank)) return true;
+        if (w.rank === 'Maegashira' && (w.rankNumber || 1) <= 5) return true;
+        return false;
+    };
+    const isJuryo = (w: Wrestler) => w.rank === 'Juryo';
+
+    if ((isHighRank(p1) && isJuryo(p2)) || (isHighRank(p2) && isJuryo(p1))) {
+        return false;
+    }
+
+    // B. 上位陣対決の温存 (Save Best Bouts)
+    // 12日目以前は 大関以上同士の対戦禁止
+    if (!relaxConstraintB && day <= 12) {
+        const isTop = (w: Wrestler) => ['Yokozuna', 'Ozeki'].includes(w.rank);
+        if (isTop(p1) && isTop(p2)) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+/**
  * 全関取（幕内・十両）の統合マッチング生成
  * @param wrestlers 関取全リスト
  * @param day 何日目か (1-15)
@@ -68,26 +109,43 @@ const scheduleSekitoriMatches = (wrestlers: Wrestler[], day: number): MatchPair[
         const east = sortedWrestlers[i];
         if (pairedIds.has(east.id)) continue;
 
-        // 対戦候補を探す
+        let opponent: Wrestler | null = null;
+
+        // 検索パス 1: 厳格なルール
         for (let j = i + 1; j < sortedWrestlers.length; j++) {
-            const west = sortedWrestlers[j];
-            if (pairedIds.has(west.id)) continue;
+            const candidate = sortedWrestlers[j];
+            if (pairedIds.has(candidate.id)) continue;
 
-            // 既に対戦済みかチェック
-            if (east.currentBashoStats.matchHistory.includes(west.id)) continue;
+            if (isValidMatch(east, candidate, day, false)) {
+                opponent = candidate;
+                break;
+            }
+        }
 
-            // 同部屋チェック（優勝決定戦以外は当たらない）
-            if (east.heyaId === west.heyaId) continue;
+        // 検索パス 2: フォールバック (Rule B 無視)
+        // 相手が見つからなかった場合のみ実行
+        if (!opponent) {
+            for (let j = i + 1; j < sortedWrestlers.length; j++) {
+                const candidate = sortedWrestlers[j];
+                if (pairedIds.has(candidate.id)) continue;
 
-            // ペアリング成立
+                // relaxConstraintB = true
+                if (isValidMatch(east, candidate, day, true)) {
+                    opponent = candidate;
+                    break;
+                }
+            }
+        }
+
+        // ペアリング成立
+        if (opponent) {
             matches.push({
                 east,
-                west,
-                division: 'Makuuchi' // 混合戦の場合は上位のDivision名義にするか、eastのDivision
+                west: opponent,
+                division: 'Makuuchi' // 便宜上
             });
             pairedIds.add(east.id);
-            pairedIds.add(west.id);
-            break;
+            pairedIds.add(opponent.id);
         }
     }
 

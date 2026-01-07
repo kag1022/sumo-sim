@@ -132,16 +132,16 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
                                 <div className="w-1/2 bg-amber-500 text-white text-center py-1.5 font-bold font-serif shadow-sm">関脇・小結</div>
                                 {/* Maegashira */}
                                 <div className="w-2/3 bg-stone-400 text-white text-center py-1.5 font-bold font-serif">前頭 (幕内)</div>
+                                {/* Juryo */}
+                                <div className="w-3/4 bg-stone-300 text-stone-700 text-center py-1.5 font-bold font-serif">十両</div>
 
                                 {/* Sekitori Line */}
                                 <div className="w-full flex items-center gap-2 my-2 py-2">
                                     <div className="h-px bg-stone-300 flex-1"></div>
-                                    <span className="text-xs font-bold text-stone-400">これより上は「関取」 (給金あり)</span>
+                                    <span className="text-xs font-bold text-stone-400">これより上が「関取」 (給金あり)</span>
                                     <div className="h-px bg-stone-300 flex-1"></div>
                                 </div>
 
-                                {/* Juryo */}
-                                <div className="w-3/4 bg-stone-300 text-stone-600 text-center py-1.5 font-bold font-serif">十両</div>
                                 {/* Lower */}
                                 <div className="w-full bg-stone-200 text-stone-500 text-center py-4 font-bold font-serif text-sm rounded-b-sm">
                                     幕下・三段目・序二段・序ノ口

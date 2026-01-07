@@ -17,7 +17,9 @@ export type SkillType =
     | 'GiantKiller'  // 巨漢殺し: 相手が20kg以上重い場合、戦闘力+15%
     | 'EscapeArtist' // 逃げ足: 心属性判定時、ボーナス+20%
     | 'StaminaGod'   // 無尽蔵: 長期戦で有利（将来実装）
-    | 'Bulldozer';   // 重戦車: 体属性判定時、ボーナス+10%
+    | 'Bulldozer'    // 重戦車: 体属性判定時、ボーナス+10%
+    | 'Lightning'    // 電光石火: 「技」属性の速攻が決まる
+    | 'Intimidation'; // 横綱相撲: 格下の相手を萎縮させる
 
 /** 引退ステータス */
 export type RetirementStatus =
@@ -125,6 +127,7 @@ export interface Matchup {
     winnerId: string | null;
     division: Division;
     kimarite?: string; // Optional result string
+    triggeredSkills?: SkillType[]; // Skills that affected the outcome
 }
 
 export interface Candidate extends Omit<Wrestler, 'history' | 'currentBashoStats' | 'nextBoutDay'> {

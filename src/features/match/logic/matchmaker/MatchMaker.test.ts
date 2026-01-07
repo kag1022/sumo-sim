@@ -37,7 +37,8 @@ describe('MatchMaker Logic', () => {
         // BF: Body (100) vs others -> Body
         // TF: Tech (100) vs others -> Tech
 
-        const prob = matchMaker.calculateWinChance(bodyFighter, techFighter);
+        const result = matchMaker.calculateWinChance(bodyFighter, techFighter);
+        const prob = result.winChance;
 
         // Expect > 0.5
         // Calculation trace:
@@ -55,14 +56,14 @@ describe('MatchMaker Logic', () => {
     it('should give advantage to Technique over Mind', () => {
         const techFighter = createMockFighter('TF', 50, 100, 50);
         const mindFighter = createMockFighter('MF', 50, 50, 100);
-        const prob = matchMaker.calculateWinChance(techFighter, mindFighter);
+        const prob = matchMaker.calculateWinChance(techFighter, mindFighter).winChance;
         expect(prob).toBeGreaterThan(0.51);
     });
 
     it('should give advantage to Mind over Body', () => {
         const mindFighter = createMockFighter('MF', 50, 50, 100);
         const bodyFighter = createMockFighter('BF', 100, 50, 50);
-        const prob = matchMaker.calculateWinChance(mindFighter, bodyFighter);
+        const prob = matchMaker.calculateWinChance(mindFighter, bodyFighter).winChance;
         expect(prob).toBeGreaterThan(0.51);
     });
 });

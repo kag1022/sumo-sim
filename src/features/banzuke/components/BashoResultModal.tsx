@@ -146,7 +146,7 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
                             else if (newVal < oldVal) status = 'down';
 
                             // Format old rank
-                            const oldRankStr = formatRank(oldRank, last ? last.rankSide : 'East', last ? last.rankNumber : 1);
+                            // const oldRankStr = formatRank(oldRank, last ? last.rankSide : 'East', last ? last.rankNumber : 1);
 
                             return (
                                 <div key={w.id} className={`

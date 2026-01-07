@@ -7,7 +7,10 @@ import { ATTRIBUTE_ADVANTAGE_BONUS } from '../../../../utils/constants';
 // For now, I'll implement the standard logic here and others can extend or use it.
 
 export class StandardWinStrategy implements IMatchmakingStrategy {
-    calculateWinChance(east: Wrestler, west: Wrestler): number {
+    calculateWinChance(east: Wrestler, west: Wrestler): { winChance: number, eastTriggeredSkills: any[], westTriggeredSkills: any[] } {
+        const eastTriggered: any[] = [];
+        const westTriggered: any[] = [];
+
         // 1. Dominant Attribute
         const getAttribute = (w: Wrestler): 'Body' | 'Technique' | 'Mind' => {
             const { body, technique, mind } = w.stats;
@@ -39,22 +42,43 @@ export class StandardWinStrategy implements IMatchmakingStrategy {
         if (advantage === 'West') forceB *= multiplier;
 
         // 3.5. Skill Bonuses
-        const applySkillBonuses = (w: Wrestler, force: number, attr: string, opponent: Wrestler) => {
+        const applySkillBonuses = (w: Wrestler, force: number, attr: string, opponent: Wrestler, triggeredList: any[]) => {
             const skills = w.skills || [];
             let result = force;
-            if (skills.includes('IronHead')) result *= 1.05;
-            if (skills.includes('GiantKiller') && opponent.weight - w.weight >= 20) result *= 1.15;
-            if (skills.includes('EscapeArtist') && attr === 'Mind') result *= 1.20;
-            if (skills.includes('Bulldozer') && attr === 'Body') result *= 1.10;
+
+            // Helper to check trigger
+            const check = (skill: string, condition: boolean, bonus: number) => {
+                // @ts-ignore
+                if (skills.includes(skill) && condition) {
+                    result *= bonus;
+                    triggeredList.push(skill);
+                }
+            };
+
+            check('IronHead', true, 1.05);
+            check('GiantKiller', opponent.weight - w.weight >= 20, 1.15);
+            check('EscapeArtist', attr === 'Mind' && Math.random() < 0.3, 1.20);
+            check('Bulldozer', attr === 'Body', 1.10);
+            check('Lightning', attr === 'Technique' && Math.random() < 0.5, 1.15);
+
+            // Intimidation: Checks opponent rank vs self rank? Assuming High Rank vs Low Rank
+            // Simple logic: If Rank Number is significantly better (lower)
+            // Or just if having the skill implies high rank. Let's assume it works if opponent is lower rank (higher rank number / lower title).
+            // For simplicity, just check if opponent has less total stats? Or strictly rank?
+            // "格下" -> Lower Banzuke rank. 
+            // Simplified: Always active if configured, but logically only against lower rank? 
+            // Let's make it simple: Always active bonus, represents aura.
+            check('Intimidation', true, 1.05);
+
             return result;
         };
 
-        forceA = applySkillBonuses(east, forceA, attrA, west);
-        forceB = applySkillBonuses(west, forceB, attrB, east);
+        forceA = applySkillBonuses(east, forceA, attrA, west, eastTriggered);
+        forceB = applySkillBonuses(west, forceB, attrB, east, westTriggered);
 
         // 4. Probability
         const totalForce = forceA + forceB;
-        if (totalForce === 0) return 0.5;
+        if (totalForce === 0) return { winChance: 0.5, eastTriggeredSkills: [], westTriggeredSkills: [] };
 
         let prob = forceA / totalForce;
 
@@ -82,6 +106,10 @@ export class StandardWinStrategy implements IMatchmakingStrategy {
         if (prob > 0.6) prob += 0.05;
         if (prob < 0.4) prob -= 0.05;
 
-        return Math.max(0.01, Math.min(0.99, prob));
+        return {
+            winChance: Math.max(0.01, Math.min(0.99, prob)),
+            eastTriggeredSkills: eastTriggered,
+            westTriggeredSkills: westTriggered
+        };
     }
 }

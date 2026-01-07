@@ -2,7 +2,7 @@
 import React from 'react';
 import { Wrestler } from '../../../types';
 import { formatRank } from '../../../utils/formatting';
-import { SKILL_INFO } from '../../../utils/skills';
+import { SkillBadge } from '../../../components/ui/SkillBadge';
 
 interface WrestlerListProps {
     wrestlers: Wrestler[];
@@ -80,12 +80,7 @@ const WrestlerList: React.FC<WrestlerListProps> = ({ wrestlers, onSelect }) => {
                         {wrestler.skills && wrestler.skills.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1.5">
                                 {wrestler.skills.slice(0, 3).map((skill) => (
-                                    <span
-                                        key={skill}
-                                        className="px-1.5 py-0.5 bg-purple-50 text-purple-800 text-[9px] font-bold rounded-sm border border-purple-100"
-                                    >
-                                        {SKILL_INFO[skill]?.name || skill}
-                                    </span>
+                                    <SkillBadge key={skill} skill={skill} />
                                 ))}
                                 {wrestler.skills.length > 3 && <span className="text-[9px] text-slate-400">+{wrestler.skills.length - 3}</span>}
                             </div>

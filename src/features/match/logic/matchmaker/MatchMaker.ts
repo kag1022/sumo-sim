@@ -21,7 +21,7 @@ export class MatchMaker {
         };
     }
 
-    public calculateWinChance(east: Wrestler, west: Wrestler): number {
+    public calculateWinChance(east: Wrestler, west: Wrestler): { winChance: number, eastTriggeredSkills: any[], westTriggeredSkills: any[] } {
         // Delegate to strategy based on East wrestler's division (usually same)
         const div = this.getDivision(east.rank);
         const strategy = this.strategies[div] || this.strategies['Makuuchi'];

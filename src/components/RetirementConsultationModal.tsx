@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Wrestler } from '../types';
 import { formatRank } from '../utils/formatting';
@@ -14,7 +15,7 @@ interface RetirementConsultationModalProps {
 const getDialogue = (reason: string | undefined): { title: string; message: string; emoji: string } => {
     if (!reason) {
         return {
-            title: '引退を考えています',
+            title: '進退伺い',
             emoji: '😔',
             message: '親方…私は、ここが潮時だと思うのです。'
         };
@@ -22,7 +23,7 @@ const getDialogue = (reason: string | undefined): { title: string; message: stri
 
     if (reason.includes('Injury') || reason.includes('怪我')) {
         return {
-            title: '体の限界',
+            title: '気力と体の限界',
             emoji: '🩹',
             message: '親方…体がもう悲鳴を上げています。これ以上は土俵に上がれません…'
         };
@@ -30,7 +31,7 @@ const getDialogue = (reason: string | undefined): { title: string; message: stri
 
     if (reason.includes('Age') || reason.includes('高齢')) {
         return {
-            title: '年齢による衰え',
+            title: '世代交代の時',
             emoji: '👴',
             message: '親方…気力が続きません。若い者に道を譲る時が来ました。潮時です。'
         };
@@ -40,13 +41,13 @@ const getDialogue = (reason: string | undefined): { title: string; message: stri
         return {
             title: '品格を守るために',
             emoji: '🎌',
-            message: '親方、これ以上は名折れです。横綱（大関）として、引退させてください。'
+            message: '親方、これ以上は名折れです。横綱として、潔く散らせてください。'
         };
     }
 
     // Default - performance issues
     return {
-        title: '成績不振',
+        title: '自身の限界',
         emoji: '😞',
         message: '親方…これ以上ご迷惑をおかけできません。引退させてください。'
     };
@@ -54,7 +55,7 @@ const getDialogue = (reason: string | undefined): { title: string; message: stri
 
 /**
  * 引退相談モーダル
- * プレイヤー部屋の力士が引退基準を満たした時に表示される
+ * Theme: "Solemn Night" (Dark, intimate atmosphere)
  */
 export const RetirementConsultationModal: React.FC<RetirementConsultationModalProps> = ({
     wrestler,
@@ -65,93 +66,99 @@ export const RetirementConsultationModal: React.FC<RetirementConsultationModalPr
     const isInjuryRelated = wrestler.retirementReason?.includes('Injury');
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/90 z-[100] backdrop-blur-md">
-            <div className="bg-gradient-to-b from-stone-800 to-stone-900 max-w-lg w-full rounded-lg shadow-2xl overflow-hidden border-2 border-stone-600 animate-fadeIn">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-stone-700 to-stone-800 p-6 text-white text-center border-b border-stone-600">
-                    <div className="text-5xl mb-3">{dialogue.emoji}</div>
-                    <h2 className="text-2xl font-bold font-serif tracking-widest text-amber-200">
-                        引退相談
-                    </h2>
-                    <p className="text-sm text-stone-400 mt-1">{dialogue.title}</p>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/95 z-[100] backdrop-blur-md transition-opacity duration-1000">
+            {/* Background Atmosphere */}
+            <div className="absolute inset-0 opacity-20 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/dark-wood.png')]"></div>
+
+            <div className="relative max-w-2xl w-full mx-4 overflow-hidden flex flex-col items-center animate-fadeInSlow">
+
+                {/* Wrestler Image / Icon */}
+                <div className="mb-8 relative group">
+                    <div className="w-32 h-32 bg-stone-800 rounded-full border-2 border-stone-600 flex items-center justify-center shadow-[0_0_50px_rgba(0,0,0,0.5)] z-10 relative overflow-hidden">
+                        <span className="text-5xl opacity-80 grayscale mix-blend-overlay">🙇</span>
+                        {/* Shadow overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                    </div>
+                    {/* Glow effect */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-amber-900/20 rounded-full blur-3xl pointer-events-none"></div>
                 </div>
 
-                {/* Content */}
-                <div className="p-8 flex flex-col items-center">
-                    {/* Wrestler Info */}
-                    <div className="w-24 h-24 bg-stone-700 rounded-full mb-4 border-4 border-amber-600/50 flex items-center justify-center shadow-lg">
-                        <span className="text-3xl">🙇</span>
+                {/* Name & Rank */}
+                <div className="text-center mb-10 z-10">
+                    <div className="text-stone-500 font-serif font-bold tracking-widest text-sm mb-2">{dialogue.title}</div>
+                    <h2 className="text-4xl font-black font-serif text-stone-200 mb-2 tracking-tight">
+                        {wrestler.name}
+                    </h2>
+                    <div className="flex justify-center items-center gap-3">
+                        <span className="px-2 py-0.5 border border-stone-600 text-stone-400 text-xs font-serif rounded-sm">
+                            {formatRank(wrestler.rank, wrestler.rankSide, wrestler.rankNumber)}
+                        </span>
+                        <span className="text-stone-500 text-xs">
+                            (最高位: {formatRank(wrestler.maxRank)})
+                        </span>
                     </div>
+                </div>
 
-                    <h3 className="text-2xl font-black text-white mb-1">{wrestler.name}</h3>
-                    <p className="text-amber-400 font-bold mb-2">
-                        {formatRank(wrestler.rank, wrestler.rankSide, wrestler.rankNumber)}
+                {/* Dialogue "Cinema Style" */}
+                <div className="w-full bg-gradient-to-r from-transparent via-stone-900/80 to-transparent p-8 mb-12 relative z-10 border-y border-stone-800">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-stone-600 text-4xl font-serif">❝</div>
+                    <p className="text-stone-300 text-xl font-serif leading-loose text-center italic tracking-wide">
+                        {dialogue.message}
                     </p>
-                    <p className="text-stone-400 text-sm mb-6">
-                        {wrestler.age}歳 / 最高位: {formatRank(wrestler.maxRank)}
-                    </p>
+                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-stone-600 text-4xl font-serif">❞</div>
+                </div>
 
-                    {/* Dialogue Box */}
-                    <div className="bg-stone-950/50 p-6 rounded-lg w-full mb-8 border border-stone-700">
-                        <p className="text-stone-200 text-lg leading-relaxed text-center italic">
-                            「{dialogue.message}」
+                {/* Actions */}
+                <div className="flex flex-col md:flex-row gap-6 w-full max-w-lg z-10">
+                    {/* Persuade (Left for Drama) */}
+                    <button
+                        onClick={onPersuade}
+                        disabled={isInjuryRelated}
+                        className={`flex-1 group relative overflow-hidden p-1 rounded-sm transition-all duration-500
+                             ${isInjuryRelated ? 'opacity-30 cursor-not-allowed' : 'hover:scale-[1.02]'}
+                        `}
+                    >
+                        {/* Button Background */}
+                        <div className={`absolute inset-0 transition-opacity bg-gradient-to-b ${isInjuryRelated ? 'from-stone-800 to-stone-900' : 'from-[#b7282e] to-[#8c1c22]'}`}></div>
+
+                        <div className="relative bg-stone-950/90 h-full p-6 flex flex-col items-center justify-center text-center group-hover:bg-opacity-0 transition-all duration-500 border border-white/5 group-hover:border-transparent">
+                            <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">🔥</div>
+                            <div className={`font-bold font-serif text-lg mb-1 ${isInjuryRelated ? 'text-stone-500' : 'text-red-500 group-hover:text-white'}`}>
+                                慰留する
+                            </div>
+                            <div className={`text-[10px] ${isInjuryRelated ? 'text-stone-600' : 'text-stone-400 group-hover:text-white/80'}`}>
+                                {isInjuryRelated ? '怪我が理由の為不可' : '「まだやれるはずだ」'}
+                            </div>
+                        </div>
+                    </button>
+
+                    {/* Accept (Right for Closure) */}
+                    <button
+                        onClick={onAccept}
+                        className="flex-1 group relative overflow-hidden p-1 rounded-sm transition-all duration-500 hover:scale-[1.02]"
+                    >
+                        <div className="absolute inset-0 bg-stone-700"></div>
+                        <div className="relative bg-stone-900 h-full p-6 flex flex-col items-center justify-center text-center group-hover:bg-stone-800 transition-colors border border-stone-600">
+                            <div className="text-2xl mb-2 grayscale group-hover:grayscale-0 transition-all">🍶</div>
+                            <div className="font-bold font-serif text-lg text-stone-300 mb-1 group-hover:text-white">
+                                引退を認める
+                            </div>
+                            <div className="text-[10px] text-stone-500 group-hover:text-stone-400">
+                                「ご苦労だった」
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                {/* Warning Text */}
+                {!isInjuryRelated && (
+                    <div className="mt-8 text-center animate-pulse z-10">
+                        <p className="text-[10px] text-amber-900/60 font-bold bg-amber-500/10 px-4 py-1 rounded-full border border-amber-900/20">
+                            ※慰留に成功しても、次場所で負け越すと強制引退となります
                         </p>
                     </div>
+                )}
 
-                    {/* Action Buttons */}
-                    <div className="w-full space-y-4">
-                        {/* Accept Retirement */}
-                        <button
-                            onClick={onAccept}
-                            className="w-full bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-500 hover:to-stone-600 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-all active:scale-98 border border-stone-500"
-                        >
-                            <div className="flex items-center justify-center gap-3">
-                                <span className="text-2xl">🤝</span>
-                                <div className="text-left">
-                                    <div className="text-lg">引退を認める</div>
-                                    <div className="text-xs text-stone-300 font-normal">
-                                        「よくやった。胸を張れ。」
-                                    </div>
-                                </div>
-                            </div>
-                        </button>
-
-                        {/* Persuade Button (disabled for injury) */}
-                        <button
-                            onClick={onPersuade}
-                            disabled={isInjuryRelated}
-                            className={`w-full font-bold py-4 px-6 rounded-lg shadow-lg transition-all active:scale-98 border
-                                ${isInjuryRelated
-                                    ? 'bg-stone-800 text-stone-500 border-stone-700 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 text-white border-red-600'
-                                }`}
-                        >
-                            <div className="flex items-center justify-center gap-3">
-                                <span className="text-2xl">{isInjuryRelated ? '🚫' : '🔥'}</span>
-                                <div className="text-left">
-                                    <div className="text-lg">説得する（ラストチャンス）</div>
-                                    <div className={`text-xs font-normal ${isInjuryRelated ? 'text-stone-500' : 'text-red-200'}`}>
-                                        {isInjuryRelated
-                                            ? '怪我が原因の場合は説得できません'
-                                            : '「馬鹿野郎！お前の相撲はまだ終わっちゃいない！」'
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </button>
-
-                        {/* Warning for Persuade */}
-                        {!isInjuryRelated && (
-                            <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-3 text-center">
-                                <p className="text-amber-200 text-xs">
-                                    ⚠️ 説得に成功すると心がMAXになりますが、
-                                    <strong className="text-amber-100">次場所で勝ち越せなければ強制引退</strong>
-                                    となります。
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
             </div>
         </div>
     );

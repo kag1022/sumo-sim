@@ -515,12 +515,18 @@ const MainGameInterface = () => {
                         )}
 
                         {/* Age and Tenure Info */}
-                        <div className="mt-3 flex justify-center gap-4 text-xs font-bold">
+                        <div className="mt-3 flex flex-wrap justify-center gap-2 text-xs font-bold">
                           <div className={`px-2 py-1 rounded bg-slate-50 ${activeSelectedWrestler.age >= 35 ? 'text-red-600' : 'text-slate-600'}`}>
                             {activeSelectedWrestler.age}歳
                           </div>
                           <div className="px-2 py-1 rounded bg-slate-50 text-slate-500">
                             在籍 {Math.floor((activeSelectedWrestler.timeInHeya || 0) / 12)}年
+                          </div>
+                          <div className="px-2 py-1 rounded bg-slate-50 text-slate-600">
+                            {activeSelectedWrestler.height}cm
+                          </div>
+                          <div className="px-2 py-1 rounded bg-slate-50 text-slate-600">
+                            {activeSelectedWrestler.weight}kg
                           </div>
                         </div>
                       </div>

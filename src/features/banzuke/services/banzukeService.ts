@@ -74,7 +74,9 @@ export const processBanzukeUpdate = (
     // 2. Promotion (Shinjo)
     let updatedWrestlers = wrestlers.map(w => {
         if (w.rank === 'MaeZumo') {
-            logs.push(`【新序出世】${w.name} が序ノ口に昇進しました！`);
+            if (w.heyaId === 'player_heya') {
+                logs.push(`【新序出世】${w.name} が序ノ口に昇進しました！`);
+            }
             return { ...w, rank: 'Jonokuchi' as const, rankNumber: 50 };
         }
         return w;

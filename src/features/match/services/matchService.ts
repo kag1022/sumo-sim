@@ -22,14 +22,18 @@ export const processDailyMatches = (
     const tournamentDay = currentDate.getDate() - 9; // 10th is Day 1
 
     // 1. Calculate outcomes
+    // 1. Calculate outcomes
     const processedMatchups = todaysMatchups.map(match => {
-        const eastChance = matchMaker.calculateWinChance(match.east, match.west);
-        const isEastWinner = Math.random() < eastChance;
+        const result = matchMaker.calculateWinChance(match.east, match.west);
+        const isEastWinner = Math.random() < result.winChance;
+        const winner = isEastWinner ? match.east : match.west;
+        const triggeredSkills = isEastWinner ? result.eastTriggeredSkills : result.westTriggeredSkills;
 
         return {
             ...match,
-            winnerId: isEastWinner ? match.east.id : match.west.id,
-            kimarite: 'Oshidashi' // Temporary default, logic should be improved later
+            winnerId: winner.id,
+            kimarite: 'Oshidashi', // Temporary default, logic should be improved later
+            triggeredSkills: triggeredSkills
         };
     });
 
@@ -77,6 +81,27 @@ export const processDailyMatches = (
     return {
         updatedWrestlers,
         updatedMatchups: processedMatchups,
-        logs
+        logs: processedMatchups
+            .filter(m => m.east.heyaId === 'player_heya' || m.west.heyaId === 'player_heya')
+            .map(m => {
+                const winner = m.winnerId === m.east.id ? m.east : m.west;
+                const skills = m.triggeredSkills || [];
+                // Dramatic Log
+                let skillText = "";
+                if (skills.length > 0) {
+                    const skillNames: Record<string, string> = {
+                        'IronHead': '鉄の額',
+                        'GiantKiller': '巨漢殺し',
+                        'EscapeArtist': 'うっちゃり',
+                        'StaminaGod': '無尽蔵',
+                        'Bulldozer': '重戦車',
+                        'Lightning': '電光石火',
+                        'Intimidation': '横綱相撲'
+                    };
+                    const names = skills.map(s => `【${skillNames[s] as string || s}】`).join('');
+                    skillText = `${names}が炸裂！`;
+                }
+                return `${winner.name}の勝ち。${skillText}決まり手は${m.kimarite}。`;
+            })
     };
 };

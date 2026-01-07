@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { YushoRecord } from '../../../types';
+import { getWesternYearFromBashoId } from '../../../utils/time';
 
 interface HistoryModalProps {
     history?: YushoRecord[];
@@ -219,7 +220,12 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                         {filteredTimeline.length > 0 ? (
                                             filteredTimeline.map((record, i) => (
                                                 <tr key={i} className="hover:bg-amber-50/50 transition-colors">
-                                                    <td className="px-6 py-4 font-mono text-stone-400 text-xs font-bold pl-8 border-l border-transparent">{record.bashoId}</td>
+                                                    <td className="px-6 py-4 font-mono text-stone-400 text-xs font-bold pl-8 border-l border-transparent">
+                                                        <div className="text-sm text-stone-600">{getWesternYearFromBashoId(record.bashoId)}年</div>
+                                                        <div className="text-[10px] opacity-60">
+                                                            {record.bashoId.replace(/^\d{4}年\s*/, '')}
+                                                        </div>
+                                                    </td>
                                                     <td className="px-6 py-4 font-bold text-xs text-stone-500 uppercase tracking-wider">{record.division}</td>
                                                     <td className="px-6 py-4">
                                                         <div className={`font-serif font-bold ${record.division === 'Makuuchi' ? 'text-[#b7282e] text-lg' : 'text-slate-800'}`}>

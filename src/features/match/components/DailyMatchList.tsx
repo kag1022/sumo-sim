@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Matchup } from '../../../types';
+import { SkillBadge } from '../../../components/ui/SkillBadge';
 
 interface DailyMatchListProps {
     matchups: Matchup[];
@@ -53,18 +54,26 @@ const DailyMatchList: React.FC<DailyMatchListProps> = ({ matchups }) => {
                             `}
                         >
                             {/* East */}
-                            <div className={`flex-1 text-right flex items-center justify-end gap-2 ${eastWin ? 'text-slate-900' : 'text-slate-500'} ${westWin ? 'opacity-40 grayscale' : ''}`}>
-                                <span className={`font-serif ${isPlayerEast ? 'font-bold text-slate-900 underline decoration-amber-400 decoration-2 underline-offset-2' : ''} ${eastWin ? 'font-bold' : ''}`}>
-                                    {m.east.name}
-                                </span>
-                                <span className="text-[10px] w-5 text-center bg-slate-100 rounded-sm text-slate-500 font-mono self-center">
-                                    {formatShortRank(m.east.rank)}
-                                </span>
-                                <span className={`w-4 text-center font-bold ${eastWin ? 'text-[#b7282e]' : 'invisible'}`}>○</span>
+                            <div className={`flex-1 text-right flex flex-col justify-center items-end gap-0.5 ${eastWin ? 'text-slate-900' : 'text-slate-500'} ${westWin ? 'opacity-40 grayscale' : ''}`}>
+                                <div className="flex items-center gap-2 justify-end">
+                                    <span className={`font-serif ${isPlayerEast ? 'font-bold text-slate-900 underline decoration-amber-400 decoration-2 underline-offset-2' : ''} ${eastWin ? 'font-bold' : ''}`}>
+                                        {m.east.name}
+                                    </span>
+                                    <span className="text-[10px] w-5 text-center bg-slate-100 rounded-sm text-slate-500 font-mono self-center">
+                                        {formatShortRank(m.east.rank)}
+                                    </span>
+                                    <span className={`w-4 text-center font-bold ${eastWin ? 'text-[#b7282e]' : 'invisible'}`}>○</span>
+                                </div>
+                                {/* Skills */}
+                                {m.east.skills && m.east.skills.length > 0 && (
+                                    <div className="flex gap-0.5 justify-end flex-wrap max-w-[120px]">
+                                        {m.east.skills.map(s => <div key={s} className="scale-75 origin-right"><SkillBadge skill={s} /></div>)}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Center Status */}
-                            <div className="mx-1 w-14 text-center shrink-0 flex justify-center">
+                            <div className="mx-1 w-14 text-center shrink-0 flex justify-center self-center">
                                 {finished ? (
                                     <span className="text-[9px] text-slate-400 block truncate font-serif bg-slate-100 px-1 rounded-sm min-w-[36px]">
                                         {m.kimarite || '決り手'}
@@ -75,14 +84,22 @@ const DailyMatchList: React.FC<DailyMatchListProps> = ({ matchups }) => {
                             </div>
 
                             {/* West */}
-                            <div className={`flex-1 text-left flex items-center justify-start gap-2 ${westWin ? 'text-slate-900' : 'text-slate-500'} ${eastWin ? 'opacity-40 grayscale' : ''}`}>
-                                <span className={`w-4 text-center font-bold ${westWin ? 'text-[#b7282e]' : 'invisible'}`}>○</span>
-                                <span className="text-[10px] w-5 text-center bg-slate-100 rounded-sm text-slate-500 font-mono self-center">
-                                    {formatShortRank(m.west.rank)}
-                                </span>
-                                <span className={`font-serif ${isPlayerWest ? 'font-bold text-slate-900 underline decoration-amber-400 decoration-2 underline-offset-2' : ''} ${westWin ? 'font-bold' : ''}`}>
-                                    {m.west.name}
-                                </span>
+                            <div className={`flex-1 text-left flex flex-col justify-center items-start gap-0.5 ${westWin ? 'text-slate-900' : 'text-slate-500'} ${eastWin ? 'opacity-40 grayscale' : ''}`}>
+                                <div className="flex items-center gap-2 justify-start">
+                                    <span className={`w-4 text-center font-bold ${westWin ? 'text-[#b7282e]' : 'invisible'}`}>○</span>
+                                    <span className="text-[10px] w-5 text-center bg-slate-100 rounded-sm text-slate-500 font-mono self-center">
+                                        {formatShortRank(m.west.rank)}
+                                    </span>
+                                    <span className={`font-serif ${isPlayerWest ? 'font-bold text-slate-900 underline decoration-amber-400 decoration-2 underline-offset-2' : ''} ${westWin ? 'font-bold' : ''}`}>
+                                        {m.west.name}
+                                    </span>
+                                </div>
+                                {/* Skills */}
+                                {m.west.skills && m.west.skills.length > 0 && (
+                                    <div className="flex gap-0.5 justify-start flex-wrap max-w-[120px]">
+                                        {m.west.skills.map(s => <div key={s} className="scale-75 origin-left"><SkillBadge skill={s} /></div>)}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );

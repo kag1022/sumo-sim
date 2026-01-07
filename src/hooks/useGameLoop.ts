@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { TrainingType, Candidate, SaveData, Matchup } from '../types';
-import { ALL_SKILLS, MAX_SKILLS, SKILL_INFO } from '../utils/skills';
+import { ALL_SKILLS, MAX_SKILLS, SKILL_INFO } from '../features/wrestler/logic/skills';
 import { generateDailyMatches } from '../features/match/logic/matchmaker/DailyScheduler';
 import { generateCandidates } from '../features/wrestler/logic/scouting';
 import { generateWrestler } from '../features/wrestler/logic/generator';
