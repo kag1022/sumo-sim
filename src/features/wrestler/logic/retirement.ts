@@ -31,8 +31,20 @@ export const shouldUpdateMaxRank = (currentRank: Rank, maxRank: Rank): boolean =
 };
 // ... (previous code)
 
-export const shouldRetire = (wrestler: Wrestler): { retire: boolean, reason?: string } => {
-    const { rank, age, currentBashoStats, history, maxRank } = wrestler;
+export interface RetirementCheckResult {
+    retire: boolean;
+    reason?: string;
+    shouldConsult?: boolean; // プレイヤー部屋の場合、相談が必要
+}
+
+/**
+ * 引退判定ロジック
+ * @param wrestler 力士
+ * @param isPlayerHeya プレイヤー部屋かどうか
+ * @returns 引退判定結果
+ */
+export const shouldRetire = (wrestler: Wrestler, isPlayerHeya: boolean = false): RetirementCheckResult => {
+    const { rank, age, currentBashoStats, history, maxRank, retirementStatus } = wrestler;
     const currentWins = currentBashoStats.wins;
     const isMakeKoshi = currentWins < 8;
 
@@ -40,17 +52,19 @@ export const shouldRetire = (wrestler: Wrestler): { retire: boolean, reason?: st
     const lastBasho = history.length > 0 ? history[history.length - 1] : null;
     const lastRank = lastBasho ? lastBasho.rank : 'MaeZumo';
 
+    let retireResult: { retire: boolean, reason?: string } = { retire: false };
+
     // 1. Yokozuna Rules (The Dignity Rule)
     if (rank === 'Yokozuna') {
         // 2 consecutive Make-Koshi
         if (isMakeKoshi && lastBasho && lastBasho.wins < 8) {
-            return { retire: true, reason: 'Yokozuna: Consecutive Make-Koshi' };
+            retireResult = { retire: true, reason: 'Yokozuna: Consecutive Make-Koshi' };
         }
         // 1 Make-Koshi + Age >= 30
-        if (isMakeKoshi && age >= 30) {
+        else if (isMakeKoshi && age >= 30) {
             // High probability (50%+)
             if (Math.random() < 0.7) {
-                return { retire: true, reason: 'Yokozuna: Make-Koshi Over 30' };
+                retireResult = { retire: true, reason: 'Yokozuna: Make-Koshi Over 30' };
             }
         }
         // Low Win Rate (Average < 8 in last 3)
@@ -62,43 +76,75 @@ export const shouldRetire = (wrestler: Wrestler): { retire: boolean, reason?: st
     // Current Rank: Sekiwake (Demoted Ozeki status handles via 'isKadoban' mostly, but here we check status)
     // If wrestler WAS Ozeki recently. 
     // Logic: If MaxRank is Ozeki/Yokozuna, and currently Sekiwake/Lower.
-    if (maxRank === 'Ozeki' || maxRank === 'Yokozuna') {
+    if (!retireResult.retire && (maxRank === 'Ozeki' || maxRank === 'Yokozuna')) {
         if (['Sekiwake', 'Komusubi', 'Maegashira', 'Juryo'].includes(rank)) {
             // If failed to return to Ozeki (e.g. didn't get 10 wins as Sekiwake)
             // Or just spiraling down.
             if (isMakeKoshi) {
                 // Former Ozeki/Yokozuna getting Make-Koshi in lower ranks -> High retire chance
-                if (Math.random() < 0.6) return { retire: true, reason: 'Former Ozeki: Dignity' };
+                if (Math.random() < 0.6) {
+                    retireResult = { retire: true, reason: 'Former Ozeki: Dignity' };
+                }
             }
             // Specific Ozeki Return Fail: Rank=Sekiwake, Last=Ozeki, Wins < 10
-            if (rank === 'Sekiwake' && lastRank === 'Ozeki' && currentWins < 10) {
-                if (Math.random() < 0.4) return { retire: true, reason: 'Ozeki: Failed Re-promotion' };
+            if (!retireResult.retire && rank === 'Sekiwake' && lastRank === 'Ozeki' && currentWins < 10) {
+                if (Math.random() < 0.4) {
+                    retireResult = { retire: true, reason: 'Ozeki: Failed Re-promotion' };
+                }
             }
         }
     }
 
     // 3. General Rules (Makuuchi / Juryo / Lower)
     // 3 Consecutive Make-Koshi + Age >= 30
-    if (age >= 30 && isMakeKoshi) {
+    if (!retireResult.retire && age >= 30 && isMakeKoshi) {
         if (lastBasho && lastBasho.wins < 8) {
             const last2 = history.length > 1 ? history[history.length - 2] : null;
             if (last2 && last2.wins < 8) {
                 // 3 Consecutive MK
-                if (Math.random() < 0.5) return { retire: true, reason: 'Age & Performance Loop' };
+                if (Math.random() < 0.5) {
+                    retireResult = { retire: true, reason: 'Age & Performance Loop' };
+                }
             }
         }
     }
 
     // Age Limits (Hard Caps)
-    if (age >= 35 && ['Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi'].includes(rank)) {
-        return { retire: true, reason: 'Age Limit (Lower Division)' };
+    if (!retireResult.retire && age >= 35 && ['Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi'].includes(rank)) {
+        retireResult = { retire: true, reason: 'Age Limit (Lower Division)' };
     }
-    if (age >= 40) return { retire: true, reason: 'Mandatory Retirement Age' };
+    if (!retireResult.retire && age >= 40) {
+        retireResult = { retire: true, reason: 'Mandatory Retirement Age' };
+    }
 
     // Injury Spiraling
-    if (wrestler.injuryStatus === 'injured' && isMakeKoshi && age >= 28) {
-        if (Math.random() < 0.3) return { retire: true, reason: 'Injury & Age' };
+    if (!retireResult.retire && wrestler.injuryStatus === 'injured' && isMakeKoshi && age >= 28) {
+        if (Math.random() < 0.3) {
+            retireResult = { retire: true, reason: 'Injury & Age' };
+        }
     }
 
-    return { retire: false };
+    // プレイヤー部屋特別処理
+    if (isPlayerHeya && retireResult.retire) {
+        // ラストチャンス状態で再度引退基準を満たした場合 → 強制引退（相談なし）
+        if (retirementStatus === 'LastHanamichi') {
+            return {
+                retire: true,
+                reason: `${retireResult.reason} (ラストチャンス失敗)`,
+                shouldConsult: false
+            };
+        }
+
+        // 通常状態で引退基準を満たした場合 → 相談モード
+        if (retirementStatus === 'None' || !retirementStatus) {
+            return {
+                retire: false,
+                reason: retireResult.reason,
+                shouldConsult: true
+            };
+        }
+    }
+
+    return retireResult;
 };
+

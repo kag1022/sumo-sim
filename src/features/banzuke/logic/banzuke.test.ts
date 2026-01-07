@@ -39,6 +39,8 @@ const createMockWrestler = (
     weight: 150,
     height: 180,
     background: 'Test',
+    skills: [],
+    retirementStatus: 'None'
 });
 
 describe('Banzuke Logic', () => {

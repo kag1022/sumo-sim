@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useGame } from '../context/GameContext';
-import { TrainingType, Wrestler, Candidate, Heya, YushoRecord, SaveData, Division } from '../types';
+import { TrainingType, Wrestler, Candidate, YushoRecord, SaveData, Division, Matchup } from '../types';
+import { ALL_SKILLS, MAX_SKILLS, SKILL_INFO } from '../utils/skills';
 import { matchMaker } from '../features/match/logic/matchmaker/MatchMaker';
+import { generateDailyMatches } from '../features/match/logic/matchmaker/DailyScheduler';
 import { updateBanzuke } from '../features/banzuke/logic/banzuke';
 import { generateCandidates } from '../features/wrestler/logic/scouting';
 import { generateWrestler } from '../features/wrestler/logic/generator';
-import { MAX_PLAYERS_PER_HEYA, getRankValue } from '../utils/constants';
+import { MAX_PLAYERS_PER_HEYA } from '../utils/constants';
 import { calculateIncome, calculateExpenses } from '../features/heya/logic/economy';
 import { calculateSeverance, shouldUpdateMaxRank, shouldRetire } from '../features/wrestler/logic/retirement';
 import { getOkamiBudgetMultiplier, getOkamiUpgradeCost } from '../features/heya/logic/okami';
@@ -20,26 +22,25 @@ export const useGameLoop = () => {
         funds,
         wrestlers,
         heyas,
-        gamePhase, // Renamed
-        gameMode, // Added
+        gamePhase,
+        gameMode,
         setFunds,
         setWrestlers,
         advanceDate,
         addLog,
-        setGamePhase, // Renamed
+        setGamePhase,
         setBashoFinished,
         setYushoWinners,
         setLastMonthBalance,
-        // Phase 19
         okamiLevel,
         reputation,
         logs,
         setOkamiLevel,
         setReputation,
+        todaysMatchups,
         setTodaysMatchups,
         trainingPoints,
         setTrainingPoints,
-        // Added for Save/History
         bashoFinished,
         lastMonthBalance,
         isInitialized,
@@ -47,7 +48,12 @@ export const useGameLoop = () => {
         yushoHistory,
         setYushoHistory,
         setRetiringQueue,
-        usedNames
+        usedNames,
+        setConsultingWrestlerId,
+
+        matchesProcessed,
+        setMatchesProcessed,
+        retiringQueue // Add missing destructure
     } = useGame();
 
     const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -55,6 +61,7 @@ export const useGameLoop = () => {
 
     const advanceTime = (trainingType: TrainingType) => {
         let daysToAdvance = 0;
+        let nextWrestlersState = [...wrestlers];
 
         // Check next state
         if (gamePhase === 'training') {
@@ -74,14 +81,38 @@ export const useGameLoop = () => {
                 }
             }
 
-            if (collisionDay !== -1) {
-                daysToAdvance = collisionDay - currentDate.getDate();
-                setGamePhase('tournament'); // Renamed
-                addLog("本場所（初日）が始まります！", 'info');
-            }
-
             // Training & Passive Growth Logic
             let updatedWrestlers = [...wrestlers];
+
+            if (collisionDay !== -1) {
+                daysToAdvance = collisionDay - currentDate.getDate();
+                setGamePhase('tournament');
+                addLog("本場所（初日）が始まります！", 'info');
+
+                // 力士のcurrentBashoStatsをリセット
+                updatedWrestlers = updatedWrestlers.map(w => ({
+                    ...w,
+                    currentBashoStats: { wins: 0, losses: 0, matchHistory: [], boutDays: [] }
+                }));
+                // nextWrestlersState更新
+                nextWrestlersState = updatedWrestlers;
+
+                // 初日(Day 1)の割を作成
+                const day1Matches = generateDailyMatches(updatedWrestlers, 1);
+
+                // MatchPair[] -> Matchup[] 変換 (winnerIdはnull)
+                const matchups: Matchup[] = day1Matches.map(m => ({
+                    east: m.east,
+                    west: m.west,
+                    division: m.division,
+                    winnerId: null
+                }));
+
+                setTodaysMatchups(matchups);
+                setMatchesProcessed(false);
+                addLog("初日の取組が発表されました。", 'info');
+            }
+
             if (daysToAdvance > 0) {
                 // Reset Training Points Weekly
                 setTrainingPoints(3);
@@ -109,565 +140,499 @@ export const useGameLoop = () => {
                     let stressGain = 0;
 
                     // 1. Decay
-                    newStats.mind = applyDecay(newStats.mind);
-                    newStats.technique = applyDecay(newStats.technique);
                     newStats.body = applyDecay(newStats.body);
+                    newStats.technique = applyDecay(newStats.technique);
+                    newStats.mind = applyDecay(newStats.mind);
 
-                    // 2. Passive Growth Calculation
-                    const heyaMod = heyaStrengthMap.get(w.heyaId) || 1.0;
-                    const p = w.potential;
+                    // 2. Training Effect (Active)
+                    const isPlayerHeya = w.heyaId === 'player_heya';
 
-                    // Base growth per week (7 days) approx 0.5 - 1.0 adjusted by potential?
-                    // User said: (Base + Random) * StrengthMod * PotentialFactor
-                    // Let's define Base ~ 0.2 per day? = 1.4 per week.
-                    // Random ~ 0.0 - 0.5.
-
-                    const growthBase = (0.2 + Math.random() * 0.1) * daysToAdvance;
-                    const growth = growthBase * heyaMod;
-
-                    // Apply to all stats (General growth) or randomized focus?
-                    // General growth for passive.
-                    newStats.body = updateStat(newStats.body, growth, p);
-                    newStats.technique = updateStat(newStats.technique, growth, p);
-                    newStats.mind = updateStat(newStats.mind, growth, p);
-
-                    // Stress from training (Passive)
-                    stressGain = 0.5 * daysToAdvance;
-
-                    // If Player's selected "Weekly Policy" (trainingType), apply EXTRA bonus to Player Wrestlers?
-                    // The user instructions implies "Active Training" is the SPECIAL command.
-                    // The "Weekly Policy" (shiko/teppo etc) from previous UI might still be valid for Player's wrestlers as "Focus"?
-                    // Let's keep the Weekly Policy bonus for Player Heya wrestlers to maintain that feature.
-                    if (w.heyaId === 'player_heya') {
-                        if (trainingType === 'shiko') {
-                            newStats.body = updateStat(newStats.body, 1.0 * daysToAdvance, p); // Extra focus
-                            stressGain += 1 * daysToAdvance;
-                        } else if (trainingType === 'teppo') {
-                            newStats.technique = updateStat(newStats.technique, 1.0 * daysToAdvance, p);
-                            stressGain += 1 * daysToAdvance;
-                        } else if (trainingType === 'moushi_ai') {
-                            newStats.body = updateStat(newStats.body, 0.5 * daysToAdvance, p);
-                            newStats.technique = updateStat(newStats.technique, 0.5 * daysToAdvance, p);
-                            newStats.mind = updateStat(newStats.mind, 0.5 * daysToAdvance, p);
-                            stressGain += 3 * daysToAdvance;
-                        } else if (trainingType === 'rest') {
-                            stressGain = -3 * daysToAdvance; // Rest
+                    if (isPlayerHeya) {
+                        // Active Training Bonus
+                        const trainingMod = 1.0;
+                        switch (trainingType) {
+                            case 'shiko':
+                                newStats.body = updateStat(newStats.body, 0.5 * trainingMod, w.potential);
+                                stressGain = 5;
+                                break;
+                            case 'teppo':
+                                newStats.technique = updateStat(newStats.technique, 0.5 * trainingMod, w.potential);
+                                stressGain = 5;
+                                break;
+                            case 'moushi_ai':
+                                newStats.mind = updateStat(newStats.mind, 0.5 * trainingMod, w.potential);
+                                newStats.body = updateStat(newStats.body, 0.2 * trainingMod, w.potential);
+                                newStats.technique = updateStat(newStats.technique, 0.2 * trainingMod, w.potential);
+                                stressGain = 10;
+                                break;
+                            case 'rest':
+                                w.stress = Math.max(0, (w.stress || 0) - 20);
+                                return w; // No stat gain, just rest
                         }
+                    } else {
+                        // CPU Passive Growth
+                        const heyaStr = heyaStrengthMap.get(w.heyaId) || 1.0;
+                        newStats.body = updateStat(newStats.body, 0.1 * heyaStr, w.potential);
+                        newStats.technique = updateStat(newStats.technique, 0.1 * heyaStr, w.potential);
                     }
 
-                    // Apply Stress
-                    let newStress = Math.min(100, Math.max(0, (w.stress || 0) + stressGain));
-
-                    // Reset nextBoutDay if Basho is starting
-                    const nextBoutDay = collisionDay !== -1 ? null : w.nextBoutDay;
-
-                    return { ...w, stats: newStats, stress: newStress, nextBoutDay };
+                    return { ...w, stats: newStats, stress: Math.min(100, (w.stress || 0) + stressGain) };
                 });
 
                 // 3. Okami Relief (Daily x Days)
-                const okamiReliefPerDay = [0, 2, 4, 6, 8, 10][okamiLevel] || 2;
-                const totalRelief = okamiReliefPerDay * daysToAdvance;
+                const okamiRelief = [0, 2, 4, 6, 8, 10][okamiLevel] || 0;
+                const totalRelief = okamiRelief * daysToAdvance;
 
                 updatedWrestlers = updatedWrestlers.map(w => ({
                     ...w,
                     stress: Math.max(0, w.stress - totalRelief)
                 }));
 
-                // 4. Random Events
-                const eventResult = checkRandomEvents(updatedWrestlers, reputation, okamiLevel);
+                // Update wrestlers state after training
+                if (collisionDay === -1) {
+                    nextWrestlersState = updatedWrestlers;
+                }
 
-                updatedWrestlers = eventResult.updatedWrestlers;
-
-                // Update Funds/Reputation from Events
-                if (eventResult.fundsChange !== 0) setFunds((prev: number) => prev + eventResult.fundsChange);
-                if (eventResult.reputationChange !== 0) setReputation(Math.max(0, Math.min(100, reputation + eventResult.reputationChange)));
-
-                eventResult.logs.forEach(l => addLog(l.message, l.type));
-
-                setWrestlers(updatedWrestlers);
+                setWrestlers(nextWrestlersState);
 
                 // Auto-Save Weekly
-                triggerAutoSave({ wrestlers: updatedWrestlers, heyas, funds: funds + eventResult.fundsChange, reputation: Math.max(0, Math.min(100, reputation + eventResult.reputationChange)), okamiLevel });
+                triggerAutoSave({ wrestlers: nextWrestlersState, heyas, funds, reputation, okamiLevel });
             }
         } else {
             // --- TOURNAMENT MODE (Day by Day) ---
-            daysToAdvance = 1;
 
-            const currentWrestlers = [...wrestlers];
+            // ガード: 二重実行防止
+            if (matchesProcessed) {
+                return;
+            }
+
+            daysToAdvance = 1;
             const tournamentDay = currentDate.getDate() - 9; // 10th is Day 1
 
-            // 1. Generate Matchups for Today
-            const todaysMatchups = matchMaker.generateMatchups(currentWrestlers, tournamentDay);
+            // 1. 今日の対戦結果を決定
+            const processedMatchups = todaysMatchups.map(match => {
+                const eastChance = matchMaker.calculateWinChance(match.east, match.west);
+                const isEastWinner = Math.random() < eastChance;
 
-            // 2. Decide Winners & Prepare Updates
-            const updates = new Map<string, { win: boolean, opponentId: string }>();
-
-            todaysMatchups.forEach(matchup => {
-                const eastChance = matchMaker.calculateWinChance(matchup.east, matchup.west);
-
-                // Random Outcome based on Stats
-                const eastWins = Math.random() < eastChance;
-
-                // Set Winner in Matchup Object (Mutation ok for generic usage/display)
-                matchup.winnerId = eastWins ? matchup.east.id : matchup.west.id;
-
-                updates.set(matchup.east.id, { win: eastWins, opponentId: matchup.west.id });
-                updates.set(matchup.west.id, { win: !eastWins, opponentId: matchup.east.id });
+                return {
+                    ...match,
+                    winnerId: isEastWinner ? match.east.id : match.west.id
+                };
             });
 
-            // Update Global State for Matchups (UI Display)
-            setTodaysMatchups([...todaysMatchups]);
+            // 2. 結果をUIに反映（勝者表示）
+            setTodaysMatchups(processedMatchups);
 
-            // 3. Update Wrestlers Stats
-            let updatedWrestlers = currentWrestlers.map(w => {
+            // 3. 結果を力士Statsに反映
+            let updatedWrestlers = [...wrestlers];
+            const updates = new Map<string, { win: boolean, opponentId: string, kimarite: string }>();
+
+            processedMatchups.forEach(m => {
+                const winnerId = m.winnerId!;
+                const loserId = m.east.id === winnerId ? m.west.id : m.east.id;
+                updates.set(winnerId, { win: true, opponentId: loserId, kimarite: 'Oshidashi' });
+                updates.set(loserId, { win: false, opponentId: winnerId, kimarite: 'Oshidashi' });
+            });
+
+            updatedWrestlers = updatedWrestlers.map(w => {
                 const res = updates.get(w.id);
+                if (!res) return w; // 試合なし
 
-                // Okami Relief (Daily)
                 const okamiRelief = [0, 2, 4, 6, 8, 10][okamiLevel] || 2;
-                let nextBoutDay = w.nextBoutDay;
-                let stressChange = 0;
                 let newStats = { ...w.currentBashoStats };
 
-                if (res) {
-                    stressChange = res.win ? -2 : 3;
-                    newStats.wins += res.win ? 1 : 0;
-                    newStats.losses += res.win ? 0 : 1;
-                    newStats.matchHistory = [...newStats.matchHistory, res.opponentId];
+                // 勝敗反映
+                newStats.wins += res.win ? 1 : 0;
+                newStats.losses += res.win ? 0 : 1;
+                newStats.matchHistory = [...newStats.matchHistory, res.opponentId];
+                newStats.boutDays = [...(newStats.boutDays || []), tournamentDay];
 
-                    // Schedule next bout for Makushita and below
-                    if (!w.isSekitori) {
-                        const matchesPlayed = newStats.wins + newStats.losses;
-                        const remainingMatches = 7 - matchesPlayed;
-                        const remainingDays = 15 - tournamentDay;
-
-                        // Default gap is 2 (Run - Rest - Run)
-                        let gap = 2;
-
-                        // Check if we have luxury to rest 2 days (gap=3)
-                        // Need: remainingMatches * 2 + 1 (buffer) <= remainingDays
-                        // e.g. 2 matches left, need 4 days. If 6 days left, can gap=3 once.
-                        if (remainingDays > (remainingMatches * 2 + 2)) {
-                            if (Math.random() < 0.5) gap = 3;
-                        }
-
-                        // If very tight, forced to verify if gap=2 is even possible is tricky here without lookahead.
-                        // But if we strictly follow "gap=2", we consume 2 days per match.
-                        // If remainingDays < remainingMatches * 2, we are in trouble.
-                        // Ideally "gap=1" (Consecutive) handles emergency.
-                        if (remainingDays < remainingMatches * 2) {
-                            gap = 1; // Emergency consecutive fight
-                        }
-
-                        nextBoutDay = tournamentDay + gap;
-                    } else {
-                        nextBoutDay = null; // Sekitori fight daily (or handled implicitly)
-                    }
-                }
-
+                // ストレス変動
+                const stressChange = res.win ? -2 : 3;
                 let newStress = Math.max(0, (w.stress || 0) + stressChange - okamiRelief);
 
                 return {
                     ...w,
-                    stress: newStress,
                     currentBashoStats: newStats,
-                    nextBoutDay: nextBoutDay
+                    stress: newStress
                 };
             });
 
+            nextWrestlersState = updatedWrestlers;
             setWrestlers(updatedWrestlers);
+            setMatchesProcessed(true); // 処理完了
+            addLog(`${tournamentDay}日目の取組が終了しました。`, 'info');
+        }
 
-            // Basho End Check
-            if (currentDate.getDate() >= 24) {
-                const divisions = ['Makuuchi', 'Juryo', 'Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi'];
-                const rankToDivision = (rank: string): string => {
-                    if (['Yokozuna', 'Ozeki', 'Sekiwake', 'Komusubi', 'Maegashira'].includes(rank)) return 'Makuuchi';
-                    return rank;
-                };
+        // Common Updates
+        const eventResult = checkRandomEvents(nextWrestlersState, reputation, okamiLevel);
+        setFunds(prev => prev + eventResult.fundsChange);
+        setReputation(Math.min(100, Math.max(0, reputation + eventResult.reputationChange)));
 
-                const winnersMap: Record<string, Wrestler> = {};
+        // Update wrestlers with event results
+        nextWrestlersState = eventResult.updatedWrestlers;
+        setWrestlers(nextWrestlersState);
 
-                divisions.forEach(division => {
-                    const divisionWrestlers = updatedWrestlers.filter(w => rankToDivision(w.rank) === division);
+        // Advance Date
+        if (daysToAdvance > 0) {
+            advanceDate(daysToAdvance);
 
-                    if (divisionWrestlers.length > 0) {
-                        divisionWrestlers.sort((a, b) => {
-                            if (b.currentBashoStats.wins !== a.currentBashoStats.wins) return b.currentBashoStats.wins - a.currentBashoStats.wins;
-                            const rA = getRankValue(a.rank);
-                            const rB = getRankValue(b.rank);
-                            if (rA !== rB) return rB - rA;
-                            if ((a.rankNumber || 999) !== (b.rankNumber || 999)) return (a.rankNumber || 999) - (b.rankNumber || 999);
-                            if (a.rankSide === 'East' && b.rankSide === 'West') return -1;
-                            if (a.rankSide === 'West' && b.rankSide === 'East') return 1;
-                            return 0;
-                        });
-                        winnersMap[division] = divisionWrestlers[0];
-                    }
-                });
+            // もし場所中なら、翌日の対戦カードを作成する
+            if (gamePhase === 'tournament') {
 
-                if (Object.keys(winnersMap).length > 0) {
-                    setYushoWinners(winnersMap);
+                // Basho End Check: 24th is the last day (Day 15)
+                if (currentDate.getDate() >= 24) { // 24日(千秋楽)終了後
+                    // 千秋楽終了後の処理（Stats更新済みのwrestlersを使用）
+                    processBashoEnd(nextWrestlersState);
+                } else {
+                    // 翌日の割作成 (Day 2-15)
+                    const nextDate = new Date(currentDate);
+                    nextDate.setDate(nextDate.getDate() + 1); // 翌日の日付
+                    const nextDay = nextDate.getDate() - 9; // 翌日が何日目か
 
-                    // --- Log Yusho History ---
-                    const newRecords: YushoRecord[] = Object.entries(winnersMap).map(([div, winner]) => {
-                        const heya = heyas.find(h => h.id === winner.heyaId);
-                        return {
-                            bashoId: formatHybridDate(currentDate, 'tournament'),
-                            division: div as Division,
-                            wrestlerId: winner.id,
-                            wrestlerName: winner.name,
-                            heyaName: heya ? heya.name : 'Unknown',
-                            rank: formatRank(winner.rank),
-                            wins: winner.currentBashoStats.wins,
-                            losses: winner.currentBashoStats.losses
-                        };
-                    });
-                    setYushoHistory(prev => [...prev, ...newRecords]);
-
-                    const makuuchiWinner = winnersMap['Makuuchi'];
-                    if (makuuchiWinner) {
-                        addLog(`幕内最高優勝: ${makuuchiWinner.name} (${makuuchiWinner.currentBashoStats.wins}勝${makuuchiWinner.currentBashoStats.losses}敗)`, 'info');
-                        if (makuuchiWinner.heyaId === 'player_heya') {
-                            setFunds(funds + 10000000); // Need to use callback if funds changed in event loop?
-                            // actually funds logic is stable here.
-                            addLog("優勝賞金 1,000万円を獲得しました！", 'info');
-                        }
-                    }
+                    const nextMatches = generateDailyMatches(nextWrestlersState, nextDay);
+                    const nextMatchups: Matchup[] = nextMatches.map(m => ({
+                        east: m.east,
+                        west: m.west,
+                        division: m.division,
+                        winnerId: null
+                    }));
+                    setTodaysMatchups(nextMatchups);
+                    setMatchesProcessed(false); // リセット
+                    addLog(`${nextDay}日目の取組が発表されました。`, 'info');
                 }
-
-                updatedWrestlers = updatedWrestlers.map(w => {
-                    if (w.rank === 'MaeZumo') {
-                        addLog(`【新序出世】${w.name} が序ノ口に昇進しました！`, 'info');
-                        return { ...w, rank: 'Jonokuchi', rankNumber: 50 };
-                    }
-                    return w;
-                });
-
-                let nextWrestlers = updateBanzuke(updatedWrestlers);
-
-                const survivingWrestlers: Wrestler[] = [];
-                let retiredCount = 0;
-
-                nextWrestlers.forEach(w => {
-                    const retirementCheck = shouldRetire(w);
-                    let willRetire = false;
-
-                    if (w.heyaId !== 'player_heya') {
-                        if (retirementCheck.retire) willRetire = true;
-                    } else {
-                        // Player Logic
-                        if (retirementCheck.retire) {
-                            addLog(`${w.rank} ${w.name}: 引退の危機です (${retirementCheck.reason})`, 'warning');
-                            // Force Retire Yokozuna
-                            if (w.rank === 'Yokozuna') {
-                                willRetire = true;
-                                addLog(`${w.name}は横綱の品格を守るため引退を決意しました。`, 'error');
-                            }
-                        }
-                    }
-
-                    if (willRetire) {
-                        retiredCount++;
-                        // Trigger Retirement Ceremony Queue if distinct logic needed (Future task)
-                    } else {
-                        let newMax = w.maxRank;
-                        if (shouldUpdateMaxRank(w.rank, w.maxRank)) {
-                            newMax = w.rank;
-                        }
-                        let newStats = { ...w.stats };
-                        if (w.age >= 30) {
-                            const decayChance = w.age >= 35 ? 0.3 : 0.1;
-                            if (Math.random() < decayChance) {
-                                newStats.body = Math.max(1, newStats.body - 1);
-                                if (w.age >= 35) newStats.technique = Math.max(1, newStats.technique - 1);
-                            }
-                        }
-
-                        survivingWrestlers.push({
-                            ...w,
-                            maxRank: newMax,
-                            stats: newStats
-                        });
-                    }
-                });
-
-                for (let i = 0; i < retiredCount; i++) {
-                    // NEW: Only auto-replenish CPU Heyas
-                    const cpuHeyas = heyas.filter(h => h.id !== 'player_heya');
-
-                    if (cpuHeyas.length > 0) {
-                        const heya = cpuHeyas[Math.floor(Math.random() * cpuHeyas.length)];
-                        const rookie = generateWrestler(heya, 'Jonokuchi', usedNames);
-                        survivingWrestlers.push(rookie);
-                    }
-                }
-
-                if (retiredCount > 0) {
-                    addLog(`${retiredCount}名の力士が引退し、${retiredCount}名の新弟子が入門しました。`, 'info');
-                }
-
-                setWrestlers(survivingWrestlers);
-                setBashoFinished(true);
             }
         }
-
-        // --- MONTHLY PROCESSING ---
-        const nextDate = new Date(currentDate);
-        nextDate.setDate(nextDate.getDate() + daysToAdvance);
-
-        if (nextDate.getMonth() !== currentDate.getMonth()) {
-            const playerWrestlers = wrestlers.filter(w => w.heyaId === 'player_heya');
-
-            const income = calculateIncome(playerWrestlers);
-            const expenseBase = calculateExpenses(playerWrestlers);
-
-            // Okami Budget Cut
-            const multiplier = getOkamiBudgetMultiplier(okamiLevel);
-            const expense = Math.floor(expenseBase * multiplier);
-            const saved = expenseBase - expense;
-
-            const netBalance = income.total - expense;
-
-            // Update Funds
-            // NOTE: setFunds uses state. We should be careful about sequential updates.
-            // But here we are at end of function.
-            // Better to use functional update if funds might have changed during events?
-            // "funds" var is closure captured. Events update funds via setFunds. 
-            // So "funds" here is STALE if events fired?
-            // Yes.
-            // We should trust setFunds(prev => prev + ...) logic.
-            // Here: setFunds(prev => prev + netBalance);
-
-            setFunds((prev: number) => prev + netBalance);
-            setLastMonthBalance(netBalance);
-
-            addLog(`【収支報告】収入: ¥${income.total.toLocaleString()} - 支出: ¥${expense.toLocaleString()} = 収支: ¥${netBalance.toLocaleString()}`, netBalance >= 0 ? 'info' : 'warning');
-            if (saved > 0) {
-                addLog(`(女将さんの功績により、経費 ¥${saved.toLocaleString()} を節約しました)`, 'info');
-            }
-        }
-
-        if (nextDate.getFullYear() !== currentDate.getFullYear()) {
-            setWrestlers(prev => prev.map(w => ({ ...w, age: w.age + 1 })));
-            addLog("新年を迎えました。力士たちが1つ歳をとりました。", 'info');
-        }
-
-        if (nextDate.getMonth() !== currentDate.getMonth()) {
-            setWrestlers(prev => prev.map(w => ({ ...w, timeInHeya: (w.timeInHeya || 0) + 1 })));
-        }
-
-        advanceDate(daysToAdvance);
     };
 
+    /**
+     * 場所終了後の処理（表彰、番付編成、イベントなど）
+     */
+    const processBashoEnd = (finalWrestlers: Wrestler[]) => {
+        setBashoFinished(true);
+        setGamePhase('training');
+
+        // 優勝者の決定
+        const divisions = ['Makuuchi', 'Juryo', 'Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi'];
+        const winnersMap: Record<string, Wrestler> = {};
+        const rankToDivision = (rank: string): string => {
+            if (['Yokozuna', 'Ozeki', 'Sekiwake', 'Komusubi', 'Maegashira'].includes(rank)) return 'Makuuchi';
+            return rank;
+        };
+
+        divisions.forEach(division => {
+            const divisionWrestlers = finalWrestlers.filter(w => rankToDivision(w.rank) === division);
+
+            if (divisionWrestlers.length > 0) {
+                divisionWrestlers.sort((a, b) => {
+                    if (b.currentBashoStats.wins !== a.currentBashoStats.wins) return b.currentBashoStats.wins - a.currentBashoStats.wins;
+                    // 決定戦ロジック省略（上位者優勝）
+                    return 0;
+                });
+                winnersMap[division] = divisionWrestlers[0];
+            }
+        });
+
+        setYushoWinners(winnersMap);
+
+        // Log Yusho History
+        const newRecords: YushoRecord[] = Object.entries(winnersMap).map(([div, winner]) => {
+            const heya = heyas.find(h => h.id === winner.heyaId);
+            return {
+                bashoId: formatHybridDate(currentDate, 'tournament'),
+                division: div as Division,
+                wrestlerId: winner.id,
+                wrestlerName: winner.name,
+                heyaName: heya ? heya.name : 'Unknown',
+                rank: formatRank(winner.rank),
+                wins: winner.currentBashoStats.wins,
+                losses: winner.currentBashoStats.losses
+            };
+        });
+        setYushoHistory(prev => [...prev, ...newRecords]);
+
+        const makuuchiWinner = winnersMap['Makuuchi'];
+        if (makuuchiWinner) {
+            addLog(`幕内最高優勝: ${makuuchiWinner.name} (${makuuchiWinner.currentBashoStats.wins}勝${makuuchiWinner.currentBashoStats.losses}敗)`, 'info');
+            if (makuuchiWinner.heyaId === 'player_heya') {
+                setFunds(prev => prev + 10000000);
+                addLog("優勝賞金 1,000万円を獲得しました！", 'info');
+            }
+        }
+
+        // 新序出世
+        let updatedWrestlers = finalWrestlers.map(w => {
+            if (w.rank === 'MaeZumo') {
+                addLog(`【新序出世】${w.name} が序ノ口に昇進しました！`, 'info');
+                return { ...w, rank: 'Jonokuchi' as const, rankNumber: 50 };
+            }
+            return w;
+        });
+
+        // 番付編成
+        let nextWrestlers = updateBanzuke(updatedWrestlers);
+
+        const survivingWrestlers: Wrestler[] = [];
+        let retiredCount = 0;
+
+        // 引退判定
+        nextWrestlers.forEach(w => {
+            const isPlayerHeya = w.heyaId === 'player_heya';
+            const retirementCheck = shouldRetire(w, isPlayerHeya);
+            let willRetire = false;
+
+            if (!isPlayerHeya) {
+                // CPU
+                if (retirementCheck.retire) willRetire = true;
+            } else {
+                // Player
+                if (retirementCheck.retire) {
+                    willRetire = true;
+                    addLog(`${w.name}は${retirementCheck.reason} により引退を決意しました。`, 'error');
+                } else if (retirementCheck.shouldConsult) {
+                    // Consultation
+                    const updatedWrestler = {
+                        ...w,
+                        retirementStatus: 'Thinking' as const,
+                        retirementReason: retirementCheck.reason
+                    };
+                    survivingWrestlers.push(updatedWrestler);
+                    addLog(`【引退相談】${w.name}が引退について相談を求めています...`, 'warning');
+                    return;
+                }
+            }
+
+            if (willRetire) {
+                retiredCount++;
+                if (isPlayerHeya && w.isSekitori) {
+                    setRetiringQueue(prev => [...prev, w]);
+                }
+            } else {
+                // Aging / Decay
+                let newMax = w.maxRank;
+                if (shouldUpdateMaxRank(w.rank, w.maxRank)) {
+                    newMax = w.rank;
+                }
+                let newStats = { ...w.stats };
+                if (w.age >= 30) {
+                    const decayChance = w.age >= 35 ? 0.3 : 0.1;
+                    if (Math.random() < decayChance) {
+                        newStats.body = Math.max(1, newStats.body - 1);
+                        if (w.age >= 35) newStats.technique = Math.max(1, newStats.technique - 1);
+                    }
+                }
+
+                // LastHanamichi Check
+                let newRetirementStatus = w.retirementStatus || 'None';
+                if (w.retirementStatus === 'LastHanamichi' && w.currentBashoStats.wins >= 8) {
+                    newRetirementStatus = 'None';
+                    addLog(`【復活】${w.name} がラストチャンスを見事に掴みました！現役続行決定！`, 'info');
+                }
+
+                survivingWrestlers.push({
+                    ...w,
+                    maxRank: newMax,
+                    stats: newStats,
+                    retirementStatus: newRetirementStatus as any,
+                    age: w.age + (currentDate.getMonth() === 11 ? 1 : 0), // Birthday logic approximation
+                    // Reset Basho Stats
+                    currentBashoStats: { wins: 0, losses: 0, matchHistory: [], boutDays: [] },
+                    nextBoutDay: null // Clear bout day
+                });
+            }
+        });
+
+        // 新弟子
+        let recruitedCount = 0;
+        if (survivingWrestlers.length < 950) {
+            const needed = 960 - survivingWrestlers.length;
+            const recruitNum = Math.min(needed, Math.floor(Math.random() * 10) + 5);
+            for (let i = 0; i < recruitNum; i++) {
+                const randomHeya = heyas[Math.floor(Math.random() * heyas.length)];
+                survivingWrestlers.push(generateWrestler(randomHeya, 'MaeZumo'));
+                recruitedCount++;
+            }
+        }
+
+        // Monthly Balance
+        const playerWrestlers = survivingWrestlers.filter(w => w.heyaId === 'player_heya');
+
+        const incomeReport = calculateIncome(playerWrestlers);
+        const income = incomeReport.total;
+        const rawExpenses = calculateExpenses(playerWrestlers);
+        const budgetMultiplier = getOkamiBudgetMultiplier(okamiLevel);
+        const expense = Math.floor(rawExpenses * budgetMultiplier);
+        const netBalance = income - expense;
+
+        setLastMonthBalance(netBalance);
+
+        // Apply finances
+        setFunds(prev => prev + netBalance);
+
+        const savedPercentage = Math.round((1 - budgetMultiplier) * 100);
+        if (savedPercentage > 0) {
+            addLog(`【収支報告】女将さんの功績により、経費 ${savedPercentage}% を節約しました。`, 'info');
+        }
+
+        setWrestlers(survivingWrestlers);
+        addLog(`${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月場所終了。${retiredCount}名の力士が引退し、${recruitedCount}名の新弟子が入門しました。`, 'info');
+    };
 
     const closeBashoModal = () => {
         setBashoFinished(false);
-        setGamePhase('training'); // Renamed
-        addLog("新番付が発表されました。育成期間に入ります。", 'info');
-
-        // Construct Basho ID for history (e.g., "2025年1月場所")
-        const bashoId = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月場所`;
-
-        // Get Yusho Winners (from history which should be updated by now)
-        // BUG FIX: yushoHistory contains all divisions. Must filter for Makuuchi.
-        const makuuchiHistory = yushoHistory.filter(r => r.division === 'Makuuchi');
-        const currentWinnerId = makuuchiHistory.length > 0 ? makuuchiHistory[makuuchiHistory.length - 1].wrestlerId : null;
-        const prevWinnerId = makuuchiHistory.length > 1 ? makuuchiHistory[makuuchiHistory.length - 2].wrestlerId : null;
-
-        // Update Banzuke (Rank Promotion/Demotion)
-        const newWrestlers = updateBanzuke(wrestlers, bashoId, currentWinnerId, prevWinnerId);
-        setWrestlers(newWrestlers);
-
-        // Reset Matchups
-        setTodaysMatchups([]);
-
-        // Auto Save after Basho
-        triggerAutoSave({
-            wrestlers: newWrestlers,
-            heyas, funds, reputation, okamiLevel,
-            usedNames
-        });
-    };
-
-    const inspectCandidate = (cost: number): boolean => {
-        if (funds < cost) return false;
-        setFunds((prev: number) => prev - cost);
-        return true;
     };
 
     const recruitWrestler = (candidate: Candidate, customName?: string) => {
-        if (funds < candidate.scoutCost) return;
-
-        const playerWrestlers = wrestlers.filter(w => w.heyaId === 'player_heya');
-        if (playerWrestlers.length >= MAX_PLAYERS_PER_HEYA) {
-            addLog("部屋の定員オーバーです！", 'error');
+        if (wrestlers.filter(w => w.heyaId === 'player_heya').length >= MAX_PLAYERS_PER_HEYA) {
+            addLog("部屋の定員（10人）がいっぱいです！", 'error');
+            return;
+        }
+        if (funds < 3000000) {
+            addLog("支度金（300万円）が足りません！", 'error');
             return;
         }
 
-        setFunds((prev: number) => prev - candidate.scoutCost);
+        const playerHeyaObj = heyas.find(h => h.id === 'player_heya');
+        if (!playerHeyaObj) return;
 
-        const { scoutCost, revealedStats, ...wrestlerData } = candidate;
+        setFunds(prev => prev - 3000000);
+        let newWrestler = generateWrestler(playerHeyaObj, 'MaeZumo');
+        // generateWrestler doesn't take candidate stats directly, so updates stats manually from candidate
+        // Or generator needs update. For now, overwrite stats.
+        newWrestler.stats = { ...candidate.stats };
+        newWrestler.potential = candidate.potential;
+        newWrestler.flexibility = candidate.flexibility;
+        newWrestler.weight = candidate.weight;
+        newWrestler.height = candidate.height;
+        newWrestler.background = candidate.background;
+        newWrestler.age = candidate.age;
 
-        const newWrestler: Wrestler = {
-            ...wrestlerData,
-            name: customName && customName.trim() !== '' ? customName : wrestlerData.name,
-            rank: 'MaeZumo',
-            rankNumber: 1,
-            history: [],
-            currentBashoStats: { wins: 0, losses: 0, matchHistory: [] },
-            nextBoutDay: null,
-            stress: 0 // Init stress
-        };
-
+        if (customName) {
+            newWrestler.name = customName;
+        }
         setWrestlers(prev => [...prev, newWrestler]);
-        addLog(`新弟子 ${newWrestler.name} が入門しました！来場所から前相撲として修行を開始します。`, 'info');
         setCandidates(prev => prev.filter(c => c.id !== candidate.id));
+        addLog(`新弟子 ${newWrestler.name} が入門しました！来場所から前相撲として修行を開始します。`, 'info');
+    };
+
+    const inspectCandidate = (cost: number) => {
+        if (funds >= cost) {
+            setFunds(prev => prev - cost);
+        } else {
+            addLog("資金が足りません！", 'error');
+        }
     };
 
     const retireWrestler = (wrestlerId: string) => {
         const wrestler = wrestlers.find(w => w.id === wrestlerId);
-        if (!wrestler) return;
+        if (wrestler) {
+            // Player manual retirement logic
+            const severance = calculateSeverance(wrestler);
 
-        // New Logic: If Sekitori, queue for Danpatsu-shiki
-        if (wrestler.isSekitori) {
-            setRetiringQueue(prev => [...prev, wrestler]);
-            // Remove from active list immediately? 
-            // If we remove immediately, the modal needs the object.
-            // We pushed the object to queue, so it's safe.
-            setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
-            return;
+            addLog(`${wrestler.name} (最高位: ${formatRank(wrestler.maxRank)}) が引退しました。`, 'warning');
+
+            if (wrestler.isSekitori) {
+                // Sekitori Queue
+                setRetiringQueue(prev => [...prev, wrestler]);
+            } else {
+                // Instant
+                if (severance > 0) setFunds(prev => prev + severance);
+                addLog("協会より功労金" + severance.toLocaleString() + "円が支払われました。", 'info');
+                // Remove
+                setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
+            }
         }
-
-        // Non-Sekitori: Retire quietly
-        const severance = calculateSeverance(wrestler); // Assuming this creates small amount or 0
-        if (severance > 0) {
-            setFunds((prev: number) => prev + severance);
-        }
-
-        setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
-        addLog(`【引退】${wrestler.name} (最高位: ${formatRank(wrestler.rank)}) が引退しました。`, 'warning');
     };
 
-    const completeRetirement = (wrestler: Wrestler) => {
-        const severance = calculateSeverance(wrestler);
-        if (severance > 0) {
-            setFunds((prev: number) => prev + severance);
-            addLog(`断髪式にて、協会より功労金 ¥${severance.toLocaleString()} が支払われました。`, 'info');
+    const completeRetirement = (wrestlerId: string) => {
+        const wrestler = retiringQueue.find(w => w.id === wrestlerId);
+        if (wrestler) {
+            const severance = calculateSeverance(wrestler);
+            setFunds(prev => prev + severance);
+            addLog(`${wrestler.name}の断髪式が執り行われ、マゲに別れを告げました。`, 'info');
+            addLog("協会より功労金" + severance.toLocaleString() + "円が支払われました。", 'info');
+            setRetiringQueue(prev => prev.filter(w => w.id !== wrestlerId));
+            // Finally remove from wrestler list if still there (usually filtered out in processBashoEnd, but for updatedWrestlers logic)
+            setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
         }
-        addLog(`【引退】${wrestler.name} の断髪式が執り行われ、マゲに別れを告げました。`, 'warning');
-
-        // Remove from queue
-        setRetiringQueue(prev => prev.filter(w => w.id !== wrestler.id));
     };
 
     const upgradeOkami = () => {
         const cost = getOkamiUpgradeCost(okamiLevel);
-        if (!cost) return;
-        if (funds < cost) {
-            addLog("資金が不足しています。", 'error');
-            return;
-        }
-        setFunds((prev: number) => prev - cost);
+        if (cost === null || okamiLevel >= 5) return;
+        if (funds < cost) return;
+
+        setFunds(prev => prev - cost);
         setOkamiLevel(okamiLevel + 1);
         addLog(`女将さんのレベルが ${okamiLevel + 1} に上がりました！`, 'info');
     };
 
-    // Special Training Logic
-    const doSpecialTraining = (wrestlerId: string, menuType: TrainingType | 'meditation') => {
-        if (trainingPoints <= 0) {
-            alert("指導力が不足しています");
-            return;
-        }
-
+    const doSpecialTraining = (wrestlerId: string, menuType: string) => {
         const wrestler = wrestlers.find(w => w.id === wrestlerId);
-        if (!wrestler) return;
+        if (!wrestler || trainingPoints <= 0) return;
 
-        if (wrestler.injuryStatus === 'injured') {
-            alert("怪我をしている力士は特訓できません");
-            return;
-        }
+        setTrainingPoints(prev => prev - 1);
 
-        setTrainingPoints((prev: number) => prev - 1);
-
-        let newStats = { ...wrestler.stats };
-        let stressGain = 0;
         let diffBody = 0, diffTech = 0, diffMind = 0;
 
-        const p = wrestler.potential;
-        const getEfficiency = (current: number) => Math.max(0.1, (p - current) / p);
-        const baseBoost = 2.0;
+        if (menuType === 'strength') { diffBody = 2; diffTech = 1; }
+        else if (menuType === 'technique') { diffTech = 2; diffMind = 1; }
+        else if (menuType === 'meditation') { diffMind = 2; diffBody = 1; }
 
-        if (menuType === 'shiko') {
-            const gain = baseBoost * getEfficiency(newStats.body) * 2;
-            newStats.body = Math.min(p, newStats.body + gain);
-            diffBody = gain;
-            stressGain = 5;
-        } else if (menuType === 'teppo') {
-            const gainT = baseBoost * getEfficiency(newStats.technique);
-            const gainB = baseBoost * getEfficiency(newStats.body) * 0.5;
-            newStats.technique = Math.min(p, newStats.technique + gainT);
-            newStats.body = Math.min(p, newStats.body + gainB);
-            diffTech = gainT;
-            diffBody = gainB;
-            stressGain = 5;
-        } else if (menuType === 'moushi_ai') {
-            const gainT = baseBoost * getEfficiency(newStats.technique) * 1.5;
-            const gainM = baseBoost * getEfficiency(newStats.mind);
-            newStats.technique = Math.min(p, newStats.technique + gainT);
-            newStats.mind = Math.min(p, newStats.mind + gainM);
-            diffTech = gainT;
-            diffMind = gainM;
-            stressGain = 15;
-        } else if (menuType === 'meditation') {
-            const gainM = baseBoost * getEfficiency(newStats.mind) * 2;
-            newStats.mind = Math.min(p, newStats.mind + gainM);
-            diffMind = gainM;
-            stressGain = -20;
+        setWrestlers(prev => prev.map(w => w.id === wrestlerId ? {
+            ...w,
+            stats: {
+                body: Math.min(w.potential, w.stats.body + diffBody),
+                technique: Math.min(w.potential, w.stats.technique + diffTech),
+                mind: Math.min(w.potential, w.stats.mind + diffMind)
+            }
+        } : w));
+
+        // Skill Check
+        const learnProb = 0.05;
+        if (Math.random() < learnProb && wrestler.skills.length < MAX_SKILLS) {
+            // Learn random skill
+            const unlearned = ALL_SKILLS.filter(s => !wrestler.skills.includes(s));
+            if (unlearned.length > 0) {
+                const newSkill = unlearned[Math.floor(Math.random() * unlearned.length)];
+                setWrestlers(prev => prev.map(w => w.id === wrestlerId ? { ...w, skills: [...w.skills, newSkill] } : w));
+                addLog(`${wrestler.name}は特訓の末、秘技『${SKILL_INFO[newSkill].name}』を閃いた！`, 'info');
+            }
         }
 
-        const newStress = Math.min(100, Math.max(0, (wrestler.stress || 0) + stressGain));
-
-        setWrestlers((prev: Wrestler[]) => prev.map((w: Wrestler) =>
-            w.id === wrestlerId
-                ? { ...w, stats: newStats, stress: newStress }
-                : w
-        ));
-
-        addLog(`${wrestler.name}が${menuType === 'shiko' ? '四股' :
-            menuType === 'teppo' ? '鉄砲' :
-                menuType === 'moushi_ai' ? '申し合い' : '瞑想'
-            }を行いました (心+${diffMind.toFixed(1)} 技+${diffTech.toFixed(1)} 体+${diffBody.toFixed(1)})`, 'info');
+        addLog(`特別指導（${menuType}）を行いました。心+${diffMind} 技+${diffTech} 体+${diffBody}`, 'info');
     };
 
-    // History & Save Logic
-    const triggerAutoSave = (currentState: { wrestlers: Wrestler[], heyas: Heya[], funds: number, reputation: number, okamiLevel: number, history?: YushoRecord[], usedNames?: string[] }) => {
-        // We use the passed state to ensure we save the *latest* data after updates
-        const saveData: SaveData = {
+    const triggerAutoSave = (currentState: any) => {
+        const data: SaveData = {
             version: 1,
             timestamp: Date.now(),
             gameState: {
                 currentDate: currentDate.toISOString(),
                 funds: currentState.funds,
-                gamePhase, // Renamed
-                gameMode, // Added
+                reputation: currentState.reputation,
+                okamiLevel: currentState.okamiLevel,
+                gamePhase,
+                gameMode,
                 bashoFinished,
                 lastMonthBalance,
                 isInitialized,
-                oyakataName: oyakataName,
-                okamiLevel: currentState.okamiLevel,
-                reputation: currentState.reputation,
-                trainingPoints
+                oyakataName,
+                trainingPoints,
+                matchesProcessed,
+                todaysMatchups
             },
             wrestlers: currentState.wrestlers,
-            heyas: currentState.heyas,
-            yushoHistory: yushoHistory.concat(currentState.history || []),
-            logs: logs,
-            usedNames: currentState.usedNames || []
+            heyas,
+            yushoHistory,
+            logs,
+            usedNames
         };
-        saveGame(saveData);
+        saveGame(data);
     };
 
     const recordYushoHistory = (winners: Record<string, Wrestler>) => {
-        const bashoId = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月場所`;
+        const bashoId = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1} 月場所`;
 
         const newRecords: YushoRecord[] = Object.entries(winners).map(([div, winner]) => {
             const heya = heyas.find(h => h.id === winner.heyaId);
@@ -684,9 +649,55 @@ export const useGameLoop = () => {
         });
 
         setYushoHistory(prev => [...prev, ...newRecords]);
-        return newRecords; // Return for saving
+        return newRecords;
     };
 
-    return { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining, triggerAutoSave, recordYushoHistory };
-};
+    const handleRetirementConsultation = (wrestlerId: string, decision: 'accept' | 'persuade') => {
+        const wrestler = wrestlers.find(w => w.id === wrestlerId);
+        if (!wrestler) return;
 
+        if (decision === 'accept') {
+            addLog(`【引退決定】${wrestler.name} の引退が正式に決まりました。`, 'warning');
+
+            if (wrestler.isSekitori) {
+                setRetiringQueue(prev => [...prev, wrestler]);
+            } else {
+                const severance = calculateSeverance(wrestler);
+                if (severance > 0) {
+                    setFunds((prev: number) => prev + severance);
+                }
+                addLog(`【引退】${wrestler.name} (最高位: ${formatRank(wrestler.maxRank)}) が引退しました。`, 'warning');
+            }
+
+            setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
+        } else {
+            addLog(`【説得成功】「馬鹿野郎！お前の相撲はまだ終わっちゃいない！」`, 'info');
+            addLog(`${wrestler.name} は親方の言葉に奮い立ち、ラストチャンスに挑みます！`, 'warning');
+
+            setWrestlers(prev => prev.map(w =>
+                w.id === wrestlerId
+                    ? {
+                        ...w,
+                        retirementStatus: 'LastHanamichi' as const,
+                        retirementReason: undefined,
+                        stats: { ...w.stats, mind: w.potential || 100 }
+                    }
+                    : w
+            ));
+        }
+
+        setConsultingWrestlerId(null);
+    };
+
+    const checkForRetirementConsultation = () => {
+        const thinkingWrestler = wrestlers.find(
+            w => w.heyaId === 'player_heya' && w.retirementStatus === 'Thinking'
+        );
+
+        if (thinkingWrestler) {
+            setConsultingWrestlerId(thinkingWrestler.id);
+        }
+    };
+
+    return { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining, triggerAutoSave, recordYushoHistory, handleRetirementConsultation, checkForRetirementConsultation };
+};

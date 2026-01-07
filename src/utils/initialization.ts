@@ -57,7 +57,9 @@ const createPlayerWrestler = (
         timeInHeya: 0,
         injuryDuration: 0,
         consecutiveLoseOrAbsent: 0,
-        stress: 0
+        stress: 0,
+        skills: [],
+        retirementStatus: 'None'
     };
 };
 

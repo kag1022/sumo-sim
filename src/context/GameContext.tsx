@@ -24,6 +24,8 @@ interface GameState {
     yushoHistory: YushoRecord[];
     retiringQueue: Wrestler[];
     usedNames: string[];
+    consultingWrestlerId: string | null; // 現在相談中の力士ID
+    matchesProcessed: boolean; // 今日、既に勝敗判定とログ出力を行ったか？
 }
 
 interface GameContextProps extends GameState {
@@ -53,6 +55,10 @@ interface GameContextProps extends GameState {
     registerName: (name: string) => void;
     isNameUsed: (name: string) => boolean;
     setUsedNames: React.Dispatch<React.SetStateAction<string[]>>;
+    consultingWrestlerId: string | null;
+    setConsultingWrestlerId: React.Dispatch<React.SetStateAction<string | null>>;
+    matchesProcessed: boolean;
+    setMatchesProcessed: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -81,6 +87,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [trainingPoints, setTrainingPoints] = useState<number>(3);
     const [retiringQueue, setRetiringQueue] = useState<Wrestler[]>([]);
     const [usedNames, setUsedNames] = useState<string[]>([]);
+    const [consultingWrestlerId, setConsultingWrestlerId] = useState<string | null>(null);
+    const [matchesProcessed, setMatchesProcessed] = useState<boolean>(false);
 
     const registerName = (name: string) => {
         setUsedNames(prev => [...prev, name]);
@@ -217,7 +225,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             usedNames,
             registerName,
             isNameUsed,
-            setUsedNames
+            setUsedNames,
+            consultingWrestlerId,
+            setConsultingWrestlerId,
+            matchesProcessed,
+            setMatchesProcessed
         }}>
             {children}
         </GameContext.Provider>

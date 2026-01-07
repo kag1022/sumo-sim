@@ -1,7 +1,8 @@
 import { Wrestler, Rank, BashoLog } from '../../../types';
 import {
-    QUOTA_OZEKI_MIN, QUOTA_SEKIWAKE, QUOTA_KOMUSUBI,
-    QUOTA_MAKUUCHI, QUOTA_JURYO, QUOTA_MAKUSHITA, QUOTA_SANDANME, QUOTA_JONIDAN
+    QUOTA_OZEKI_MIN,
+    QUOTA_MAKUUCHI, QUOTA_JURYO, QUOTA_MAKUSHITA, QUOTA_SANDANME, QUOTA_JONIDAN,
+    BANZUKE_QUOTA
 } from '../../../utils/constants';
 
 // --- Scoring Constants ---
@@ -254,7 +255,53 @@ export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent B
     const nextJonidan: Wrestler[] = [];
     const nextJonokuchi: Wrestler[] = [];
 
-    // Helper: Fill List from Candidates with Side Assignment (Step D)
+    // Helper: Calculate how many Sekiwake slots to use
+    const calculateSekiwakeSlots = (): number => {
+        // Start with minimum
+        let slots = BANZUKE_QUOTA.Sekiwake_Min;
+
+        // Check for exceptional performers
+        for (const c of candidates) {
+            if (slots >= BANZUKE_QUOTA.Sekiwake_Max) break;
+
+            const wins = c.currentBashoStats.wins;
+            const rank = c.rank;
+
+            // 小結で11勝以上 → 関脇昇進
+            if (rank === 'Komusubi' && wins >= 11) {
+                slots++;
+            }
+            // 前頭筆頭付近（M1-M3）で12勝以上 → 関脇昇進
+            else if (rank === 'Maegashira' && (c.rankNumber || 99) <= 3 && wins >= 12) {
+                slots++;
+            }
+        }
+
+        return Math.min(slots, BANZUKE_QUOTA.Sekiwake_Max);
+    };
+
+    // Helper: Calculate how many Komusubi slots to use
+    const calculateKomusubiSlots = (remainingMakuuchiSlots: number): number => {
+        let slots = BANZUKE_QUOTA.Komusubi_Min;
+
+        // Check for strong Maegashira who should be promoted
+        for (const c of candidates) {
+            if (slots >= BANZUKE_QUOTA.Komusubi_Max) break;
+            if (slots >= remainingMakuuchiSlots) break;
+
+            const wins = c.currentBashoStats.wins;
+            const rank = c.rank;
+
+            // 前頭で8勝以上 → 小結昇進候補
+            if (rank === 'Maegashira' && wins >= 8) {
+                slots++;
+            }
+        }
+
+        return Math.min(slots, BANZUKE_QUOTA.Komusubi_Max);
+    };
+
+    // Helper: Fill List from Candidates with Side Assignment
     const fillListAndAssign = (targetList: Wrestler[], count: number, rankName: Rank, sekitori: boolean) => {
         for (let i = 0; i < count; i++) {
             const w = candidates.shift();
@@ -266,8 +313,15 @@ export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent B
         }
     };
 
-    fillListAndAssign(nextSekiwake, QUOTA_SEKIWAKE, 'Sekiwake', true);
-    fillListAndAssign(nextKomusubi, QUOTA_KOMUSUBI, 'Komusubi', true);
+    // --- Flexible Sanyaku Allocation ---
+    const sekiwakeSlots = calculateSekiwakeSlots();
+    fillListAndAssign(nextSekiwake, sekiwakeSlots, 'Sekiwake', true);
+
+    const usedSoFar = nextYokozuna.length + nextOzeki.length + nextSekiwake.length;
+    const remainingForKomusubiAndBelow = QUOTA_MAKUUCHI - usedSoFar;
+
+    const komusubiSlots = calculateKomusubiSlots(remainingForKomusubiAndBelow);
+    fillListAndAssign(nextKomusubi, komusubiSlots, 'Komusubi', true);
 
     const usedMakuuchi = nextYokozuna.length + nextOzeki.length + nextSekiwake.length + nextKomusubi.length;
     fillListAndAssign(nextMaegashira, Math.max(0, QUOTA_MAKUUCHI - usedMakuuchi), 'Maegashira', true);
@@ -277,6 +331,7 @@ export const updateBanzuke = (wrestlers: Wrestler[], bashoId: string = "Recent B
     fillListAndAssign(nextSandanme, QUOTA_SANDANME, 'Sandanme', false);
     fillListAndAssign(nextJonidan, QUOTA_JONIDAN, 'Jonidan', false);
     fillListAndAssign(nextJonokuchi, candidates.length, 'Jonokuchi', false); // Rest
+
 
     // --- Phase 5: Assign East/West Strictly (Step D) ---
     const assignRows = (list: Wrestler[]) => {

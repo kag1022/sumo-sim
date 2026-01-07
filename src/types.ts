@@ -11,6 +11,21 @@ export type Rank =
     | "Jonokuchi"
     | "MaeZumo";
 
+/** 秘技スキルの種類 */
+export type SkillType =
+    | 'IronHead'     // 鉄の額: 常に戦闘力+5%
+    | 'GiantKiller'  // 巨漢殺し: 相手が20kg以上重い場合、戦闘力+15%
+    | 'EscapeArtist' // 逃げ足: 心属性判定時、ボーナス+20%
+    | 'StaminaGod'   // 無尽蔵: 長期戦で有利（将来実装）
+    | 'Bulldozer';   // 重戦車: 体属性判定時、ボーナス+10%
+
+/** 引退ステータス */
+export type RetirementStatus =
+    | 'None'          // 通常
+    | 'Thinking'      // 引退を考えている（相談待ち）
+    | 'LastHanamichi' // 親方に引き止められたラストチャンス中
+    | 'Retired';      // 引退済み
+
 export type TrainingType = 'shiko' | 'teppo' | 'moushi_ai' | 'rest';
 
 export type GamePhase = 'training' | 'tournament';
@@ -57,6 +72,7 @@ export interface Wrestler {
         wins: number;
         losses: number;
         matchHistory: string[]; // IDs of opponents fought in this basho
+        boutDays?: number[]; // Days fought in this basho (for rest day logic)
     };
     // Status Fields
 
@@ -77,6 +93,28 @@ export interface Wrestler {
     injuryDuration: number; // Weeks (or Days)
     consecutiveLoseOrAbsent: number; // Bashos
     stress: number; // 0-100
+
+    // Skill System
+    skills: SkillType[]; // 習得済みスキル（最大3つ）
+
+    // Retirement Consultation System
+    retirementStatus: RetirementStatus;
+    retirementReason?: string; // 引退理由
+}
+
+// 以前のMatchResultは日次結果ログ用などに残すが、MatchPairを定義
+export interface MatchPair {
+    east: Wrestler;
+    west: Wrestler;
+    division: Division;
+}
+
+export interface MatchResult {
+    day: number;
+    winnerId: string;
+    loserId: string;
+    kimarite: string;
+    winningAttribute: string;
 }
 
 export type Division = 'Makuuchi' | 'Juryo' | 'Makushita' | 'Sandanme' | 'Jonidan' | 'Jonokuchi';
@@ -126,6 +164,8 @@ export interface SaveData {
         okamiLevel: number;
         reputation: number;
         trainingPoints: number;
+        matchesProcessed: boolean;
+        todaysMatchups: Matchup[];
     };
     wrestlers: Wrestler[];
     heyas: Heya[];

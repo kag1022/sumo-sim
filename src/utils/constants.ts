@@ -11,6 +11,24 @@ export const QUOTA_OZEKI_MIN = 2;
 export const QUOTA_SEKIWAKE = 2;
 export const QUOTA_KOMUSUBI = 2;
 
+/** 柔軟な三役定員ルール（史実に基づく） */
+export const BANZUKE_QUOTA = {
+    /** 大関の最大人数 */
+    Ozeki_Max: 6,
+    /** 関脇の最低人数 */
+    Sekiwake_Min: 2,
+    /** 関脇の最大人数 */
+    Sekiwake_Max: 5,
+    /** 小結の最低人数 */
+    Komusubi_Min: 2,
+    /** 小結の最大人数 */
+    Komusubi_Max: 4,
+    /** 幕内総定員 */
+    Makuuchi: 42,
+    /** 十両定員 */
+    Juryo: 28
+};
+
 export const RANK_VALUE_MAP: Record<string, number> = {
     "Yokozuna": 13000, // Boosted to keep above Ozeki
     "Ozeki": 12000,

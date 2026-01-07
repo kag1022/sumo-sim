@@ -15,7 +15,7 @@ const createMockFighter = (id: string, body: number, tech: number, mind: number,
     history: [],
     currentBashoStats: { wins: 0, losses: 0, matchHistory: [] },
     // Dummies
-    age: 20, maxRank: 'Maegashira', historyMaxLength: 10, timeInHeya: 10, injuryDuration: 0, consecutiveLoseOrAbsent: 0, stress: 0, nextBoutDay: null, potential: 100, flexibility: 50, weight: 150, height: 180, background: ''
+    age: 20, maxRank: 'Maegashira', historyMaxLength: 10, timeInHeya: 10, injuryDuration: 0, consecutiveLoseOrAbsent: 0, stress: 0, nextBoutDay: null, potential: 100, flexibility: 50, weight: 150, height: 180, background: '', skills: [], retirementStatus: 'None'
 });
 
 describe('MatchMaker Logic', () => {

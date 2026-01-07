@@ -10,6 +10,7 @@ import ManagementModal from './features/heya/components/ManagementModal';
 import { TitleScreen } from './components/TitleScreen'; // New Import
 import { HistoryModal } from './features/banzuke/components/HistoryModal'; // New Import
 import { DanpatsuModal } from './features/wrestler/components/DanpatsuModal';
+import { RetirementConsultationModal } from './components/RetirementConsultationModal';
 import { HelpModal } from './components/HelpModal';
 import { TrainingType, Wrestler, GameMode } from './types';
 import { GameProvider, useGame } from './context/GameContext';
@@ -50,7 +51,9 @@ const generateDummyWrestlers = (): Wrestler[] => {
       timeInHeya: 120,
       injuryDuration: 0,
       consecutiveLoseOrAbsent: 0,
-      stress: 0
+      stress: 0,
+      skills: [],
+      retirementStatus: 'None'
     },
     {
       id: 'player-2',
@@ -78,7 +81,9 @@ const generateDummyWrestlers = (): Wrestler[] => {
       timeInHeya: 80,
       injuryDuration: 0,
       consecutiveLoseOrAbsent: 0,
-      stress: 0
+      stress: 0,
+      skills: [],
+      retirementStatus: 'None'
     },
     {
       id: 'player-3',
@@ -106,7 +111,9 @@ const generateDummyWrestlers = (): Wrestler[] => {
       timeInHeya: 60,
       injuryDuration: 0,
       consecutiveLoseOrAbsent: 0,
-      stress: 0
+      stress: 0,
+      skills: [],
+      retirementStatus: 'None'
     },
     {
       id: 'player-4',
@@ -134,7 +141,9 @@ const generateDummyWrestlers = (): Wrestler[] => {
       timeInHeya: 24,
       injuryDuration: 0,
       consecutiveLoseOrAbsent: 0,
-      stress: 0
+      stress: 0,
+      skills: [],
+      retirementStatus: 'None'
     }
   ];
 };
@@ -168,8 +177,8 @@ const GameAppContent = () => {
 };
 
 const MainGameInterface = () => {
-  const { currentDate, funds, setFunds, wrestlers, setWrestlers, heyas, setHeyas, gamePhase, bashoFinished, lastMonthBalance, yushoWinners, setYushoWinners, okamiLevel, reputation, trainingPoints, yushoHistory, retiringQueue } = useGame();
-  const { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining } = useGameLoop();
+  const { currentDate, funds, setFunds, wrestlers, setWrestlers, heyas, setHeyas, gamePhase, bashoFinished, lastMonthBalance, yushoWinners, setYushoWinners, okamiLevel, reputation, trainingPoints, yushoHistory, retiringQueue, consultingWrestlerId } = useGame();
+  const { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining, handleRetirementConsultation } = useGameLoop();
   const { t, i18n } = useTranslation();
 
   const [selectedWrestler, setSelectedWrestler] = useState<Wrestler | null>(null);
@@ -617,12 +626,28 @@ const MainGameInterface = () => {
       {retiringQueue.length > 0 && (
         <DanpatsuModal
           wrestler={retiringQueue[0]}
-          onSnip={() => completeRetirement(retiringQueue[0])}
+          onSnip={() => {
+            if (retiringQueue.length > 0) {
+              completeRetirement(retiringQueue[0].id);
+            }
+          }}
         />
       )}
 
       {/* Help Modal */}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+
+      {/* Retirement Consultation Modal */}
+      {consultingWrestlerId && (() => {
+        const consultingWrestler = wrestlers.find(w => w.id === consultingWrestlerId);
+        return consultingWrestler ? (
+          <RetirementConsultationModal
+            wrestler={consultingWrestler}
+            onAccept={() => handleRetirementConsultation(consultingWrestlerId, 'accept')}
+            onPersuade={() => handleRetirementConsultation(consultingWrestlerId, 'persuade')}
+          />
+        ) : null;
+      })()}
 
       {
         showScout && (

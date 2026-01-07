@@ -1,6 +1,7 @@
 import React from 'react';
 import { Wrestler } from '../../../types';
 import { formatRank } from '../../../utils/formatting';
+import { SKILL_INFO } from '../../../utils/skills';
 
 interface WrestlerListProps {
     wrestlers: Wrestler[];
@@ -91,6 +92,21 @@ const WrestlerList: React.FC<WrestlerListProps> = ({ wrestlers, onSelect }) => {
                                 </span>
                             )}
                         </div>
+
+                        {/* Skill Badges */}
+                        {wrestler.skills && wrestler.skills.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                                {wrestler.skills.map((skill) => (
+                                    <span
+                                        key={skill}
+                                        className="px-2 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-bold rounded border border-purple-200 cursor-help transition-colors hover:bg-purple-200"
+                                        title={SKILL_INFO[skill]?.description || skill}
+                                    >
+                                        {SKILL_INFO[skill]?.name || skill}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Injury Overlay */}

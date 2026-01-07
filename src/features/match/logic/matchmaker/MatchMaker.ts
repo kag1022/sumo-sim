@@ -93,6 +93,42 @@ export class MatchMaker {
         if (advantage === 'East') forceA *= multiplier;
         if (advantage === 'West') forceB *= multiplier;
 
+        // 3.5. Skill Bonuses
+        const applySkillBonuses = (
+            w: Wrestler,
+            force: number,
+            attr: 'Body' | 'Technique' | 'Mind',
+            opponent: Wrestler
+        ): number => {
+            const skills = w.skills || [];
+            let result = force;
+
+            // IronHead: 常に+5%
+            if (skills.includes('IronHead')) {
+                result *= 1.05;
+            }
+
+            // GiantKiller: 相手が20kg以上重い場合+15%
+            if (skills.includes('GiantKiller') && opponent.weight - w.weight >= 20) {
+                result *= 1.15;
+            }
+
+            // EscapeArtist: Mind優勢時+20%
+            if (skills.includes('EscapeArtist') && attr === 'Mind') {
+                result *= 1.20;
+            }
+
+            // Bulldozer: Body優勢時+10%
+            if (skills.includes('Bulldozer') && attr === 'Body') {
+                result *= 1.10;
+            }
+
+            return result;
+        };
+
+        forceA = applySkillBonuses(east, forceA, attrA, west);
+        forceB = applySkillBonuses(west, forceB, attrB, east);
+
 
         // 4. Probability
         const totalForce = forceA + forceB;
