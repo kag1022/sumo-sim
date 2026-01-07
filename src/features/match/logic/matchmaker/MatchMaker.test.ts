@@ -6,6 +6,8 @@ import { Wrestler } from '../../../../types';
 const createMockFighter = (id: string, body: number, tech: number, mind: number, rank: string = 'Maegashira'): Wrestler => ({
     id,
     name: id,
+    reading: id,
+    origin: 'Tokyo',
     heyaId: 'h1',
     rank: rank as any,
     rankNumber: 1,

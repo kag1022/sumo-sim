@@ -3,10 +3,12 @@ import { generateDailyMatches } from './DailyScheduler';
 import { Wrestler, Rank } from '../../../../types';
 
 // Helper to create mock wrestler
-const createMockWrestler = (id: string, rank: Rank, rankNumber: number = 1): Wrestler => ({
+const createMockWrestler = (id: string, rank: Rank, rankNumber: number = 1, heyaId?: string): Wrestler => ({
     id,
     name: `Wrestler ${id}`,
-    heyaId: `heya-${Math.floor(Math.random() * 10)}`, // Random heya to minimize same-heya conflicts
+    reading: `Wrestler ${id}`,
+    origin: 'Osaka',
+    heyaId: heyaId || `heya-${id}`, // Deterministic distinct default
     rank,
     rankNumber,
     rankSide: 'East',

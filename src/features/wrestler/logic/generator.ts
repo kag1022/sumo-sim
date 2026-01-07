@@ -1,101 +1,60 @@
 import { Wrestler, Rank, Heya } from '../../../types';
-// unused import removed
+import { ShikonaGenerator, ShikonaConfig } from './ShikonaGenerator';
+
+const shikonaGenerator = new ShikonaGenerator();
 
 // --- Name Generation Data ---
-// 部屋のPrefixリスト（自然＋相撲らしい文字）
-const HEYA_PREFIXES = [
-    '山', '川', '海', '風', '雷', '琴', '丸', '玉', '千代', '北',
-    '若', '貴', '豊', '朝', '武', '春', '栃', '霧', '旭', '日',
-    '高', '安', '隆', '魁', '照', '大', '出', '入', '友', '鏡',
-    '伊勢', '佐渡', '陸奥', '九重', '八角', '尾車', '木瀬', '芝田', '片男', '宮城'
+
+// 部屋のPrefixデータ（読み仮名付き）
+const HEYA_PREFIX_DATA = [
+    { char: '山', read: 'Yama' }, { char: '川', read: 'Kawa' }, { char: '海', read: 'Umi' },
+    { char: '風', read: 'Kaze' }, { char: '雷', read: 'Ikazuchi' }, { char: '琴', read: 'Koto' },
+    { char: '丸', read: 'Maru' }, { char: '玉', read: 'Tama' }, { char: '千代', read: 'Chiyo' },
+    { char: '北', read: 'Kita' }, { char: '若', read: 'Waka' }, { char: '貴', read: 'Taka' },
+    { char: '豊', read: 'Toyo' }, { char: '朝', read: 'Asa' }, { char: '武', read: 'Mu' },
+    { char: '春', read: 'Haru' }, { char: '栃', read: 'Tochi' }, { char: '霧', read: 'Kiri' },
+    { char: '旭', read: 'Kyoku' }, { char: '日', read: 'Hi' }, { char: '高', read: 'Taka' },
+    { char: '安', read: 'Asa' }, { char: '隆', read: 'Taka' }, { char: '魁', read: 'Kai' },
+    { char: '照', read: 'Teru' }, { char: '大', read: 'Dai' }, { char: '出', read: 'De' },
+    { char: '入', read: 'Iri' }, { char: '友', read: 'Tomo' }, { char: '鏡', read: 'Kagami' },
+    { char: '伊勢', read: 'Ise' }, { char: '佐渡', read: 'Sado' }, { char: '陸奥', read: 'Michinoku' },
+    { char: '九重', read: 'Kokonoe' }, { char: '八角', read: 'Hakkaku' }, { char: '尾車', read: 'Oguruma' },
+    { char: '木瀬', read: 'Kise' }, { char: '芝田', read: 'Shibata' }, { char: '片男', read: 'Kataonami' },
+    { char: '宮城', read: 'Miyagino' }
 ];
+
 // 部屋名のSuffix（〇〇部屋）
 const HEYA_SUFFIXES = ['山', '川', '海', '風', '里', '浦', '灘', '嶽', '野', '花'];
 
-// 力士名の Prefix (上) - 大幅に拡張
-const SHIKONA_PREFIXES = [
-    '若', '貴', '琴', '栃', '千代', '朝', '北', '豊', '正', '高',
-    '安', '大', '玉', '春', '輝', '遠', '妙', '阿', '隆', '竜',
-    '旭', '日', '魁', '美', '翔', '英', '武', '天', '海', '山',
-    '柏', '鵬', '鶴', '霧', '荒', '双', '照', '剣', '豪', '勢',
-    '錦', '御', '志', '清', '泉', '白', '紅', '碧', '蒼', '黒',
-    '金', '銀', '鋼', '鉄', '石', '岩', '雪', '氷', '炎', '光',
-    '影', '月', '星', '雷', '嵐', '風', '雲', '霞', '虹', '露',
-    '宝', '福', '寿', '祥', '瑞', '嘉', '慶', '吉', '幸', '栄',
-    '丹', '藤', '梅', '松', '竹', '桜', '楓', '蓮', '椿', '萩'
+// 出身地リスト (Prefectures)
+export const PREFECTURES = [
+    'Hokkaido', 'Aomori', 'Iwate', 'Miyagi', 'Akita', 'Yamagata', 'Fukushima',
+    'Ibaraki', 'Tochigi', 'Gunma', 'Saitama', 'Chiba', 'Tokyo', 'Kanagawa',
+    'Niigata', 'Toyama', 'Ishikawa', 'Fukui', 'Yamanashi', 'Nagano', 'Gifu',
+    'Shizuoka', 'Aichi', 'Mie', 'Shiga', 'Kyoto', 'Osaka', 'Hyogo', 'Nara',
+    'Wakayama', 'Tottori', 'Shimane', 'Okayama', 'Hiroshima', 'Yamaguchi',
+    'Tokushima', 'Kagawa', 'Ehime', 'Kochi', 'Fukuoka', 'Saga', 'Nagasaki',
+    'Kumamoto', 'Oita', 'Miyazaki', 'Kagoshima', 'Okinawa'
 ];
 
-// 力士名のSuffix（下） - 大幅に拡張
-const SHIKONA_SUFFIXES = [
-    '山', '川', '海', '里', '富士', '花', '国', '龍', '鵬', '錦',
-    '昇', '桜', '丸', '嵐', '風', '王', '鷹', '浪', '若', '城',
-    '疾風', '響', '岳', '灘', '関', '岩', '輝', '闘', '聖', '覇',
-    '光', '兜', '刃', '翼', '翔', '颯', '雅', '馬', '獅', '虎',
-    '豹', '龍', '鳳', '凰', '麟', '亀', '蛇', '雀', '鶴', '鷲',
-    '之助', '太郎', '衛門', '乃花', '之里', '之海', '之山', '乃風',
-    '道', '潮', '曙', '波', '洋', '州', '郷', '宮', '宿', '荘',
-    '堂', '殿', '院', '閣', '楼', '塔', '碑', '門', '壇', '台',
-    'ノ里', 'ノ山', 'ノ海', 'ノ花', 'ノ川', 'ノ国', 'ノ富士'
-];
-
-// ユニーク四股名生成関数
-export const generateUniqueName = (usedNames: string[], heyaPrefix?: string, forcePrefix: boolean = false): string => {
-    const maxRetries = 100;
-    let attempts = 0;
-
-    while (attempts < maxRetries) {
-        let name = '';
-
-        // 70%: heyaPrefix + Suffix パターン (forcePrefix=trueなら100%)
-        // 30%: ランダムPrefix + Suffix パターン
-        if (heyaPrefix && (forcePrefix || Math.random() < 0.7)) {
-            const suffix = SHIKONA_SUFFIXES[Math.floor(Math.random() * SHIKONA_SUFFIXES.length)];
-            name = heyaPrefix + suffix;
-        } else {
-            const prefix = SHIKONA_PREFIXES[Math.floor(Math.random() * SHIKONA_PREFIXES.length)];
-            const suffix = SHIKONA_SUFFIXES[Math.floor(Math.random() * SHIKONA_SUFFIXES.length)];
-            // 時々「〇〇ノ〇」パターン (3割)
-            if (Math.random() < 0.3 && !suffix.startsWith('ノ') && !suffix.startsWith('の')) {
-                const bridgeSuffixes = ['ノ里', 'ノ山', 'ノ海', 'ノ花', 'ノ富士'];
-                const bridge = bridgeSuffixes[Math.floor(Math.random() * bridgeSuffixes.length)];
-                name = prefix + bridge;
-            } else {
-                name = prefix + suffix;
-            }
-        }
-
-        if (!usedNames.includes(name)) {
-            return name;
-        }
-        attempts++;
-    }
-
-    // Fallback: 「二代目」などを付加
-    const baseName = SHIKONA_PREFIXES[Math.floor(Math.random() * SHIKONA_PREFIXES.length)] +
-        SHIKONA_SUFFIXES[Math.floor(Math.random() * SHIKONA_SUFFIXES.length)];
-
-    const generations = ['二代目 ', '三代目 ', '四代目 ', '改 '];
-    for (const gen of generations) {
-        const fallbackName = gen + baseName;
-        if (!usedNames.includes(fallbackName)) {
-            return fallbackName;
-        }
-    }
-
-    // Ultimate fallback with timestamp
-    return `新人力士${Date.now().toString().slice(-6)}`;
-};
+// Helper to get random element
+const getRandom = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
 // Generate Heyas (部屋 - Stables)
+// Note: This logic preserves the legacy structure but uses the new data
 export const generateHeyas = (): Heya[] => {
     const heyas: Heya[] = [];
     const usedHeyaNames = new Set<string>();
 
+    // Using string arrays for tiered generation mapping
+    // We map back to HEYA_PREFIX_DATA later or just extract chars
+    const commonPrefixes = HEYA_PREFIX_DATA.map(d => d.char);
+
     const tiers = [
         { count: 3, mod: 1.5, level: 5, prefixes: ['雷', '若', '貴'] },
         { count: 7, mod: 1.2, level: 4, prefixes: ['千代', '北', '琴', '春', '豊'] },
-        { count: 20, mod: 1.0, level: 3, prefixes: HEYA_PREFIXES },
-        { count: 15, mod: 0.8, level: 1, prefixes: HEYA_PREFIXES }
+        { count: 20, mod: 1.0, level: 3, prefixes: commonPrefixes },
+        { count: 15, mod: 0.8, level: 1, prefixes: commonPrefixes }
     ];
 
     let overallIndex = 0;
@@ -105,18 +64,18 @@ export const generateHeyas = (): Heya[] => {
             let name = '';
             let prefix = '';
             let tries = 0;
-
             const availablePrefixes = tier.prefixes;
 
             while (!name || usedHeyaNames.has(name)) {
                 if (tries < 10) {
-                    prefix = availablePrefixes[Math.floor(Math.random() * availablePrefixes.length)];
+                    prefix = getRandom(availablePrefixes);
                 } else {
-                    prefix = HEYA_PREFIXES[Math.floor(Math.random() * HEYA_PREFIXES.length)];
+                    prefix = getRandom(commonPrefixes);
                 }
 
-                const suffix = HEYA_SUFFIXES[Math.floor(Math.random() * HEYA_SUFFIXES.length)];
+                const suffix = getRandom(HEYA_SUFFIXES);
                 if (prefix === suffix) continue;
+
                 name = prefix + suffix;
                 tries++;
                 if (tries > 100) name = prefix + suffix + '変';
@@ -138,12 +97,6 @@ export const generateHeyas = (): Heya[] => {
     return heyas;
 };
 
-// Generate Name based on Heya Prefix (Legacy, now uses unique)
-const generateShikona = (prefix: string): string => {
-    const suffix = SHIKONA_SUFFIXES[Math.floor(Math.random() * SHIKONA_SUFFIXES.length)];
-    return prefix + suffix;
-}
-
 // Discrete Potential Generation
 const generatePotential = (): number => {
     const rand = Math.random();
@@ -162,13 +115,34 @@ const generatePotential = (): number => {
     }
 };
 
-// Generate Single Wrestler Helper (with unique name support)
-export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi', usedNames?: string[]): Wrestler => {
-    const name = usedNames
-        ? generateUniqueName(usedNames, heya.shikonaPrefix)
-        : generateShikona(heya.shikonaPrefix);
+// Internal helper for finding reading
+const getPrefixData = (char: string) => HEYA_PREFIX_DATA.find(d => d.char === char) || { char, read: '' };
 
-    if (usedNames) usedNames.push(name);
+// Generate Single Wrestler Helper
+export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi', usedNames?: string[]): Wrestler => {
+
+    // Create Config
+    const origin = getRandom(PREFECTURES);
+    const prefixData = getPrefixData(heya.shikonaPrefix);
+
+    const config: ShikonaConfig = {
+        heyaPrefix: prefixData.read ? prefixData : undefined,
+        origin: origin
+    };
+
+    // Generate Name with retry logic for uniqueness
+    let shikona = shikonaGenerator.generate(config);
+    let attempts = 0;
+    while (usedNames && usedNames.includes(shikona.kanji) && attempts < 50) {
+        shikona = shikonaGenerator.generate(config);
+        attempts++;
+    }
+    // Fallback if unique generation fails
+    if (usedNames && usedNames.includes(shikona.kanji)) {
+        shikona.kanji = shikona.kanji + '二代目';
+    }
+
+    if (usedNames) usedNames.push(shikona.kanji);
 
     const potential = generatePotential();
 
@@ -186,7 +160,9 @@ export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi', usedNames
     return {
         id: uniqueId,
         heyaId: heya.id,
-        name: name,
+        name: shikona.kanji,
+        reading: shikona.reading,
+        origin: origin,
         rank,
         rankSide: 'East',
         rankNumber: 1,
@@ -213,7 +189,7 @@ export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi', usedNames
     };
 };
 
-// Generate Full Roster (with unique name registry)
+// Generate Full Roster
 export const generateFullRoster = (existingHeyas: Heya[], usedNames: string[] = []): Wrestler[] => {
     const wrestlers: Wrestler[] = [];
     const heyas = existingHeyas;
@@ -247,11 +223,32 @@ export const generateFullRoster = (existingHeyas: Heya[], usedNames: string[] = 
         for (let i = 0; i < count; i++) {
             const isWest = i % 2 === 1;
             const rankNumber = Math.floor(i / 2) + startNumber;
-
             const heya = getBalancedHeya();
-            const name = generateUniqueName(usedNames, heya.shikonaPrefix);
-            usedNames.push(name);
 
+            // Generate Name
+            const origin = getRandom(PREFECTURES);
+            const prefixData = getPrefixData(heya.shikonaPrefix);
+
+            let shikona = shikonaGenerator.generate({
+                heyaPrefix: prefixData.read ? prefixData : undefined,
+                origin
+            });
+
+            // Unique check
+            let attempts = 0;
+            while (usedNames.includes(shikona.kanji) && attempts < 20) {
+                shikona = shikonaGenerator.generate({
+                    heyaPrefix: prefixData.read ? prefixData : undefined,
+                    origin
+                });
+                attempts++;
+            }
+            if (usedNames.includes(shikona.kanji)) {
+                shikona.kanji += '丸'; // Fallback
+            }
+            usedNames.push(shikona.kanji);
+
+            // Stats
             let baseStat = 20;
             if (rank === 'Yokozuna') baseStat = 90;
             else if (rank === 'Ozeki') baseStat = 80;
@@ -274,7 +271,9 @@ export const generateFullRoster = (existingHeyas: Heya[], usedNames: string[] = 
             wrestlers.push({
                 id: `cpu-${globalRankCount++}`,
                 heyaId: heya.id,
-                name: name,
+                name: shikona.kanji,
+                reading: shikona.reading,
+                origin,
                 rank,
                 rankSide: isWest ? 'West' : 'East',
                 rankNumber,

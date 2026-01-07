@@ -15,6 +15,8 @@ const createMockWrestler = (
 ): Wrestler => ({
     id,
     name: `Wrestler-${id}`,
+    reading: `Read-${id}`,
+    origin: 'TestPlace',
     heyaId: 'heya1',
     rank,
     rankNumber: rankNum,

@@ -1,5 +1,8 @@
 import { Wrestler, Heya, Rank, GameMode } from '../../../types';
-import { generateHeyas, generateFullRoster, generateUniqueName } from '../../wrestler/logic/generator';
+import { generateHeyas, generateFullRoster } from '../../wrestler/logic/generator';
+import { ShikonaGenerator } from '../../wrestler/logic/ShikonaGenerator';
+
+const shikonaGen = new ShikonaGenerator();
 
 export interface InitialSettings {
     oyakataName: string;
@@ -8,7 +11,7 @@ export interface InitialSettings {
     hometown: string;
     location?: string;
     specialty?: string;
-    mode: GameMode; // Added
+    mode: GameMode;
 }
 
 // Helper to create a specific player wrestler (with unique name)
@@ -16,6 +19,7 @@ const createPlayerWrestler = (
     id: string,
     heyaId: string,
     prefix: string,
+    origin: string,
     rank: Rank,
     rankNumber: number,
     age: number,
@@ -23,9 +27,28 @@ const createPlayerWrestler = (
     currentStatAvg: number,
     usedNames: string[] // Registry to check/update
 ): Wrestler => {
-    // Generate unique name using the shared registry
-    const name = generateUniqueName(usedNames, prefix, true); // Force prefix
-    usedNames.push(name); // Register immediately
+    // Generate unique name using the generator
+    // Note: Prefix reading is unknown here as it is user input, passing empty reading
+    // Ideally we would ask user for reading or fetch it? For now leaving empty string.
+    let shikona = shikonaGen.generate({
+        heyaPrefix: { char: prefix, read: prefix }, // Using 'prefix' as fallback reading (Romaji? user might type Kanji)
+        origin: origin
+    });
+
+    // Retry if conflicting
+    let attempts = 0;
+    while (usedNames.includes(shikona.kanji) && attempts < 20) {
+        shikona = shikonaGen.generate({
+            heyaPrefix: { char: prefix, read: prefix },
+            origin: origin
+        });
+        attempts++;
+    }
+    if (usedNames.includes(shikona.kanji)) {
+        shikona.kanji += '継';
+    }
+
+    usedNames.push(shikona.kanji);
 
     const stats = {
         mind: currentStatAvg,
@@ -36,7 +59,9 @@ const createPlayerWrestler = (
     return {
         id: `player-${id}`,
         heyaId,
-        name,
+        name: shikona.kanji,
+        reading: shikona.reading, // Use generated reading
+        origin: origin,
         rank,
         rankSide: 'East',
         rankNumber,
@@ -84,7 +109,7 @@ export const initializeGameData = (settings: InitialSettings) => {
 
         // High potential rookie (MaeZumo or Jonokuchi)
         const rookie = createPlayerWrestler(
-            '1', 'player_heya', settings.shikonaPrefix,
+            '1', 'player_heya', settings.shikonaPrefix, settings.hometown,
             'Jonokuchi', 30, // Rank
             18, 90, 40, // Age, Potential, Stats
             usedNames
@@ -99,15 +124,15 @@ export const initializeGameData = (settings: InitialSettings) => {
 
         playerWrestlers = [
             // 1. Head (Makushita)
-            createPlayerWrestler('1', 'player_heya', settings.shikonaPrefix, 'Makushita', 10, 26, 75, 60, usedNames),
+            createPlayerWrestler('1', 'player_heya', settings.shikonaPrefix, settings.hometown, 'Makushita', 10, 26, 75, 60, usedNames),
             // 2. Sandanme
-            createPlayerWrestler('2', 'player_heya', settings.shikonaPrefix, 'Sandanme', 20, 24, 70, 45, usedNames),
-            createPlayerWrestler('3', 'player_heya', settings.shikonaPrefix, 'Sandanme', 80, 22, 80, 40, usedNames),
+            createPlayerWrestler('2', 'player_heya', settings.shikonaPrefix, settings.hometown, 'Sandanme', 20, 24, 70, 45, usedNames),
+            createPlayerWrestler('3', 'player_heya', settings.shikonaPrefix, settings.hometown, 'Sandanme', 80, 22, 80, 40, usedNames),
             // 3. Jonidan
-            createPlayerWrestler('4', 'player_heya', settings.shikonaPrefix, 'Jonidan', 15, 20, 60, 30, usedNames),
-            createPlayerWrestler('5', 'player_heya', settings.shikonaPrefix, 'Jonidan', 85, 19, 70, 25, usedNames),
+            createPlayerWrestler('4', 'player_heya', settings.shikonaPrefix, settings.hometown, 'Jonidan', 15, 20, 60, 30, usedNames),
+            createPlayerWrestler('5', 'player_heya', settings.shikonaPrefix, settings.hometown, 'Jonidan', 85, 19, 70, 25, usedNames),
             // 4. Jonokuchi
-            createPlayerWrestler('6', 'player_heya', settings.shikonaPrefix, 'Jonokuchi', 10, 18, 50, 20, usedNames),
+            createPlayerWrestler('6', 'player_heya', settings.shikonaPrefix, settings.hometown, 'Jonokuchi', 10, 18, 50, 20, usedNames),
         ];
     }
 

@@ -62,6 +62,7 @@ export interface Wrestler {
     id: string;
     heyaId: string;
     name: string;
+    reading: string; // Combined reading (e.g. "Kitanoumi")
     rank: Rank;
     rankSide?: 'East' | 'West';
     rankNumber?: number; // 1 = 1st, 2 = 2nd
@@ -86,6 +87,7 @@ export interface Wrestler {
     weight: number; // kg
     height: number; // cm
     background: string; // Flavor text
+    origin: string; // Place of origin (e.g. "Hokkaido")
 
     // Retirement System Fields
     age: number;

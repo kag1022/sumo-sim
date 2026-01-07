@@ -1,13 +1,8 @@
 import { Candidate } from '../../../types';
+import { ShikonaGenerator } from './ShikonaGenerator';
+import { PREFECTURES } from './generator';
 
-const LAST_NAMES = [
-    '若', '貴', '琴', '栃', '千代', '北', '豊', '朝', '旭', '玉',
-    '春', '安', '魁', '照', '御', '正', '阿', '遠', '妙', '碧'
-];
-const FIRST_NAMES = [
-    '花', 'の富士', 'の海', 'の山', '桜', '龍', '鵬', '丸', '国',
-    '勝', '嵐', '岩', '関', '戸', '城', '島', '錦', '光', '炎'
-];
+const shikonaGenerator = new ShikonaGenerator();
 
 const BACKGROUNDS = [
     '高校柔道県大会ベスト4',
@@ -21,12 +16,6 @@ const BACKGROUNDS = [
     '陸上投擲種目の元選手',
     '応援団長からの転身'
 ];
-
-const generateName = (): string => {
-    const l = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
-    const f = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
-    return `${l}${f}`;
-};
 
 export const generateCandidates = (count: number, reputation: number): Candidate[] => {
     const candidates: Candidate[] = [];
@@ -78,10 +67,17 @@ export const generateCandidates = (count: number, reputation: number): Candidate
         if (roundedCost >= 700000) revealedStats.push('flexibility');
         if (roundedCost >= 1200000) revealedStats.push('potential');
 
+        // Generate Name & Origin
+        const origin = PREFECTURES[Math.floor(Math.random() * PREFECTURES.length)];
+        // Candidates don't have a Heya yet, so no heyaPrefix inheritance
+        const shikona = shikonaGenerator.generate({ origin });
+
         candidates.push({
             id: `candidate-${Date.now()}-${i}`,
             heyaId: 'player_heya',
-            name: generateName(),
+            name: shikona.kanji,
+            reading: shikona.reading,
+            origin: origin,
             rank: 'Jonokuchi',
             stats: { mind, technique, body },
             isSekitori: false,
