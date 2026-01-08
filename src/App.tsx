@@ -22,7 +22,7 @@ import { formatHybridDate } from './utils/time';
 import { generateFullRoster, generateHeyas } from './features/wrestler/logic/generator';
 import { updateBanzuke } from './features/banzuke/logic/banzuke';
 import { formatRank } from './utils/formatting';
-import { MAX_PLAYERS_PER_HEYA } from './utils/constants';
+import { MAX_PLAYERS_PER_HEYA, MAX_TP } from './utils/constants';
 import { calculateSeverance } from './features/wrestler/logic/retirement';
 
 // Dummy data generation
@@ -141,15 +141,15 @@ const generateDummyWrestlers = (): Wrestler[] => {
       nextBoutDay: null,
 
       potential: 70,
-      flexibility: 40,
-      weight: 140,
+      flexibility: 60,
+      weight: 120,
       height: 175,
-      background: '期待の若手',
+      background: '期待の新人',
       // New Init
-      age: 20,
+      age: 18,
       maxRank: 'Makushita',
       historyMaxLength: 0,
-      timeInHeya: 24,
+      timeInHeya: 12,
       injuryDuration: 0,
       consecutiveLoseOrAbsent: 0,
       stress: 0,
@@ -184,7 +184,7 @@ const GameAppContent = () => {
 
 const MainGameInterface = () => {
   const { currentDate, funds, setFunds, wrestlers, setWrestlers, heyas, setHeyas, gamePhase, bashoFinished, lastMonthBalance, yushoWinners, setYushoWinners, okamiLevel, reputation, trainingPoints, yushoHistory, retiringQueue, consultingWrestlerId, todaysMatchups } = useGame();
-  const { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining, handleRetirementConsultation } = useGameLoop();
+  const { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining, handleRetirementConsultation, giveAdvice } = useGameLoop();
   const { t, i18n } = useTranslation();
 
   const [selectedWrestler, setSelectedWrestler] = useState<Wrestler | null>(null);
@@ -302,6 +302,11 @@ const MainGameInterface = () => {
                 <span className="opacity-50">|</span>
                 <span>{t('ui.reputation')}:</span>
                 <span className="font-bold text-white text-xs">{reputation}</span>
+                <span className="opacity-50">|</span>
+                <span>TP:</span>
+                <span className={`font-bold text-xs ${trainingPoints < 10 ? 'text-red-300' : 'text-amber-300'}`}>
+                  {trainingPoints}/{MAX_TP}
+                </span>
               </div>
 
               <div className="flex gap-2">
@@ -479,7 +484,11 @@ const MainGameInterface = () => {
               {/* Matches View */}
               {sidebarTab === 'matches' && gamePhase === 'tournament' && (
                 <div className="flex-1 min-h-0 overflow-hidden">
-                  <DailyMatchList matchups={todaysMatchups} />
+                  <DailyMatchList
+                    matchups={todaysMatchups}
+                    onAdvice={giveAdvice}
+                    currentTp={trainingPoints}
+                  />
                 </div>
               )}
 

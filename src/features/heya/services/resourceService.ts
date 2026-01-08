@@ -7,7 +7,7 @@ import { generateWrestler } from '../../wrestler/logic/generator';
 interface ResourceUpdateResult {
     updatedWrestlers: Wrestler[];
     fundsChange: number;
-    logs: string[];
+    logs: (string | import('../../../types').LogData)[];
 }
 
 /**
@@ -20,7 +20,7 @@ export const processMonthlyResources = (
     reputation: number,
     autoRecruitAllowed: boolean
 ): ResourceUpdateResult => {
-    const logs: string[] = [];
+    const logs: (string | import('../../../types').LogData)[] = [];
     const survivingWrestlers = [...wrestlers];
 
     // 1. New Recruits (Replacement)
@@ -44,7 +44,12 @@ export const processMonthlyResources = (
     }
 
     if (recruitedCount > 0) {
-        logs.push(`${recruitedCount}名の新弟子が入門しました。`);
+        logs.push({
+            key: 'log.heya.new_recruits',
+            params: { count: recruitedCount },
+            message: `${recruitedCount}名の新弟子が入門しました。`,
+            type: 'info'
+        });
     }
 
     // 2. Finances (Monthly Balance)
@@ -59,13 +64,23 @@ export const processMonthlyResources = (
 
     const savedPercentage = Math.round((1 - budgetMultiplier) * 100);
     if (savedPercentage > 0) {
-        logs.push(`【収支報告】女将さんの功績により、経費 ${savedPercentage}% を節約しました。`);
+        logs.push({
+            key: 'log.heya.okami_savings',
+            params: { percent: savedPercentage },
+            message: `【収支報告】女将さんの功績により、経費 ${savedPercentage}% を節約しました。`,
+            type: 'info'
+        });
     }
 
     // 3. Supporter Income
     const supporterIncome = reputation * 10000;
     if (supporterIncome > 0) {
-        logs.push(`後援会より 支援金 ¥${supporterIncome.toLocaleString()} を受領しました。`);
+        logs.push({
+            key: 'log.heya.supporter_income',
+            params: { amount: supporterIncome.toLocaleString() },
+            message: `後援会より 支援金 ¥${supporterIncome.toLocaleString()} を受領しました。`,
+            type: 'info'
+        });
     }
 
     return {

@@ -2,12 +2,13 @@
 import { useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { TrainingType, Candidate, SaveData, Matchup } from '../types';
-import { ALL_SKILLS, MAX_SKILLS, SKILL_INFO } from '../features/wrestler/logic/skills';
+import { SKILL_INFO } from '../features/wrestler/logic/skills';
 import { generateDailyMatches } from '../features/match/logic/matchmaker/DailyScheduler';
 import { generateCandidates } from '../features/wrestler/logic/scouting';
 import { generateWrestler } from '../features/wrestler/logic/generator';
-import { MAX_PLAYERS_PER_HEYA } from '../utils/constants';
+import { MAX_PLAYERS_PER_HEYA, MAX_TP, TP_RECOVER_WEEKLY } from '../utils/constants';
 import { calculateSeverance } from '../features/wrestler/logic/retirement';
+import { calculateSpecialTrainingResult } from '../features/wrestler/logic/training';
 import { getOkamiUpgradeCost } from '../features/heya/logic/okami';
 // import { useEvents } from './useEvents'; // Replaced by new EventEngine
 import { checkForWeeklyEvent } from '../features/events/logic/eventEngine';
@@ -93,7 +94,12 @@ export const useGameLoop = () => {
             if (collisionDay !== -1) {
                 daysToAdvance = collisionDay - currentDate.getDate();
                 setGamePhase('tournament');
-                addLog("本場所（初日）が始まります！", 'info');
+                setGamePhase('tournament');
+                addLog({
+                    key: 'log.tourney.start',
+                    message: "本場所（初日）が始まります！",
+                    type: 'info'
+                }, 'info');
 
                 // Reset specific basho stats before tournament starts
                 updatedWrestlers = updatedWrestlers.map(w => ({
@@ -114,12 +120,20 @@ export const useGameLoop = () => {
 
                 setTodaysMatchups(matchups);
                 setMatchesProcessed(false);
-                addLog("初日の取組が発表されました。", 'info');
+                setMatchesProcessed(false);
+                addLog({
+                    key: 'log.tourney.day1_schedule',
+                    message: "初日の取組が発表されました。",
+                    type: 'info'
+                }, 'info');
             }
 
             if (daysToAdvance > 0) {
+                // TP Recovery (Weekly)
+                setTrainingPoints(prev => Math.min(prev + TP_RECOVER_WEEKLY, MAX_TP));
+
                 // Reset Training Points Weekly
-                setTrainingPoints(3);
+                // setTrainingPoints(3); // Removed to allow accumulation
 
                 // Create Heya Strength Map for performance
                 const heyaStrengthMap = new Map<string, number>();
@@ -153,17 +167,17 @@ export const useGameLoop = () => {
                         switch (trainingType) {
                             case 'shiko':
                                 newStats.body = updateStat(newStats.body, 0.5 * trainingMod, w.potential);
-                                stressGain = 5;
+                                stressGain = 15; // Increased from 5 to 15 (Rebalance)
                                 break;
                             case 'teppo':
                                 newStats.technique = updateStat(newStats.technique, 0.5 * trainingMod, w.potential);
-                                stressGain = 5;
+                                stressGain = 15; // Increased from 5 to 15 (Rebalance)
                                 break;
                             case 'moushi_ai':
                                 newStats.mind = updateStat(newStats.mind, 0.5 * trainingMod, w.potential);
                                 newStats.body = updateStat(newStats.body, 0.2 * trainingMod, w.potential);
                                 newStats.technique = updateStat(newStats.technique, 0.2 * trainingMod, w.potential);
-                                stressGain = 10;
+                                stressGain = 25; // Increased from 10 to 25 (Rebalance)
                                 break;
                             case 'rest':
                                 w.stress = Math.max(0, (w.stress || 0) - 20);
@@ -219,6 +233,9 @@ export const useGameLoop = () => {
             }
             if (result.reputationChange !== 0) {
                 setReputation(Math.max(0, Math.min(100, reputation + result.reputationChange)));
+            }
+            if (result.tpChange !== 0) {
+                setTrainingPoints(prev => Math.min(prev + result.tpChange, MAX_TP));
             }
 
             result.logs.forEach(l => addLog(l, 'info'));
@@ -279,7 +296,13 @@ export const useGameLoop = () => {
                     }));
                     setTodaysMatchups(nextMatchups);
                     setMatchesProcessed(false);
-                    addLog(`${nextDay}日目の取組が発表されました。`, 'info');
+                    setMatchesProcessed(false);
+                    addLog({
+                        key: 'log.tourney.next_day_schedule',
+                        params: { day: nextDay },
+                        message: `${nextDay}日目の取組が発表されました。`,
+                        type: 'info'
+                    }, 'info');
                 }
             }
         }
@@ -335,7 +358,12 @@ export const useGameLoop = () => {
         // Final wrestler update
         setWrestlers(resourceResult.updatedWrestlers);
 
-        addLog(`${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月場所終了。`, 'info');
+        addLog({
+            key: 'log.tourney.basho_end',
+            params: { year: currentDate.getFullYear(), month: currentDate.getMonth() + 1 },
+            message: `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月場所終了。`,
+            type: 'info'
+        }, 'info');
     };
 
     const closeBashoModal = () => {
@@ -344,11 +372,21 @@ export const useGameLoop = () => {
 
     const recruitWrestler = (candidate: Candidate, customName?: string) => {
         if (wrestlers.filter(w => w.heyaId === 'player_heya').length >= MAX_PLAYERS_PER_HEYA) {
-            addLog("部屋の定員（10人）がいっぱいです！", 'error');
+            addLog({
+                key: 'log.error.heya_full',
+                params: { capacity: MAX_PLAYERS_PER_HEYA },
+                message: "部屋の定員（10人）がいっぱいです！",
+                type: 'error'
+            }, 'error');
             return;
         }
         if (funds < 3000000) {
-            addLog("支度金（300万円）が足りません！", 'error');
+            addLog({
+                key: 'log.error.insufficient_funds_recruit',
+                params: { amount: '3,000,000' },
+                message: "支度金（300万円）が足りません！",
+                type: 'error'
+            }, 'error');
             return;
         }
 
@@ -371,14 +409,24 @@ export const useGameLoop = () => {
         }
         setWrestlers(prev => [...prev, newWrestler]);
         setCandidates(prev => prev.filter(c => c.id !== candidate.id));
-        addLog(`新弟子 ${newWrestler.name} が入門しました！来場所から前相撲として修行を開始します。`, 'info');
+        setCandidates(prev => prev.filter(c => c.id !== candidate.id));
+        addLog({
+            key: 'log.action.recruit_success',
+            params: { name: newWrestler.name },
+            message: `新弟子 ${newWrestler.name} が入門しました！来場所から前相撲として修行を開始します。`,
+            type: 'info'
+        }, 'info');
     };
 
     const inspectCandidate = (cost: number) => {
         if (funds >= cost) {
             setFunds(prev => prev - cost);
         } else {
-            addLog("資金が足りません！", 'error');
+            addLog({
+                key: 'log.error.insufficient_funds',
+                message: "資金が足りません！",
+                type: 'error'
+            }, 'error');
         }
     };
 
@@ -386,13 +434,23 @@ export const useGameLoop = () => {
         const wrestler = wrestlers.find(w => w.id === wrestlerId);
         if (wrestler) {
             const severance = calculateSeverance(wrestler);
-            addLog(`${wrestler.name} (最高位: ${formatRank(wrestler.maxRank)}) が引退しました。`, 'warning');
+            addLog({
+                key: 'log.wrestler.retired',
+                params: { name: wrestler.name, rank: formatRank(wrestler.maxRank) },
+                message: `${wrestler.name} (最高位: ${formatRank(wrestler.maxRank)}) が引退しました。`,
+                type: 'warning'
+            }, 'warning');
 
             if (wrestler.isSekitori) {
                 setRetiringQueue(prev => [...prev, wrestler]);
             } else {
                 if (severance > 0) setFunds(prev => prev + severance);
-                addLog("協会より功労金" + severance.toLocaleString() + "円が支払われました。", 'info');
+                addLog({
+                    key: 'log.wrestler.severance_paid',
+                    params: { amount: severance.toLocaleString() },
+                    message: "協会より功労金" + severance.toLocaleString() + "円が支払われました。",
+                    type: 'info'
+                }, 'info');
                 setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
             }
         }
@@ -403,8 +461,18 @@ export const useGameLoop = () => {
         if (wrestler) {
             const severance = calculateSeverance(wrestler);
             setFunds(prev => prev + severance);
-            addLog(`${wrestler.name}の断髪式が執り行われ、マゲに別れを告げました。`, 'info');
-            addLog("協会より功労金" + severance.toLocaleString() + "円が支払われました。", 'info');
+            addLog({
+                key: 'log.wrestler.danpatsu',
+                params: { name: wrestler.name },
+                message: `${wrestler.name}の断髪式が執り行われ、マゲに別れを告げました。`,
+                type: 'info'
+            }, 'info');
+            addLog({
+                key: 'log.wrestler.severance_paid',
+                params: { amount: severance.toLocaleString() },
+                message: "協会より功労金" + severance.toLocaleString() + "円が支払われました。",
+                type: 'info'
+            }, 'info');
             setRetiringQueue(prev => prev.filter(w => w.id !== wrestlerId));
             setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
         }
@@ -417,7 +485,13 @@ export const useGameLoop = () => {
 
         setFunds(prev => prev - cost);
         setOkamiLevel(okamiLevel + 1);
-        addLog(`女将さんのレベルが ${okamiLevel + 1} に上がりました！`, 'info');
+        setOkamiLevel(okamiLevel + 1);
+        addLog({
+            key: 'log.action.okami_upgrade',
+            params: { level: okamiLevel + 1 },
+            message: `女将さんのレベルが ${okamiLevel + 1} に上がりました！`,
+            type: 'info'
+        }, 'info');
     };
 
     const doSpecialTraining = (wrestlerId: string, menuType: string) => {
@@ -426,32 +500,25 @@ export const useGameLoop = () => {
 
         setTrainingPoints(prev => prev - 1);
 
-        let diffBody = 0, diffTech = 0, diffMind = 0;
+        const result = calculateSpecialTrainingResult(wrestler, menuType);
 
-        if (menuType === 'strength') { diffBody = 2; diffTech = 1; }
-        else if (menuType === 'technique') { diffTech = 2; diffMind = 1; }
-        else if (menuType === 'meditation') { diffMind = 2; diffBody = 1; }
+        setWrestlers(prev => prev.map(w => w.id === wrestlerId ? result.updatedWrestler : w));
 
-        setWrestlers(prev => prev.map(w => w.id === wrestlerId ? {
-            ...w,
-            stats: {
-                body: Math.min(w.potential, w.stats.body + diffBody),
-                technique: Math.min(w.potential, w.stats.technique + diffTech),
-                mind: Math.min(w.potential, w.stats.mind + diffMind)
-            }
-        } : w));
-
-        const learnProb = 0.05;
-        if (Math.random() < learnProb && wrestler.skills.length < MAX_SKILLS) {
-            const unlearned = ALL_SKILLS.filter(s => !wrestler.skills.includes(s));
-            if (unlearned.length > 0) {
-                const newSkill = unlearned[Math.floor(Math.random() * unlearned.length)];
-                setWrestlers(prev => prev.map(w => w.id === wrestlerId ? { ...w, skills: [...w.skills, newSkill] } : w));
-                addLog(`${wrestler.name}は特訓の末、秘技『${SKILL_INFO[newSkill].name}』を閃いた！`, 'info');
-            }
+        if (result.learnedSkill) {
+            addLog({
+                key: 'log.action.skill_learned',
+                params: { name: wrestler.name, skill: SKILL_INFO[result.learnedSkill].name },
+                message: `${wrestler.name}は特訓の末、秘技『${SKILL_INFO[result.learnedSkill].name}』を閃いた！`,
+                type: 'info'
+            }, 'info');
         }
 
-        addLog(`特別指導（${menuType}）を行いました。心+${diffMind} 技+${diffTech} 体+${diffBody}`, 'info');
+        addLog({
+            key: 'log.action.training_done',
+            params: { type: menuType, mind: result.diffMind, tech: result.diffTech, body: result.diffBody },
+            message: `特別指導（${menuType}）を行いました。心+${result.diffMind} 技+${result.diffTech} 体+${result.diffBody}`,
+            type: 'info'
+        }, 'info');
     };
 
     const triggerAutoSave = (currentState: any) => {
@@ -498,7 +565,12 @@ export const useGameLoop = () => {
         if (!wrestler) return;
 
         if (decision === 'accept') {
-            addLog(`【引退決定】${wrestler.name} の引退が正式に決まりました。`, 'warning');
+            addLog({
+                key: 'log.consult.retire_decided',
+                params: { name: wrestler.name },
+                message: `【引退決定】${wrestler.name} の引退が正式に決まりました。`,
+                type: 'warning'
+            }, 'warning');
 
             if (wrestler.isSekitori) {
                 setRetiringQueue(prev => [...prev, wrestler]);
@@ -507,13 +579,27 @@ export const useGameLoop = () => {
                 if (severance > 0) {
                     setFunds((prev: number) => prev + severance);
                 }
-                addLog(`【引退】${wrestler.name} (最高位: ${formatRank(wrestler.maxRank)}) が引退しました。`, 'warning');
+                addLog({
+                    key: 'log.wrestler.retired',
+                    params: { name: wrestler.name, rank: formatRank(wrestler.maxRank) },
+                    message: `【引退】${wrestler.name} (最高位: ${formatRank(wrestler.maxRank)}) が引退しました。`,
+                    type: 'warning'
+                }, 'warning');
             }
 
             setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
         } else {
-            addLog(`【説得成功】「馬鹿野郎！お前の相撲はまだ終わっちゃいない！」`, 'info');
-            addLog(`${wrestler.name} は親方の言葉に奮い立ち、ラストチャンスに挑みます！`, 'warning');
+            addLog({
+                key: 'log.consult.persuade_success',
+                message: `【説得成功】「馬鹿野郎！お前の相撲はまだ終わっちゃいない！」`,
+                type: 'info'
+            }, 'info');
+            addLog({
+                key: 'log.consult.last_chance',
+                params: { name: wrestler.name },
+                message: `${wrestler.name} は親方の言葉に奮い立ち、ラストチャンスに挑みます！`,
+                type: 'warning'
+            }, 'warning');
 
             setWrestlers(prev => prev.map(w =>
                 w.id === wrestlerId
@@ -540,5 +626,33 @@ export const useGameLoop = () => {
         }
     };
 
-    return { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining, triggerAutoSave, recordYushoHistory, handleRetirementConsultation, checkForRetirementConsultation };
+    const giveAdvice = (matchIndex: number, side: 'east' | 'west') => {
+        if (trainingPoints < 5) return;
+
+        const match = todaysMatchups[matchIndex];
+        if (!match) return;
+
+        // Check if already advised
+        if (match.tacticalBonus?.[side]) return;
+
+        setTrainingPoints(prev => prev - 5);
+
+        const newMatchups = [...todaysMatchups];
+        const newBonus = { ...(newMatchups[matchIndex].tacticalBonus || {}) };
+        newBonus[side] = true;
+
+        newMatchups[matchIndex] = {
+            ...newMatchups[matchIndex],
+            tacticalBonus: newBonus
+        };
+
+        setTodaysMatchups(newMatchups);
+        addLog({
+            key: 'log.action.advice',
+            message: "力士に助言を与えました。(TP -5)",
+            type: 'info'
+        }, 'info');
+    };
+
+    return { advanceTime, closeBashoModal, candidates, recruitWrestler, inspectCandidate, retireWrestler, completeRetirement, upgradeOkami, doSpecialTraining, triggerAutoSave, recordYushoHistory, handleRetirementConsultation, checkForRetirementConsultation, giveAdvice };
 };

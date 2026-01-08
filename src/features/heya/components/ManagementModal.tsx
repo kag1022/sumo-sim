@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { getOkamiUpgradeCost, MAX_OKAMI_LEVEL } from '../logic/okami';
+import { saveGame as saveToStorage, loadGame as loadFromStorage, exportSaveData, importSaveData, clearSave } from '../../../utils/storage';
 import { useGame } from '../../../context/GameContext';
 
 interface ManagementModalProps {
@@ -24,8 +25,73 @@ const FACILITY_LEVELS = [
 const ManagementModal: React.FC<ManagementModalProps> = ({
     okamiLevel, funds, lastMonthBalance, onUpgradeOkami, currentHeyaLevel, onUpgradeFacility, onClose
 }) => {
-    const { autoRecruitAllowed, setAutoRecruitAllowed } = useGame();
-    const [activeTab, setActiveTab] = React.useState<'okami' | 'facility' | 'settings'>('okami');
+    const [activeTab, setActiveTab] = React.useState<'okami' | 'facility' | 'settings' | 'system'>('okami');
+    const { getSaveData, loadGameData, autoRecruitAllowed, setAutoRecruitAllowed } = useGame();
+    // Typescript might complain about require if not configured, but let's assume standard import at top of file is better.
+    // I will add imports at the top of the file in a separate edit or assume they exist. 
+    // Actually, I can't add imports with replace_file_content in the middle.
+    // I will use fully qualified logic or expect the user to add imports? 
+    // No, I should replace the whole component or add imports first. 
+    // Let's modify the imports first in a separate Step? 
+    // Or I can add the imports to the top of this block if I am replacing the whole file? 
+    // I am replacing a chunk. I will blindly add the logic and then fix imports if needed?
+    // "replace_file_content" can track line numbers. 
+    // Let's assume I can't easily add imports here. 
+    // I will add the UI logic here and then add imports in the next step.
+
+    // ... wait, I can just include the logic inline if I had the imports.
+    // Let's stick to the plan: Modify UI.
+
+    // Handlers
+    const handleQuickSave = () => {
+        const data = getSaveData();
+        saveToStorage(data);
+        alert('セーブ完了しました (Saved)');
+    };
+
+    const handleQuickLoad = () => {
+        if (!window.confirm('現在の進行状況を破棄して、前回のセーブデータをロードしますか？')) return;
+        const data = loadFromStorage();
+        if (data) {
+            loadGameData(data);
+            alert('ロードしました (Loaded)');
+            onClose();
+        } else {
+            alert('セーブデータが見つかりません');
+        }
+    };
+
+    const handleExport = () => {
+        const data = getSaveData();
+        exportSaveData(data);
+    };
+
+    const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!window.confirm('現在の進行状況を破棄して、ファイルをロードしますか？')) {
+            e.target.value = ''; // Reset input
+            return;
+        }
+
+        const data = await importSaveData(file);
+        if (data) {
+            loadGameData(data);
+            alert('ファイルからロードしました');
+            onClose();
+        }
+        e.target.value = '';
+    };
+
+    const handleReset = () => {
+        if (window.confirm('【警告】全てのデータを消去して最初から始めますか？\nこの操作は取り消せません。')) {
+            if (window.confirm('本当によろしいですか？')) {
+                clearSave();
+                window.location.reload(); // Hard reload is safest for full reset
+            }
+        }
+    };
 
     // Okami Logic
     const okamiUpgradeCost = getOkamiUpgradeCost(okamiLevel);
@@ -40,6 +106,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-[#fcf9f2] w-full max-w-2xl rounded-sm shadow-2xl overflow-hidden flex flex-col border-[6px] border-slate-800 relative">
+                {/* ... Header & Layout ... */}
 
                 {/* Texture */}
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
@@ -108,6 +175,14 @@ const ManagementModal: React.FC<ManagementModalProps> = ({
                     >
                         設定 (Settings)
                     </button>
+                    <button
+                        className={`flex-1 py-3 text-sm font-bold transition-all border-b-2 relative overflow-hidden group
+                            ${activeTab === 'system' ? 'text-purple-800 border-purple-800 bg-purple-50' : 'text-slate-400 border-slate-200 hover:text-slate-600 hover:bg-slate-50'}
+                        `}
+                        onClick={() => setActiveTab('system')}
+                    >
+                        システム (System)
+                    </button>
                 </div>
 
                 {/* Content */}
@@ -115,6 +190,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({
 
                     {activeTab === 'okami' && (
                         <div className="animate-fadeIn space-y-6">
+                            {/* ... Okami Content ... */}
                             <div className="flex items-start gap-6">
                                 {/* Level Badge */}
                                 <div className="hidden sm:flex flex-col items-center justify-center w-24 h-24 bg-white border-4 border-double border-red-100 rounded-full shadow-md shrink-0">
@@ -269,6 +345,85 @@ const ManagementModal: React.FC<ManagementModalProps> = ({
                             <div className="text-center text-xs text-slate-400 mt-8">
                                 Game Version 0.2.1
                             </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'system' && (
+                        <div className="animate-fadeIn space-y-8">
+
+                            {/* Quick Save/Load */}
+                            <section>
+                                <h3 className="font-bold font-serif text-lg text-slate-800 mb-3 flex items-center gap-2">
+                                    <span className="w-1 h-6 bg-purple-600 rounded-sm"></span>
+                                    データの保存・読込 (Quick Save)
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        onClick={handleQuickSave}
+                                        className="bg-white border border-slate-200 hover:border-purple-400 hover:text-purple-700 text-slate-600 font-bold py-4 px-4 rounded-sm shadow-sm transition-all flex flex-col items-center gap-2"
+                                    >
+                                        <span className="text-2xl">💾</span>
+                                        <span>セーブ (Save)</span>
+                                    </button>
+                                    <button
+                                        onClick={handleQuickLoad}
+                                        className="bg-white border border-slate-200 hover:border-purple-400 hover:text-purple-700 text-slate-600 font-bold py-4 px-4 rounded-sm shadow-sm transition-all flex flex-col items-center gap-2"
+                                    >
+                                        <span className="text-2xl">📂</span>
+                                        <span>ロード (Load)</span>
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-2 text-center">
+                                    ブラウザのローカルストレージに保存されます
+                                </p>
+                            </section>
+
+                            {/* Backup (File) */}
+                            <section>
+                                <h3 className="font-bold font-serif text-lg text-slate-800 mb-3 flex items-center gap-2">
+                                    <span className="w-1 h-6 bg-blue-600 rounded-sm"></span>
+                                    バックアップ (File Backup)
+                                </h3>
+                                <div className="bg-white p-6 rounded-sm border border-slate-200 shadow-sm space-y-4">
+                                    <button
+                                        onClick={handleExport}
+                                        className="w-full bg-blue-50 text-blue-800 hover:bg-blue-100 font-bold py-3 px-4 rounded-sm border border-blue-200 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <span>📥</span>
+                                        <span>ファイルに書き出し (Export JSON)</span>
+                                    </button>
+
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            accept=".json"
+                                            onChange={handleImport}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        />
+                                        <button className="w-full bg-slate-50 text-slate-700 hover:bg-slate-100 font-bold py-3 px-4 rounded-sm border border-slate-300 transition-colors flex items-center justify-center gap-2">
+                                            <span>📤</span>
+                                            <span>ファイルを読み込み (Import JSON)</span>
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        セーブデータをJSONファイルとしてダウンロードしたり、別の端末で遊んでいたデータを読み込むことができます。
+                                    </p>
+                                </div>
+                            </section>
+
+                            <div className="border-t border-slate-200"></div>
+
+                            {/* Reset */}
+                            <section>
+                                <button
+                                    onClick={handleReset}
+                                    className="w-full bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 font-bold py-4 px-4 rounded-sm border border-red-200 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <span>⚠️</span>
+                                    <span>データを完全に削除してリセット</span>
+                                </button>
+                            </section>
+
                         </div>
                     )}
 

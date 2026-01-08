@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Candidate } from '../../../types';
 import { getGrade } from '../logic/scouting';
 import { useGame } from '../../../context/GameContext';
+import { useTranslation } from 'react-i18next';
 
 interface ScoutPanelProps {
     candidates: Candidate[];
@@ -23,6 +24,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
     const INSPECTION_FEE = 300000;
 
     const { heyas, reputation } = useGame();
+    const { t } = useTranslation();
     const playerHeya = heyas.find(h => h.id === 'player_heya');
     const stablePrefix = playerHeya ? playerHeya.shikonaPrefix : '';
 
@@ -59,11 +61,11 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
     };
 
     const getFlexibilityText = (val: number, revealed: boolean) => {
-        if (!revealed) return "未測定";
-        if (val >= 80) return "非常に柔らかい";
-        if (val >= 60) return "柔軟性あり";
-        if (val >= 40) return "普通";
-        return "硬い";
+        if (!revealed) return t('flexibility.unknown');
+        if (val >= 80) return t('flexibility.very_soft');
+        if (val >= 60) return t('flexibility.soft');
+        if (val >= 40) return t('flexibility.normal');
+        return t('flexibility.stiff');
     };
 
     const renderPotential = (val: number, revealed: boolean, large: boolean = false) => {
@@ -89,21 +91,21 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
 
                     {/* Header: File Tab Style */}
                     <div className="bg-[#b7282e] p-4 text-center border-b-4 border-[#8c1c22]">
-                        <h3 className="text-2xl font-black font-serif text-white tracking-widest">新弟子検査票</h3>
+                        <h3 className="text-2xl font-black font-serif text-white tracking-widest">{t('scout.inspection_report')}</h3>
                         <div className="text-white/60 text-[10px] font-bold mt-1 uppercase tracking-[0.2em]">Inspection Record</div>
                     </div>
 
                     {!examPassed ? (
                         <div className="p-16 text-center">
                             <div className="w-20 h-20 border-8 border-stone-200 border-t-[#b7282e] rounded-full animate-spin mx-auto mb-8" />
-                            <h3 className="text-xl font-serif font-bold text-slate-700 mb-2">検査中...</h3>
-                            <p className="text-slate-400 text-sm">体格・健康状態を確認しています</p>
+                            <h3 className="text-xl font-serif font-bold text-slate-700 mb-2">{t('scout.inspection_underway')}</h3>
+                            <p className="text-slate-400 text-sm">{t('scout.checking_health')}</p>
                         </div>
                     ) : (
                         <div className="p-8 animate-fadeIn">
                             {/* Stamp */}
                             <div className="absolute top-20 right-8 w-24 h-24 border-4 border-[#b7282e] rounded-full flex flex-col items-center justify-center -rotate-12 opacity-80 mask-stamp">
-                                <span className="text-[#b7282e] font-black font-serif text-3xl">合格</span>
+                                <span className="text-[#b7282e] font-black font-serif text-3xl">{t('scout.passed')}</span>
                                 <span className="text-[#b7282e] text-[10px] font-bold uppercase border-t border-[#b7282e] w-16 text-center mt-1">PASSED</span>
                             </div>
 
@@ -124,7 +126,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                                 <div className="col-span-2 mt-2 bg-stone-100 p-3 rounded-sm border border-stone-200">
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <div className="text-[10px] font-bold text-stone-500 uppercase">POTENTIAL</div>
+                                            <div className="text-[10px] font-bold text-slate-400 mb-1">{t('scout.current_rank')}</div>
                                             {renderPotential(selectedCandidate.potential, true, true)}
                                         </div>
                                         <div className="text-right">
@@ -138,15 +140,15 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                             {/* Naming Section */}
                             <div className="mb-8">
                                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">
-                                    四股名登録 (SHIKONA)
+                                    {t('scout.shikona_registration')}
                                     <span className="ml-2 text-[#b7282e] font-normal normal-case text-[10px]">
-                                        ※部屋冠文字: {stablePrefix}
+                                        {t('scout.shikona_prefix_hint', { prefix: stablePrefix })}
                                     </span>
                                 </label>
                                 <input
                                     type="text"
                                     className="w-full bg-white border-b-2 border-stone-300 px-4 py-2 text-slate-900 font-serif font-bold text-2xl focus:outline-none focus:border-[#b7282e] transition-colors text-center placeholder:text-stone-200"
-                                    placeholder="例: 朝青龍"
+                                    placeholder={t('scout.placeholder_example')}
                                     value={customName}
                                     onChange={(e) => setCustomName(e.target.value)}
                                     autoFocus
@@ -158,14 +160,14 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                                     onClick={handleCancel}
                                     className="flex-1 py-3 px-4 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-sm transition-colors border border-transparent hover:border-slate-200"
                                 >
-                                    見送る
+                                    {t('scout.reject')}
                                 </button>
                                 <button
                                     onClick={handleConfirmJoin}
                                     disabled={!customName}
                                     className="flex-1 bg-[#b7282e] text-white font-bold py-3 px-4 rounded-sm shadow-md hover:bg-[#a01e23] hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    <span>入門承認</span>
+                                    <span>{t('scout.approve_join')}</span>
                                     <span className="text-xs">→</span>
                                 </button>
                             </div>
@@ -187,9 +189,9 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                     <div>
                         <div className="flex items-center gap-3 mb-1">
                             <span className="bg-[#b7282e] text-white text-xs font-bold px-2 py-0.5 rounded-sm">人事部</span>
-                            <h2 className="text-3xl font-black font-serif text-slate-900 tracking-tight">新弟子スカウト</h2>
+                            <h2 className="text-3xl font-black font-serif text-slate-900 tracking-tight">{t('scout.title')}</h2>
                         </div>
-                        <p className="text-xs text-slate-500 font-bold tracking-[0.15em] uppercase pl-1">Recruitment & Scouting</p>
+                        <p className="text-xs text-slate-500 font-bold tracking-[0.15em] uppercase pl-1">{t('scout.subtitle')}</p>
                     </div>
 
                     {/* Reputation Rank Display */}
@@ -204,9 +206,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                                 <span className="text-xs text-slate-400 ml-1">(評判 {reputation})</span>
                             </div>
                             <div className="text-[10px] text-slate-500 mt-1 font-bold">
-                                {getGrade(reputation) === 'S' ? '至高のブランド' :
-                                    getGrade(reputation) === 'A' ? '名門部屋' :
-                                        getGrade(reputation) === 'B' ? '中堅部屋' : '新興部屋'}
+                                {t(`scout.rank_desc.${getGrade(reputation).toLowerCase()}`)}
                             </div>
                         </div>
                     </div>
@@ -235,8 +235,8 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                     {candidates.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-slate-400">
                             <div className="text-6xl mb-4 opacity-50">🍃</div>
-                            <div className="font-serif font-bold text-xl mb-2">候補者なし</div>
-                            <p className="text-sm">来週のスカウト報告をお待ちください</p>
+                            <div className="font-serif font-bold text-xl mb-2">{t('scout.no_candidates')}</div>
+                            <p className="text-sm">{t('scout.wait_next_week')}</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -317,7 +317,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                                                     }
                                                 `}
                                             >
-                                                <span>{isFull ? '満員' : !canAffordFee ? '資金不足' : '検査へ進む'}</span>
+                                                <span>{isFull ? t('scout.full') : !canAffordFee ? t('scout.no_funds') : t('scout.inspect_action')}</span>
                                                 {canAffordFee && !isFull && (
                                                     <span className="text-[10px] font-normal opacity-70 group-hover/btn:opacity-100">
                                                         (¥{(INSPECTION_FEE / 10000)}万)

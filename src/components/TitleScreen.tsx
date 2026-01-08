@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { hasSaveData, loadGame } from '../utils/storage';
 import { SaveData, GameMode } from '../types';
 import { useTranslation } from 'react-i18next';
+import { LanguageToggle } from './common/LanguageToggle';
 
 interface TitleScreenProps {
     onNewGame: (mode: GameMode) => void;
@@ -33,6 +34,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onNewGame, onLoadGame 
             <div className="absolute top-0 left-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
             <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #000 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+            {/* Language Toggle */}
+            <LanguageToggle />
 
             <div className={`transition-all duration-700 max-w-4xl w-full flex flex-col items-center relative z-10 ${isSelectingMode ? 'translate-y-0' : 'translate-y-0'}`}>
 
@@ -80,7 +84,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onNewGame, onLoadGame 
                     <div className="w-full animate-fadeInUp">
                         <h2 className="text-center text-slate-800 text-2xl font-bold mb-8 font-serif flex items-center justify-center gap-2">
                             <span className="text-[#b7282e]">●</span>
-                            ゲームモード選択
+                            {t('title.mode_select')}
                             <span className="text-[#b7282e]">●</span>
                         </h2>
 
@@ -91,26 +95,25 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onNewGame, onLoadGame 
                                 className="group relative bg-white p-8 rounded-sm shadow-lg border-2 border-transparent hover:border-[#b7282e] transition-all duration-300 text-left hover:-translate-y-1"
                             >
                                 <div className="absolute top-0 right-0 p-4 opacity-10 font-serif text-6xl text-slate-900 group-hover:text-[#b7282e] transition-colors pointer-events-none">独</div>
-                                <h3 className="text-3xl font-bold text-slate-800 mb-1 font-serif group-hover:text-[#b7282e] transition-colors">独立</h3>
-                                <p className="text-[#b7282e] font-serif text-sm mb-6 tracking-widest">ESTABLISH</p>
+                                <h3 className="text-3xl font-bold text-slate-800 mb-1 font-serif group-hover:text-[#b7282e] transition-colors">{t('title.mode.establish.name')}</h3>
+                                <p className="text-[#b7282e] font-serif text-sm mb-6 tracking-widest">{t('title.mode.establish.subtitle')}</p>
 
-                                <p className="text-slate-600 text-sm mb-4 leading-relaxed font-bold">
-                                    自らの手で部屋を興す。<br />
-                                    茨の道だが栄光は全て自分のもの。
+                                <p className="text-slate-600 text-sm mb-4 leading-relaxed font-bold whitespace-pre-line">
+                                    {t('title.mode.establish.desc')}
                                 </p>
 
                                 <div className="space-y-2 text-xs border-t border-slate-100 pt-4">
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">資金</span>
-                                        <span className="font-bold text-[#b7282e]">300万 (少)</span>
+                                        <span className="text-slate-400">{t('title.mode.establish.funds')}</span>
+                                        <span className="font-bold text-[#b7282e]">{t('title.mode.establish.funds_val')}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">弟子</span>
-                                        <span className="font-bold text-slate-700">1名 (新弟子)</span>
+                                        <span className="text-slate-400">{t('title.mode.establish.disciples')}</span>
+                                        <span className="font-bold text-slate-700">{t('title.mode.establish.disciples_val')}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">難易度</span>
-                                        <span className="font-bold text-[#b7282e]">HARD</span>
+                                        <span className="text-slate-400">{t('title.mode.establish.difficulty')}</span>
+                                        <span className="font-bold text-[#b7282e]">{t('title.mode.establish.difficulty_val')}</span>
                                     </div>
                                 </div>
                             </button>
@@ -121,26 +124,25 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onNewGame, onLoadGame 
                                 className="group relative bg-white p-8 rounded-sm shadow-lg border-2 border-transparent hover:border-blue-500 transition-all duration-300 text-left hover:-translate-y-1"
                             >
                                 <div className="absolute top-0 right-0 p-4 opacity-10 font-serif text-6xl text-slate-900 group-hover:text-blue-500 transition-colors pointer-events-none">継</div>
-                                <h3 className="text-3xl font-bold text-slate-800 mb-1 font-serif group-hover:text-blue-600 transition-colors">継承</h3>
-                                <p className="text-blue-600 font-serif text-sm mb-6 tracking-widest">INHERIT</p>
+                                <h3 className="text-3xl font-bold text-slate-800 mb-1 font-serif group-hover:text-blue-600 transition-colors">{t('title.mode.inherit.name')}</h3>
+                                <p className="text-blue-600 font-serif text-sm mb-6 tracking-widest">{t('title.mode.inherit.subtitle')}</p>
 
-                                <p className="text-slate-600 text-sm mb-4 leading-relaxed font-bold">
-                                    名門部屋を再建する。<br />
-                                    基盤はあるが維持する責任がある。
+                                <p className="text-slate-600 text-sm mb-4 leading-relaxed font-bold whitespace-pre-line">
+                                    {t('title.mode.inherit.desc')}
                                 </p>
 
                                 <div className="space-y-2 text-xs border-t border-slate-100 pt-4">
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">資金</span>
-                                        <span className="font-bold text-blue-600">1500万 (多)</span>
+                                        <span className="text-slate-400">{t('title.mode.inherit.funds')}</span>
+                                        <span className="font-bold text-blue-600">{t('title.mode.inherit.funds_val')}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">弟子</span>
-                                        <span className="font-bold text-slate-700">6名 (幕下〜)</span>
+                                        <span className="text-slate-400">{t('title.mode.inherit.disciples')}</span>
+                                        <span className="font-bold text-slate-700">{t('title.mode.inherit.disciples_val')}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-slate-400">難易度</span>
-                                        <span className="font-bold text-blue-600">NORMAL</span>
+                                        <span className="text-slate-400">{t('title.mode.inherit.difficulty')}</span>
+                                        <span className="font-bold text-blue-600">{t('title.mode.inherit.difficulty_val')}</span>
                                     </div>
                                 </div>
                             </button>
@@ -151,7 +153,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onNewGame, onLoadGame 
                                 onClick={() => setIsSelectingMode(false)}
                                 className="text-slate-400 hover:text-slate-600 transition-colors text-sm font-bold border-b border-transparent hover:border-slate-400"
                             >
-                                戻る
+                                {t('title.mode.back')}
                             </button>
                         </div>
                     </div>

@@ -1,13 +1,14 @@
-
 import { Wrestler, Matchup } from '../../../types';
 import { matchMaker } from '../logic/matchmaker/MatchMaker';
+import { TP_REWARD_WIN } from '../../../utils/constants';
 
 interface DailyMatchResult {
     updatedWrestlers: Wrestler[];
     updatedMatchups: Matchup[];
-    logs: string[];
+    logs: (string | import('../../../types').LogData)[];
     fundsChange: number;
     reputationChange: number;
+    tpChange: number;
 }
 
 /**
@@ -20,15 +21,16 @@ export const processDailyMatches = (
     okamiLevel: number
 ): DailyMatchResult => {
 
-    const logs: string[] = [];
+    const logs: (string | import('../../../types').LogData)[] = [];
     const tournamentDay = currentDate.getDate() - 9; // 10th is Day 1
 
     let totalFundsChange = 0;
     let totalReputationChange = 0;
+    let totalTpChange = 0;
 
     // 1. Calculate outcomes
     const processedMatchups = todaysMatchups.map(match => {
-        const result = matchMaker.calculateWinChance(match.east, match.west);
+        const result = matchMaker.calculateWinChance(match.east, match.west, match.tacticalBonus);
         const isEastWinner = Math.random() < result.winChance;
         const winner = isEastWinner ? match.east : match.west;
         const loser = isEastWinner ? match.west : match.east;
@@ -41,7 +43,12 @@ export const processDailyMatches = (
 
         if (isKinboshi) {
             // Log for everyone (Major Event)
-            logs.push(`【大金星！】${winner.name}、横綱${loser.name}を破り、座布団が舞う！`);
+            logs.push({
+                key: 'log.match.kinboshi',
+                params: { winner: winner.name, loser: loser.name },
+                message: `【大金星！】${winner.name}、横綱${loser.name}を破り、座布団が舞う！`,
+                type: 'warning'
+            });
 
             // Player Bonus (Winner)
             if (winner.heyaId === 'player_heya') {
@@ -53,6 +60,21 @@ export const processDailyMatches = (
             // Player Penalty (Loser)
             if (loser.heyaId === 'player_heya') {
                 totalReputationChange -= 1; // Disgrace for Yokozuna
+            }
+        }
+
+        // TP Reward Logic (Rebalanced)
+        if (winner.heyaId === 'player_heya') {
+            // Rank based probability
+            const isSekitori = ['Yokozuna', 'Ozeki', 'Sekiwake', 'Komusubi', 'Maegashira', 'Juryo'].includes(winner.rank);
+
+            if (isSekitori) {
+                totalTpChange += TP_REWARD_WIN;
+            } else {
+                // 30% chance for lower divisions
+                if (Math.random() < 0.3) {
+                    totalTpChange += TP_REWARD_WIN;
+                }
             }
         }
 
@@ -108,7 +130,12 @@ export const processDailyMatches = (
     });
 
     if (logs.length === 0) {
-        logs.push(`${tournamentDay}日目の取組が終了しました。`);
+        logs.push({
+            key: 'log.match.day_end',
+            params: { day: tournamentDay },
+            message: `${tournamentDay}日目の取組が終了しました。`,
+            type: 'info'
+        });
     }
 
     // Filter normal regular logs, keep special ones
@@ -118,7 +145,7 @@ export const processDailyMatches = (
             const winner = m.winnerId === m.east.id ? m.east : m.west;
             const skills = m.triggeredSkills || [];
             // Dramatic Log
-            let skillText = "";
+            let skillNamesStr = "";
             if (skills.length > 0) {
                 const skillNames: Record<string, string> = {
                     'IronHead': '鉄の額',
@@ -129,10 +156,19 @@ export const processDailyMatches = (
                     'Lightning': '電光石火',
                     'Intimidation': '横綱相撲'
                 };
-                const names = skills.map(s => `【${skillNames[s] as string || s}】`).join('');
-                skillText = `${names}が炸裂！`;
+                skillNamesStr = skills.map(s => skillNames[s] || s).join(', ');
             }
-            return `${winner.name}の勝ち。${skillText}決まり手は${m.kimarite}。`;
+
+            return {
+                key: 'log.match.result',
+                params: {
+                    winner: winner.name,
+                    kimarite: m.kimarite,
+                    skills: skillNamesStr // Note: Skills might need their own translation handling if passed as params
+                },
+                message: `${winner.name}の勝ち。${skillNamesStr ? `【${skillNamesStr}】が炸裂！` : ''}決まり手は${m.kimarite}。`,
+                type: 'info'
+            } as import('../../../types').LogData;
         });
 
     return {
@@ -140,6 +176,7 @@ export const processDailyMatches = (
         updatedMatchups: processedMatchups,
         logs: [...logs, ...playerMatchLogs],
         fundsChange: totalFundsChange,
-        reputationChange: totalReputationChange
+        reputationChange: totalReputationChange,
+        tpChange: totalTpChange
     };
 };

@@ -58,14 +58,14 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
                 {/* Header */}
                 <div className="bg-white p-6 shrink-0 border-b-4 border-[#b7282e] flex justify-between items-end relative overflow-hidden">
                     {/* Watermark */}
-                    <span className="absolute -bottom-4 -right-4 text-9xl text-stone-50 font-serif opacity-50 select-none z-0">番付</span>
+                    <span className="absolute -bottom-4 -right-4 text-9xl text-stone-50 font-serif opacity-50 select-none z-0">{t('basho_result.watermark')}</span>
 
                     <div className="relative z-10">
                         <h2 className="text-3xl font-black font-serif text-[#b7282e] tracking-tight mb-1 flex items-center gap-3">
                             <span className="w-2 h-8 bg-[#b7282e]"></span>
                             {t('basho_result.title')}
                         </h2>
-                        <p className="text-xs font-bold text-slate-500 tracking-[0.2em] pl-5">OFFICIAL BANZUKE ANNOUNCEMENT</p>
+                        <p className="text-xs font-bold text-slate-500 tracking-[0.2em] pl-5">{t('basho_result.official_announcement')}</p>
                     </div>
 
                     <button
@@ -81,8 +81,7 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
                     <div className="bg-slate-100 p-3 shrink-0 border-b border-slate-200 overflow-x-auto custom-scrollbar">
                         <div className="flex gap-4">
                             <div className="flex-shrink-0 flex flex-col items-center justify-center bg-red-600 text-white px-3 py-1 rounded-sm font-bold text-[10px] shadow leading-tight text-center">
-                                <span>FLASH</span>
-                                <span>NEWS</span>
+                                <span>{t('basho_result.flash_news')}</span>
                             </div>
                             {promoted.slice(0, 10).map(w => {
                                 const last = w.history[w.history.length - 1];
@@ -164,7 +163,7 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
                                         {status === 'up' && <span className="text-red-500 text-xs shadow-sm bg-white rounded-full p-0.5">▲</span>}
                                         {status === 'down' && <span className="text-blue-400 text-xs shadow-sm bg-white rounded-full p-0.5">▼</span>}
                                         {status === 'stay' && <span className="text-slate-300 text-xs">-</span>}
-                                        {status === 'new' && <span className="text-[9px] font-bold text-amber-500 border border-amber-500 px-1 rounded-sm bg-white">新</span>}
+                                        {status === 'new' && <span className="text-[9px] font-bold text-amber-500 border border-amber-500 px-1 rounded-sm bg-white">{t('trend.new')[0]}</span>}
                                     </div>
 
                                     {/* Detail */}

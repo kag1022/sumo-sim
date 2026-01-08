@@ -62,3 +62,9 @@ export const getRankValue = (rank: string): number => {
 
     return RANK_VALUE_MAP[rank] || 0;
 };
+// TP System Constants
+export const MAX_TP = 100;
+export const TP_RECOVER_WEEKLY = 5;
+export const TP_REWARD_WIN = 1;
+export const TP_REWARD_KACHIKOSHI = 10;
+export const TP_REWARD_YUSHO = 50;

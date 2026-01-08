@@ -1,9 +1,11 @@
 import React from 'react';
 import { useGame } from '../../../context/GameContext';
 import { EventType } from '../types';
+import { useTranslation } from 'react-i18next';
 
 export const EventModal: React.FC = () => {
     const { activeEvent, setActiveEvent, setFunds, setReputation, setWrestlers, addLog } = useGame();
+    const { t } = useTranslation();
 
     if (!activeEvent) return null;
 
@@ -32,7 +34,12 @@ export const EventModal: React.FC = () => {
                 }));
             }
         }
-        addLog(`【イベント】${activeEvent.title}`, activeEvent.type === 'Bad' ? 'warning' : 'info');
+        addLog({
+            key: 'log.event_log',
+            params: { eventName: activeEvent.title },
+            message: `【イベント】${t(activeEvent.title)}`, // fallback
+            type: activeEvent.type === 'Bad' ? 'warning' : 'info'
+        }, activeEvent.type === 'Bad' ? 'warning' : 'info');
         setActiveEvent(null);
     };
 
@@ -80,7 +87,7 @@ export const EventModal: React.FC = () => {
                 <div className={`p-6 text-center border-b border-slate-200 ${style.bgClass}`}>
                     <div className="text-4xl mb-4">{style.icon}</div>
                     <h2 className={`text-2xl font-serif font-bold ${style.colorClass}`}>
-                        {activeEvent.title}
+                        {t(activeEvent.title)}
                     </h2>
                     <span className="inline-block mt-2 px-3 py-1 text-xs font-bold uppercase tracking-wider bg-white/50 rounded-full text-slate-600 border border-slate-200">
                         {activeEvent.type} EVENT
@@ -90,15 +97,15 @@ export const EventModal: React.FC = () => {
                 {/* Content */}
                 <div className="p-8">
                     <p className="text-lg leading-relaxed text-slate-700 font-serif mb-8 text-center">
-                        {activeEvent.description}
+                        {t(activeEvent.description)}
                     </p>
 
-                    {/* Effects Preview (Optional, user didn't explicitly ask but it's good UX) */}
+                    {/* Effects Preview */}
                     {activeEvent.effects && (
                         <div className="bg-white p-4 rounded-sm border border-slate-100 mb-6 text-sm text-slate-600 space-y-1">
                             {activeEvent.effects.funds !== undefined && (
                                 <div className="flex justify-between">
-                                    <span>資金:</span>
+                                    <span>{t('ui.funds')}:</span>
                                     <span className={activeEvent.effects.funds > 0 ? 'text-red-700 font-bold' : 'text-slate-500'}>
                                         {activeEvent.effects.funds > 0 ? '+' : ''}{activeEvent.effects.funds.toLocaleString()}円
                                     </span>
@@ -106,7 +113,7 @@ export const EventModal: React.FC = () => {
                             )}
                             {activeEvent.effects.reputation !== undefined && (
                                 <div className="flex justify-between">
-                                    <span>評判:</span>
+                                    <span>{t('ui.reputation')}:</span>
                                     <span className={activeEvent.effects.reputation > 0 ? 'text-red-700 font-bold' : 'text-slate-500'}>
                                         {activeEvent.effects.reputation > 0 ? '+' : ''}{activeEvent.effects.reputation}
                                     </span>
@@ -114,7 +121,7 @@ export const EventModal: React.FC = () => {
                             )}
                             {activeEvent.effects.motivation !== undefined && (
                                 <div className="flex justify-between">
-                                    <span>力士やる気:</span>
+                                    <span>{t('ui.motivation')}:</span>
                                     <span className={activeEvent.effects.motivation > 0 ? 'text-red-700 font-bold' : 'text-slate-500'}>
                                         {activeEvent.effects.motivation > 0 ? '上昇' : '低下'}
                                     </span>
@@ -127,7 +134,7 @@ export const EventModal: React.FC = () => {
                         onClick={applyEffects}
                         className={`w-full py-3 rounded-sm font-bold shadow-md active:scale-95 transition-transform ${style.btnClass}`}
                     >
-                        確認
+                        {t('cmd.confirm')}
                     </button>
                 </div>
             </div>

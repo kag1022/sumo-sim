@@ -10,7 +10,7 @@ interface BashoEndResult {
     yushoHistoryEntry: YushoRecord[];
     retiringQueue: Wrestler[];
     consultingCandidates: Wrestler[];
-    logs: string[];
+    logs: (string | import('../../../types').LogData)[];
     fundsChange: number; // For retiring wrestler severance
 }
 
@@ -23,7 +23,7 @@ export const processBanzukeUpdate = (
     currentDate: Date,
     banzukeDateId: string // e.g. "Year 1 - Jan"
 ): BashoEndResult => {
-    const logs: string[] = [];
+    const logs: (string | import('../../../types').LogData)[] = [];
     let fundsChange = 0;
 
     // 1. Determine Yusho Winners
@@ -101,7 +101,12 @@ export const processBanzukeUpdate = (
         } else {
             if (retirementCheck.retire) {
                 willRetire = true;
-                logs.push(`${w.name}は${retirementCheck.reason} により引退を決意しました。`);
+                logs.push({
+                    key: 'log.wrestler.retire_intent',
+                    params: { name: w.name, reason: retirementCheck.reason },
+                    message: `${w.name}は${retirementCheck.reason} により引退を決意しました。`,
+                    type: 'info'
+                });
             } else if (retirementCheck.shouldConsult) {
                 // Determine if consulting
                 const updatedWrestler = {
@@ -111,7 +116,12 @@ export const processBanzukeUpdate = (
                 };
                 consultingCandidates.push(updatedWrestler);
                 survivingWrestlers.push(updatedWrestler);
-                logs.push(`【引退相談】${w.name}が引退について相談を求めています...`);
+                logs.push({
+                    key: 'log.wrestler.refer_consult',
+                    params: { name: w.name },
+                    message: `【引退相談】${w.name}が引退について相談を求めています...`,
+                    type: 'info'
+                });
                 return;
             }
         }
@@ -144,7 +154,12 @@ export const processBanzukeUpdate = (
             let newRetirementStatus = w.retirementStatus || 'None';
             if (w.retirementStatus === 'LastHanamichi' && w.currentBashoStats.wins >= 8) {
                 newRetirementStatus = 'None';
-                logs.push(`【復活】${w.name} がラストチャンスを見事に掴みました！現役続行決定！`);
+                logs.push({
+                    key: 'log.wrestler.revival',
+                    params: { name: w.name },
+                    message: `【復活】${w.name} がラストチャンスを見事に掴みました！現役続行決定！`,
+                    type: 'warning'
+                });
             }
 
             survivingWrestlers.push({

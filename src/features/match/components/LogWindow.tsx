@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { useGame } from '../../../context/GameContext';
+import { useTranslation } from 'react-i18next';
 
 const LogWindow: React.FC = () => {
     const { logs } = useGame();
+    const { t } = useTranslation();
     const bottomRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom
@@ -15,13 +17,13 @@ const LogWindow: React.FC = () => {
     return (
         <div className="bg-stone-900 border-t-4 border-stone-700 h-48 md:h-64 flex flex-col font-serif shadow-inner">
             <div className="bg-stone-800 text-stone-400 px-4 py-1 text-xs font-bold uppercase tracking-wider flex justify-between items-center sticky top-0 z-10 shadow-sm">
+                <span>{t('cmd.history')}</span>
                 <span>History Log</span>
-                <span>記録帳</span>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 {logs.length === 0 && (
-                    <p className="text-stone-600 text-sm italic text-center mt-8">記録はまだありません...</p>
+                    <p className="text-stone-600 text-sm italic text-center mt-8">{t('log.empty', '記録はまだありません...')}</p>
                 )}
 
                 {/* Reverse order to show history? context adds to [0], so map is Newest First. 
@@ -46,7 +48,7 @@ const LogWindow: React.FC = () => {
                  ${log.type === 'error' ? 'text-red-400 font-bold' :
                                     log.type === 'warning' ? 'text-amber-400' : 'text-stone-200'}
                `}>
-                                {log.message}
+                                {log.key ? t(log.key, log.params) : log.message}
                             </span>
                         </div>
                     </div>

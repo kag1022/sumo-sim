@@ -132,6 +132,7 @@ export interface Matchup {
     kimarite?: string; // Optional result string
     triggeredSkills?: SkillType[]; // Skills that affected the outcome
     tags?: string[];
+    tacticalBonus?: { east?: boolean; west?: boolean };
 }
 
 export interface Candidate extends Omit<Wrestler, 'history' | 'currentBashoStats' | 'nextBoutDay'> {
@@ -139,11 +140,19 @@ export interface Candidate extends Omit<Wrestler, 'history' | 'currentBashoStats
     revealedStats: string[]; // Keys of fields that are revealed
 }
 
-export interface LogEntry {
+export interface LogData {
+    message?: string;
+    key?: string;
+    params?: Record<string, any>;
+    type?: 'info' | 'warning' | 'error';
+}
+
+export interface LogEntry extends LogData {
     id: string;
     date: string;
-    message: string;
-    type: 'info' | 'warning' | 'error';
+    // message is now optional in LogData, but for compatibility we might ensure it has a string fallback or handled in UI
+    message: string; // The fallback or translated string at time of creation? 
+    // Ideally UI translates on the fly. So message is fallback.
 }
 
 export interface YushoRecord {

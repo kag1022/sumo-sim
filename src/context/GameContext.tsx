@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Wrestler, LogEntry, GamePhase, GameMode, Heya, Matchup, YushoRecord, SaveData } from '../types';
+import { Wrestler, LogEntry, GamePhase, GameMode, Heya, Matchup, YushoRecord, SaveData, LogData } from '../types';
 import { GameEvent } from '../features/events/types';
 import { initializeGameData, InitialSettings } from '../features/game/logic/initialization';
 
@@ -35,7 +35,7 @@ interface GameContextProps extends GameState {
     setWrestlers: React.Dispatch<React.SetStateAction<Wrestler[]>>;
     setHeyas: React.Dispatch<React.SetStateAction<Heya[]>>;
     advanceDate: (days: number) => void;
-    addLog: (message: string, type?: 'info' | 'warning' | 'error') => void;
+    addLog: (log: string | LogData, type?: 'info' | 'warning' | 'error') => void;
     setGamePhase: (phase: GamePhase) => void;
     setGameMode: (mode: GameMode) => void; // New setter
     setActiveEvent: (event: GameEvent | null) => void;
@@ -64,12 +64,18 @@ interface GameContextProps extends GameState {
     setMatchesProcessed: React.Dispatch<React.SetStateAction<boolean>>;
     autoRecruitAllowed: boolean;
     setAutoRecruitAllowed: React.Dispatch<React.SetStateAction<boolean>>;
+    getSaveData: () => SaveData;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Initial State
+    // ... (keep existing state)
+    // We need to access state inside getSaveData, so we can't just return a static object.
+    // However, getSaveData will be called by components.
+    // The state variables are available in this scope.
+
     const [currentDate, setCurrentDate] = useState<Date>(new Date(2025, 0, 1));
     const [funds, setFundsState] = useState<number>(0);
     const [wrestlers, setWrestlers] = useState<Wrestler[]>([]);
@@ -90,7 +96,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [okamiLevel, setOkamiLevel] = useState<number>(1);
     const [reputation, setReputation] = useState<number>(50);
     const [todaysMatchups, setTodaysMatchups] = useState<Matchup[]>([]);
-    const [trainingPoints, setTrainingPoints] = useState<number>(3);
+    const [trainingPoints, setTrainingPoints] = useState<number>(5);
     const [retiringQueue, setRetiringQueue] = useState<Wrestler[]>([]);
     const [usedNames, setUsedNames] = useState<string[]>([]);
     const [consultingWrestlerId, setConsultingWrestlerId] = useState<string | null>(null);
@@ -144,6 +150,34 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // History
     const [yushoHistory, setYushoHistory] = useState<YushoRecord[]>([]);
 
+    const getSaveData = (): SaveData => {
+        return {
+            version: 1,
+            timestamp: Date.now(),
+            gameState: {
+                currentDate: currentDate.toISOString(),
+                funds,
+                reputation,
+                okamiLevel,
+                gamePhase,
+                gameMode,
+                bashoFinished,
+                lastMonthBalance,
+                isInitialized,
+                oyakataName,
+                trainingPoints,
+                matchesProcessed,
+                todaysMatchups,
+                autoRecruitAllowed
+            },
+            wrestlers,
+            heyas,
+            yushoHistory,
+            logs,
+            usedNames
+        };
+    };
+
     const loadGameData = (data: SaveData) => {
         setCurrentDate(new Date(data.gameState.currentDate));
         setFundsState(data.gameState.funds);
@@ -182,12 +216,14 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setYushoWinners(null);
     };
 
-    const addLog = (message: string, type: 'info' | 'warning' | 'error' = 'info') => {
+    const addLog = (log: string | LogData, type: 'info' | 'warning' | 'error' = 'info') => {
         const entry: LogEntry = {
             id: crypto.randomUUID(),
             date: currentDate.toLocaleDateString('ja-JP'),
-            message,
-            type,
+            message: typeof log === 'string' ? log : (log.message || ''),
+            key: typeof log !== 'string' ? log.key : undefined,
+            params: typeof log !== 'string' ? log.params : undefined,
+            type: typeof log !== 'string' ? (log.type || type) : type,
         };
         setLogs((prev) => [entry, ...prev]);
     };
@@ -241,7 +277,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             matchesProcessed,
             setMatchesProcessed,
             autoRecruitAllowed,
-            setAutoRecruitAllowed
+            setAutoRecruitAllowed,
+            getSaveData
         }}>
             {children}
         </GameContext.Provider>
