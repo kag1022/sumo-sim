@@ -32,9 +32,11 @@ export const ja = {
             title: '取組一覧',
             division_hint: '幕内・十両',
             not_announced: '取組はまだ発表されていません',
-            kinboshi: '★金星挑戦',
-            title_bout: '🔥優勝争い',
-            senshuraku: '結び',
+            kinboshi: '金星挑戦',
+            title_bout: '優勝決定戦',
+            senshuraku: '千秋楽',
+            advice_action: '🗣️助言',
+            advised: '指示済',
             kimarite: '決まり手',
             wins: '勝',
             losses: '敗',
@@ -109,9 +111,128 @@ export const ja = {
                 title: '寒稽古',
                 desc: '凍えるような寒さの中、裸で四股を踏む。白い息が立ち上り、精神が研ぎ澄まされる。'
             },
-            event_gift_farmers: {
-                title: '農家からの差し入れ',
-                desc: '近所の農家から大量の野菜が届いた。ちゃんこ鍋が豪華になりそうだ。'
+
+            boycott: {
+                title: '稽古拒否',
+                desc: '{{name}} がストレスのあまり稽古をボイコットしている…'
+            },
+            scandal: {
+                title: '不祥事',
+                desc: '{{name}} が街でトラブルを起こした！罰金 {{fine}}円が発生し、評判が {{repLoss}} 下がった。'
+            },
+            scandal_cpu: {
+                title: '他部屋の噂',
+                desc: '{{name}} (他部屋) が街でトラブルを起こしたという噂が流れている…'
+            },
+            gift_farmers: {
+                title: '農家の恩返し',
+                desc: '以前手伝いをした農家の方から、お礼に新鮮な米と野菜が届いた！'
+            },
+            school_visit: {
+                title: '小学校訪問',
+                desc: '地元の小学校を訪問し、子供たちと交流した。給食を共にし、人気者となった。'
+            },
+            equipment_break: {
+                title: '鉄砲柱の破損',
+                desc: '稽古の熱が入りすぎて鉄砲柱が折れてしまった！修理費がかかるが、良い稽古ができている証拠だ。'
+            },
+            stray_dog: {
+                title: '迷い犬',
+                desc: '部屋の前に迷い犬がいた。飼い主が見つかるまで一時的に世話をすることになった。'
+            },
+            types: {
+                Good: '吉兆',
+                Bad: '凶事',
+                Flavor: '噂話',
+                Special: '特別'
+            }
+        },
+        date: {
+            format_training: '{{year}}年 {{month}}月 第{{week}}週'
+        },
+        registration: {
+            title: '部屋設立届',
+            subtitle: 'Registration',
+            oyakata_label: '親方名',
+            oyakata_hint: '例: 貴乃花',
+            stable_label: '部屋名',
+            stable_hint: '例: 朝日',
+            prefix_label: '四股名冠',
+            prefix_hint: '例: 朝',
+            reading_label: 'ローマ字表記',
+            reading_hint: '例: Asa',
+            submit: '承認印を押して開始',
+            note: '※提出後の変更はできません',
+            back: '戻る'
+        },
+        management: {
+            title: '部屋経営',
+            subtitle: '親方の務め',
+            tabs: {
+                okami: '女将さん',
+                facility: '施設',
+                settings: '設定',
+                system: 'システム'
+            },
+            financial: {
+                current_funds: '現在の資金',
+                last_month: '先月の収支',
+                insufficient_funds: '資金が不足しています'
+            },
+            okami: {
+                title: '女将さんの手腕',
+                desc: '女将さんのレベルが高いほど、力士のケアや部屋の運営効率が向上します。ストレス解消効果や、タニマチとの関係構築に影響を与えます。',
+                current_level: '現在レベル',
+                max_level_reached: '最高レベル到達',
+                max_level_desc: 'これ以上の強化は必要ありません',
+                upgrade_cost: '次のレベルへ強化',
+                approve_btn: '承認する',
+                confirm_upgrade: '女将レベルを強化しますか？\n費用: ¥{{cost}}'
+            },
+            facility: {
+                title: '設備投資',
+                desc: '稽古場の環境を改善することで、所属力士全員の自然成長率（基礎トレーニング効果）が永続的に向上します。',
+                current: '現在の設備',
+                effect: '効果',
+                upgrade_to: '改修案',
+                growth_mod: '成長補正',
+                order_btn: '工務店に発注する',
+                complete: '全ての施設改修が完了しました',
+                confirm_upgrade: '{{name}} に改装しますか？\n費用: ¥{{cost}}\n補正: x{{mod}}',
+                levels: {
+                    1: '青空土俵',
+                    2: '屋内土俵',
+                    3: '基礎器具充実',
+                    4: '近代的ジム',
+                    5: 'スポーツ科学研究所'
+                }
+            },
+            settings: {
+                auto_scout: '新弟子自動スカウト',
+                auto_scout_desc: '場所終了時、引退等で人数不足になった際に、自動的に新弟子（前相撲）を入門させます。',
+                auto_scout_note: '※自分で厳選したい場合はOFFにしてください。',
+                version: 'ゲームバージョン'
+            },
+            system: {
+                save_load_title: 'データの保存・読込',
+                save_btn: 'セーブ',
+                load_btn: 'ロード',
+                local_storage_note: 'ブラウザのローカルストレージに保存されます',
+                backup_title: 'バックアップ',
+                export_btn: 'ファイルに書き出し',
+                import_btn: 'ファイルを読み込み',
+                backup_desc: 'セーブデータをファイルとしてダウンロードしたり、別の端末で遊んでいたデータを読み込むことができます。',
+                reset_btn: 'データを完全に削除してリセット',
+                alerts: {
+                    save_complete: 'セーブ完了しました',
+                    load_confirm: '現在の進行状況を破棄して、前回のセーブデータをロードしますか？',
+                    load_complete: 'ロードしました',
+                    no_save_data: 'セーブデータが見つかりません',
+                    import_confirm: '現在の進行状況を破棄して、ファイルをロードしますか？',
+                    import_complete: 'ファイルからロードしました',
+                    reset_confirm_1: '【警告】全てのデータを消去して最初から始めますか？\nこの操作は取り消せません。',
+                    reset_confirm_2: '本当によろしいですか？'
+                }
             }
         },
         cmd: {
@@ -139,6 +260,42 @@ export const ja = {
             motivation: 'やる気',
             level: 'Lv',
         },
+        modal: {
+            shikona_change: {
+                title: '四股名改名',
+                description: '{{name}} の改名を行います。改名にはTPを{{cost}}消費します。',
+                new_name_label: '新しい四股名',
+                new_reading_label: '読み（ローマ字）',
+                submit: '改名を実行'
+            }
+        },
+        sidebar: {
+            details_title: '力士詳細',
+            matches_tab: '本日の取組',
+            info_tab: '力士情報',
+            list_hint: 'リストから力士を選択',
+            injury_status: '怪我療養中',
+            win: '勝',
+            loss: '敗',
+            age_suffix: '歳',
+            tenure: '在籍 {{years}}年',
+            mind: '心',
+            tech: '技',
+            body: '体',
+            stress: '疲労',
+            special_training: '特別指導',
+            remaining_tp: '残り {{tp}}',
+            processing: '引退処理',
+            retire_desc: '引退させるとご祝儀を受け取り、力士は部屋を去ります。',
+            retire_btn: '引退勧告を行う',
+            retire_confirm: '{{name}}を引退させますか？\n\n予想されるご祝儀: ¥{{amount}}',
+            training: {
+                shiko: '四股 (体++)',
+                teppo: '鉄砲 (技+ 体+)',
+                moushi_ai: '申し合い (技++ 心+)',
+                meditation: '瞑想 (心++ 休)'
+            }
+        },
         title: {
             newGame: 'はじめから',
             continue: 'つづきから',
@@ -146,25 +303,25 @@ export const ja = {
             mode: {
                 establish: {
                     name: '独立',
-                    subtitle: 'ESTABLISH',
+                    subtitle: '創設',
                     desc: '自らの手で部屋を興す。\n茨の道だが栄光は全て自分のもの。',
                     funds: '資金',
-                    funds_val: '300万 (少)',
+                    funds_val: '300万円 (少)',
                     disciples: '弟子',
                     disciples_val: '1名 (新弟子)',
                     difficulty: '難易度',
-                    difficulty_val: 'HARD'
+                    difficulty_val: 'ハード'
                 },
                 inherit: {
                     name: '継承',
-                    subtitle: 'INHERIT',
+                    subtitle: '再建',
                     desc: '名門部屋を再建する。\n基盤はあるが維持する責任がある。',
                     funds: '資金',
-                    funds_val: '1500万 (多)',
+                    funds_val: '1500万円 (多)',
                     disciples: '弟子',
                     disciples_val: '6名 (幕下〜)',
                     difficulty: '難易度',
-                    difficulty_val: 'NORMAL'
+                    difficulty_val: 'ノーマル'
                 },
                 back: '戻る'
             }
@@ -188,7 +345,8 @@ export const ja = {
             match: {
                 day_end: '{{day}}日目の取組が終了しました。',
                 kinboshi: '【大金星！】{{winner}}、横綱{{loser}}を破り、座布団が舞う！',
-                result: '{{winner}}の勝ち。{{skills}}決まり手は{{kimarite}}。'
+                result: '{{winner}}の勝ち。{{skills}}決まり手は{{kimarite}}。',
+                result_v2: '{{winner_name}}の勝ち。{{skills}}決まり手は$t(kimarite.{{kimarite}})。'
             },
             heya: {
                 new_recruits: '{{count}}名の新弟子が入門しました。',
@@ -206,6 +364,7 @@ export const ja = {
             },
             action: {
                 recruit_success: '新弟子 {{name}} が入門しました！来場所から前相撲として修行を開始します。',
+                rename_success: '{{oldName}} は {{newName}} に改名しました！',
                 okami_upgrade: '女将さんのレベルが {{level}} に上がりました！',
                 skill_learned: '{{name}}は特訓の末、秘技『{{skill}}』を閃いた！',
                 training_done: '特別指導（{{type}}）を行いました。心+{{mind}} 技+{{tech}} 体+{{body}}'
@@ -225,7 +384,93 @@ export const ja = {
                 prize_money: '優勝賞金 {{amount}}を獲得しました！',
                 retired_summary: '{{count}}名の力士が引退しました。'
             },
-            event_log: '【イベント】$t({{eventName}})'
+            event_log: '【イベント】$t({{eventName}})',
+            achievement: {
+                unlock: '実績解除！「$t(achievements.{{id}}.title)」'
+            }
+        },
+
+        // スキル名
+        skill: {
+            IronHead: '鉄の額',
+            GiantKiller: '巨漢殺し',
+            EscapeArtist: 'うっちゃり',
+            StaminaGod: '無尽蔵',
+            Bulldozer: '重戦車',
+            Lightning: '電光石火',
+            Intimidation: '横綱相撲'
+        },
+
+        // 実績
+        achievements: {
+            first_win: { title: '初陣の喜び', desc: '初めて決まり手を記録する' },
+            collector_beginner: { title: '技のデパート・入門', desc: '10種類の決まり手を記録する' },
+            collector_master: { title: '技のデパート・本店', desc: '30種類の決まり手を記録する' },
+            push_master: { title: '突き押し名人', desc: '「突き・押し」系の技を合計100回記録する' },
+            grapple_master: { title: '四つの達人', desc: '「四つ・寄り」系の技を合計100回記録する' },
+            throw_master: { title: '投げの鬼', desc: '「投げ」系の技を合計50回記録する' },
+            tech_master: { title: '業師', desc: '「技・捻り」系の技を合計50回記録する' },
+            special_move: { title: 'まさかの結末', desc: '「特殊・その他」系の技を記録する' },
+            legendary_witness: { title: '伝説の目撃者', desc: 'レアリティ「伝説」の技を目撃する' },
+            reverse_king: { title: '逆転の美学', desc: '「うっちゃり」または「居反り」を記録する' },
+            kimarite_complete: { title: '決まり手完全制覇', desc: '全ての決まり手を目撃する' }
+        },
+
+        // Collection Features
+        encyclopedia: {
+            title: '相撲絵巻',
+            subtitle: 'コレクション',
+            tabs: {
+                kimarite: '決まり手図鑑',
+                achievements: '実績'
+            },
+            discovered: '発見数',
+            is_secret: '条件は秘密です',
+            secret_title: '？？？？？',
+            count_suffix: '回',
+            complete: '達成',
+            unlocked: '解除済み',
+            types: {
+                Push: '突き・押し',
+                Grapple: '四つ・寄り',
+                Throw: '投げ',
+                Tech: '技・捻り',
+                Special: '特殊・その他'
+            },
+            rarity: {
+                Common: '通常',
+                Uncommon: '少数',
+                Rare: '希少',
+                Legendary: '伝説'
+            }
+        },
+        kimarite: {
+            // Push
+            oshidashi: '押し出し', oshitaoshi: '押し倒し', tsukidashi: '突き出し', tsukitaoshi: '突き倒し',
+
+            // Grapple
+            yorikiri: '寄り切り', yoritaoshi: '寄り倒し', abisetaoshi: '浴びせ倒し',
+
+            // Throw
+            uwatenage: '上手投げ', shitatenage: '下手投げ', sukuinage: '掬い投げ', kotenage: '小手投げ',
+            uwatedashinage: '上手出し投げ', shitatedashinage: '下手出し投げ', kubinage: '首投げ',
+            kakenage: '掛け投げ', nichonage: '二丁投げ', ipponzeoi: '一本背負い', koshinage: '腰投げ',
+            yaguranage: '櫓投げ', tsukaminage: 'つかみ投げ',
+
+            // Tech (技・捻り)
+            tsukiotoshi: '突き落とし', katasukashi: '肩すかし', sotogake: '外掛け', tottari: 'とったり',
+            shitatehineri: '下手捻り', kirigaeshi: '切り返し', ashitori: '足取り', uwatehineri: '上手捻り',
+            watashikomi: '渡し込み', uchigake: '内掛け', kainahineri: '腕捻り', makiotoshi: '巻き落とし',
+            kegaeshi: '蹴返し', amiuchi: '網打ち', susoharai: '裾払い', zubunehineri: '頭捻り',
+            harimanage: '波離間投げ', uchimusou: '内無双', tokurinage: '徳利投げ', kubihineri: '首捻り',
+            komatusukui: '小股掬い', kawazugake: '河津掛け', sabaori: '鯖折り',
+
+            // Special (特殊・反り・非技)
+            hatakikomi: '叩き込み', hikiotoshi: '引き落とし', okuridashi: '送り出し', okuritaoshi: '送り倒し',
+            kimedashi: '極め出し', utchari: '打っ棄り', isamiashi: '勇み足', hikkake: '引っ掛け',
+            tsuridashi: '吊り出し', kimetaoshi: '極め倒し', tsukihiza: 'つきひざ', okuriage: '送り投げ',
+            sukubikonashi: '素首落とし', tsukite: 'つき手', koshikudake: '腰砕け', fumidashi: '踏み出し',
+            izori: '居反り', tsutaezori: '伝え反り', tasukizori: 'たすき反り', shumokuzori: '撞木反り'
         },
         basho_result: {
             title: '番付編成発表',
@@ -236,8 +481,8 @@ export const ja = {
             trend: '変動',
             header: '番付編成会議が終了しました。来場所の番付が決定しました。',
             watermark: '番付',
-            official_announcement: 'OFFICIAL BANZUKE ANNOUNCEMENT',
-            flash_news: 'FLASH NEWS'
+            official_announcement: '公式番付発表',
+            flash_news: '速報'
         },
         retirement: {
             dialogue: {
@@ -289,7 +534,7 @@ export const ja = {
         },
         scout: {
             title: '新弟子スカウト',
-            subtitle: 'Recruitment & Scouting',
+            subtitle: '新弟子採用',
             no_candidates: '候補者なし',
             wait_next_week: '来週のスカウト報告をお待ちください',
             inspection_report: '新弟子検査票',
@@ -304,15 +549,29 @@ export const ja = {
             full: '満員',
             no_funds: '資金不足',
             inspect_action: '検査へ進む',
-            current_rank: 'CURRENT RANK',
-            funds: 'FUNDS',
-            members: 'MEMBERS',
-            contract_fee: 'CONTRACT FEE',
+            current_rank: '現在の階級',
+            funds: '資金',
+            members: 'メンバー',
+            contract_fee: '契約料',
             rank_desc: {
                 s: '至高のブランド',
                 a: '名門部屋',
                 b: '中堅部屋',
-                c: '新興部屋'
+                c: '新興部屋',
+                d: '弱小部屋',
+                e: '存続の危機'
+            },
+            background: {
+                judo_pref_top4: '高校柔道県大会ベスト4',
+                wanpaku_national: 'わんぱく相撲全国大会出場',
+                football_giant: 'アメフト出身の巨漢',
+                wrestling_interhigh: 'レスリングでインターハイ出場',
+                fisherman_strength: '実家の漁業を手伝い鍛えられた',
+                tall_talent: '相撲未経験だが身長2mの逸材',
+                junior_yokozuna: '中学横綱のタイトルを持つ',
+                karate_kicks: '空手経験者で足腰が強い',
+                track_thrower: '陸上投擲種目の元選手',
+                cheerleader: '応援団長からの転身'
             }
         },
         flexibility: {
@@ -321,6 +580,56 @@ export const ja = {
             normal: '普通',
             stiff: '硬い',
             unknown: '未測定'
+        },
+        history: {
+            title: '大相撲 史記',
+            subtitle: '大相撲史',
+            close: '閉じる',
+            tabs: {
+                timeline: '歴代優勝者',
+                hall_of_fame: '歴代最強力士'
+            },
+            hall_of_fame: {
+                champion: '1位',
+                second_place: '2位',
+                third_place: '3位',
+                wins: '場所優勝',
+                legendary_yokozuna: '伝説の横綱',
+                table_rank: '階級',
+                table_rikishi: '力士 / 部屋',
+                table_victories: '優勝回数'
+            },
+            timeline: {
+                table_head: {
+                    basho: '場所',
+                    division: '階級',
+                    winner: '優勝力士',
+                    stable: '所属部屋',
+                    rank: '地位',
+                    record: '成績'
+                },
+                empty: '歴史はこれからのページに刻まれます...'
+            },
+            empty: {
+                title: '歴史はまだ始まっていません',
+                desc: '幕内優勝者が出るとここに記録されます。'
+            },
+            filter: {
+                Makuuchi: '幕内',
+                Juryo: '十両',
+                Makushita: '幕下以下',
+                All: '全て'
+            }
+        },
+        origin: {
+            Hokkaido: '北海道', Aomori: '青森', Iwate: '岩手', Miyagi: '宮城', Akita: '秋田', Yamagata: '山形', Fukushima: '福島',
+            Ibaraki: '茨城', Tochigi: '栃木', Gunma: '群馬', Saitama: '埼玉', Chiba: '千葉', Tokyo: '東京', Kanagawa: '神奈川',
+            Niigata: '新潟', Toyama: '富山', Ishikawa: '石川', Fukui: '福井', Yamanashi: '山梨', Nagano: '長野', Gifu: '岐阜',
+            Shizuoka: '静岡', Aichi: '愛知', Mie: '三重', Shiga: '滋賀', Kyoto: '京都', Osaka: '大阪', Hyogo: '兵庫', Nara: '奈良',
+            Wakayama: '和歌山', Tottori: '鳥取', Shimane: '島根', Okayama: '岡山', Hiroshima: '広島', Yamaguchi: '山口',
+            Tokushima: '徳島', Kagawa: '香川', Ehime: '愛媛', Kochi: '高知', Fukuoka: '福岡', Saga: '佐賀', Nagasaki: '長崎',
+            Kumamoto: '熊本', Oita: '大分', Miyazaki: '宮崎', Kagoshima: '鹿児島', Okinawa: '沖縄',
+            Mongolia: 'モンゴル', Foreign: '外国'
         }
     }
 };

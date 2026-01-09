@@ -6,6 +6,8 @@ export interface GameEvent {
     description: string;
     type: EventType;
     image?: string;
+    targetWrestlerId?: string; // ID of the specific wrestler this event targets
+    params?: Record<string, string | number>; // For i18n interpolation
     effects?: {
         funds?: number;
         reputation?: number;

@@ -24,7 +24,18 @@ const HEYA_PREFIX_DATA = [
 ];
 
 // 部屋名のSuffix（〇〇部屋）
-const HEYA_SUFFIXES = ['山', '川', '海', '風', '里', '浦', '灘', '嶽', '野', '花'];
+const HEYA_SUFFIXES = [
+    { char: '山', read: 'yama' },
+    { char: '川', read: 'gawa' }, // river often becomes gawa in suffix
+    { char: '海', read: 'umi' },
+    { char: '風', read: 'kaze' },
+    { char: '里', read: 'zato' }, // sato -> zato often
+    { char: '浦', read: 'ura' },
+    { char: '灘', read: 'nada' },
+    { char: '嶽', read: 'take' }, // dake? take is safer for standalone, but usually dake in compounds. Let's stick to take or dake? usually Dake if voiced. "Ontake". "Mitake".
+    { char: '野', read: 'no' },
+    { char: '花', read: 'hana' }
+];
 
 // 出身地リスト (Prefectures)
 export const PREFECTURES = [
@@ -62,31 +73,61 @@ export const generateHeyas = (): Heya[] => {
     tiers.forEach(tier => {
         for (let i = 0; i < tier.count; i++) {
             let name = '';
-            let prefix = '';
+            let nameEn = '';
             let tries = 0;
             const availablePrefixes = tier.prefixes;
 
             while (!name || usedHeyaNames.has(name)) {
+                let prefixChar = '';
                 if (tries < 10) {
-                    prefix = getRandom(availablePrefixes);
+                    prefixChar = getRandom(availablePrefixes);
                 } else {
-                    prefix = getRandom(commonPrefixes);
+                    prefixChar = getRandom(commonPrefixes);
                 }
 
-                const suffix = getRandom(HEYA_SUFFIXES);
-                if (prefix === suffix) continue;
+                const suffixData = getRandom(HEYA_SUFFIXES);
+                if (prefixChar === suffixData.char) continue;
 
-                name = prefix + suffix;
+                const prefixData = HEYA_PREFIX_DATA.find(p => p.char === prefixChar);
+                if (!prefixData) continue; // Should not happen
+
+                // Check for duplicate name
+                const tempName = prefixChar + suffixData.char;
+                if (usedHeyaNames.has(tempName + '部屋')) {
+                    tries++;
+                    continue;
+                }
+
+                name = tempName + '部屋';
+
+                // English Name Construction
+                // PrefixRead + SuffixRead (e.g. Waka + yama -> Wakayama)
+                // -beya suffix? usually yes.
+                const pRead = prefixData.read;
+                const sRead = suffixData.read;
+                nameEn = `${pRead}${sRead}-beya`;
+
                 tries++;
-                if (tries > 100) name = prefix + suffix + '変';
+                if (tries > 100) {
+                    name = prefixChar + suffixData.char + '変' + '部屋';
+                    nameEn = `${pRead}${sRead}hen-beya`;
+                }
             }
 
             usedHeyaNames.add(name);
 
+            // Re-finding 'prefix' for the heya object:
+            // The `shikonaPrefix` field is just the char string.
+            const prefixDataMatch = HEYA_PREFIX_DATA.find(p => name.startsWith(p.char));
+            const prefixCharMatch = prefixDataMatch?.char || name[0];
+            const prefixReadMatch = prefixDataMatch?.read || '';
+
             heyas.push({
                 id: `heya-${overallIndex++}`,
-                name: name + '部屋',
-                shikonaPrefix: prefix,
+                name: name,
+                nameEn: nameEn,
+                shikonaPrefix: prefixCharMatch,
+                shikonaPrefixReading: prefixReadMatch,
                 strengthMod: tier.mod,
                 facilityLevel: tier.level,
                 wrestlerCount: 0

@@ -1,5 +1,6 @@
 import { Wrestler, Matchup } from '../../../types';
 import { matchMaker } from '../logic/matchmaker/MatchMaker';
+import { determineKimarite } from '../logic/kimariteSelector';
 import { TP_REWARD_WIN } from '../../../utils/constants';
 
 interface DailyMatchResult {
@@ -81,7 +82,7 @@ export const processDailyMatches = (
         return {
             ...match,
             winnerId: winner.id,
-            kimarite: 'Oshidashi', // Temporary default
+            kimarite: determineKimarite(winner, loser),
             triggeredSkills: triggeredSkills,
             isKinboshi // Pass this flag if we wanted to store it in history, but for now just using it for logs/stats
         };
@@ -145,28 +146,17 @@ export const processDailyMatches = (
             const winner = m.winnerId === m.east.id ? m.east : m.west;
             const skills = m.triggeredSkills || [];
             // Dramatic Log
-            let skillNamesStr = "";
-            if (skills.length > 0) {
-                const skillNames: Record<string, string> = {
-                    'IronHead': '鉄の額',
-                    'GiantKiller': '巨漢殺し',
-                    'EscapeArtist': 'うっちゃり',
-                    'StaminaGod': '無尽蔵',
-                    'Bulldozer': '重戦車',
-                    'Lightning': '電光石火',
-                    'Intimidation': '横綱相撲'
-                };
-                skillNamesStr = skills.map(s => skillNames[s] || s).join(', ');
-            }
-
             return {
-                key: 'log.match.result',
+                key: 'log.match.result_v2',
                 params: {
-                    winner: winner.name,
-                    kimarite: m.kimarite,
-                    skills: skillNamesStr // Note: Skills might need their own translation handling if passed as params
+                    winner_name: winner.name,      // 漢字 (JA用)
+                    winner_reading: winner.reading,// ローマ字 (EN用)
+                    kimarite: m.kimarite,          // ID -> $t(kimarite.id) in locale
+                    skills: skills.length > 0
+                        ? skills.map(s => `$t(skill.${s})`).join(', ')
+                        : ''
                 },
-                message: `${winner.name}の勝ち。${skillNamesStr ? `【${skillNamesStr}】が炸裂！` : ''}決まり手は${m.kimarite}。`,
+                message: '', // Deprecated, strictly use structured data + LogWindow translation
                 type: 'info'
             } as import('../../../types').LogData;
         });

@@ -5,16 +5,16 @@ import { PREFECTURES } from './generator';
 const shikonaGenerator = new ShikonaGenerator();
 
 const BACKGROUNDS = [
-    '高校柔道県大会ベスト4',
-    'わんぱく相撲全国大会出場',
-    'アメフト出身の巨漢',
-    'レスリングでインターハイ出場',
-    '実家の漁業を手伝い鍛えられた',
-    '相撲未経験だが身長2mの逸材',
-    '中学横綱のタイトルを持つ',
-    '空手経験者で足腰が強い',
-    '陸上投擲種目の元選手',
-    '応援団長からの転身'
+    'judo_pref_top4',
+    'wanpaku_national',
+    'football_giant',
+    'wrestling_interhigh',
+    'fisherman_strength',
+    'tall_talent',
+    'junior_yokozuna',
+    'karate_kicks',
+    'track_thrower',
+    'cheerleader'
 ];
 
 export const generateCandidates = (count: number, reputation: number): Candidate[] => {

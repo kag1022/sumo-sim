@@ -4,6 +4,7 @@ import { Candidate } from '../../../types';
 import { getGrade } from '../logic/scouting';
 import { useGame } from '../../../context/GameContext';
 import { useTranslation } from 'react-i18next';
+import { Leaf } from 'lucide-react';
 
 interface ScoutPanelProps {
     candidates: Candidate[];
@@ -24,7 +25,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
     const INSPECTION_FEE = 300000;
 
     const { heyas, reputation } = useGame();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const playerHeya = heyas.find(h => h.id === 'player_heya');
     const stablePrefix = playerHeya ? playerHeya.shikonaPrefix : '';
 
@@ -113,11 +114,11 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                             <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-8 text-stone-700 text-sm border-b-2 border-stone-200 pb-6 border-dashed">
                                 <div>
                                     <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">NAME</div>
-                                    <div className="font-serif font-bold text-xl leading-none">{selectedCandidate.name}</div>
+                                    <div className="font-serif font-bold text-xl leading-none">{i18n.language === 'en' ? selectedCandidate.reading : selectedCandidate.name}</div>
                                 </div>
                                 <div>
                                     <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">AGE / ORIGIN</div>
-                                    <div className="font-bold">{selectedCandidate.age}歳 / {selectedCandidate.background}</div>
+                                    <div className="font-bold">{selectedCandidate.age}{i18n.language === 'en' ? '' : '歳'} / {t(`origin.${selectedCandidate.origin}`)}</div>
                                 </div>
                                 <div>
                                     <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">PHYSIQUE</div>
@@ -234,7 +235,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                 <div className="flex-1 overflow-y-auto p-8 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]">
                     {candidates.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                            <div className="text-6xl mb-4 opacity-50">🍃</div>
+                            <Leaf className="w-16 h-16 mb-4 text-green-200/50" />
                             <div className="font-serif font-bold text-xl mb-2">{t('scout.no_candidates')}</div>
                             <p className="text-sm">{t('scout.wait_next_week')}</p>
                         </div>
@@ -256,10 +257,10 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                                             <div className="flex justify-between items-start mb-4">
                                                 <div>
                                                     <span className="inline-block bg-slate-100 text-slate-500 text-[10px] font-bold px-1.5 py-0.5 rounded-sm mb-1 uppercase tracking-wider border border-slate-200">
-                                                        {c.background}
+                                                        {t(`scout.background.${c.background}`)}
                                                     </span>
                                                     <h3 className="text-xl font-bold font-serif text-slate-900 leading-tight group-hover:text-[#b7282e] transition-colors">
-                                                        {c.name}
+                                                        {i18n.language === 'en' ? c.reading : c.name}
                                                     </h3>
                                                 </div>
                                                 <div className="text-right">

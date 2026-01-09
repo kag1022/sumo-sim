@@ -128,12 +128,33 @@ export const EVENTS: GameEvent[] = [
         effects: { motivation: 8 }
     },
 
-    // --- Original Proposals ---
+    // --- 5. 新規追加イベント (New Variations) ---
     {
-        id: 'event_gift_farmers',
-        title: 'event.event_gift_farmers.title',
-        description: 'event.event_gift_farmers.desc',
+        id: 'gift_farmers',
+        title: 'event.gift_farmers.title',
+        description: 'event.gift_farmers.desc',
+        type: 'Good',
+        effects: { motivation: 10 }
+    },
+    {
+        id: 'school_visit',
+        title: 'event.school_visit.title',
+        description: 'event.school_visit.desc',
+        type: 'Good',
+        effects: { reputation: 2, motivation: 3 }
+    },
+    {
+        id: 'equipment_break',
+        title: 'event.equipment_break.title',
+        description: 'event.equipment_break.desc',
+        type: 'Bad',
+        effects: { funds: -50000, motivation: -2 }
+    },
+    {
+        id: 'stray_dog',
+        title: 'event.stray_dog.title',
+        description: 'event.stray_dog.desc',
         type: 'Flavor',
-        effects: { motivation: 10 } // Slightly increased from just "Up"
+        effects: { reputation: 1 }
     }
 ];

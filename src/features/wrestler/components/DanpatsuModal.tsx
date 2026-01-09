@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wrestler } from '../../../types';
 import { formatRank } from '../../../utils/formatting';
+import { Flower, Scissors } from 'lucide-react';
 
 interface DanpatsuModalProps {
     wrestler: Wrestler;
@@ -146,9 +147,9 @@ export const DanpatsuModal: React.FC<DanpatsuModalProps> = ({ wrestler, onSnip }
                              `}
                         >
                             {snipStage === 'done' ? (
-                                <span className="text-6xl animate-bounce">💐</span>
+                                <Flower className="w-16 h-16 animate-bounce text-pink-500" />
                             ) : (
-                                <span className="text-6xl filter drop-shadow-md">✂️</span>
+                                <Scissors className="w-16 h-16 filter drop-shadow-md text-slate-700" />
                             )}
                         </button>
                     </div>

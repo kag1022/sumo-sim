@@ -32,13 +32,11 @@ export const en = {
             title: 'Daily Matches',
             division_hint: 'Makuuchi / Juryo',
             not_announced: 'Matches not announced yet',
-            kinboshi: '★Kinboshi',
-            title_bout: '🔥Title Match',
-            senshuraku: 'Final',
-            kimarite: 'Winning Move',
-            wins: 'W',
-            losses: 'L',
-            omitted_hint: '*Lower divisions omitted'
+            kinboshi: 'Kinboshi Challenge',
+            title_bout: 'Title Bout',
+            senshuraku: 'Senshuraku',
+            advice_action: '🗣️Advice',
+            advised: 'Ordered'
         },
         event: {
             tanimachi_party: {
@@ -109,9 +107,128 @@ export const en = {
                 title: 'Winter Training',
                 desc: 'Stomping shiko in freezing cold. White breath rises, spirits sharpened.'
             },
-            event_gift_farmers: {
-                title: 'Farmer\'s Gift',
-                desc: 'Local farmers sent a lot of vegetables. Chanko will be luxurious.'
+
+            boycott: {
+                title: 'Training Boycott',
+                desc: '{{name}} is boycotting training due to high stress...'
+            },
+            scandal: {
+                title: 'Scandal',
+                desc: '{{name}} caused trouble downtown! Fined ¥{{fine}} and Reputation down by {{repLoss}}.'
+            },
+            scandal_cpu: {
+                title: 'Rival Rumors',
+                desc: 'Rumors say {{name}} (Rival Stable) was involved in an incident...'
+            },
+            gift_farmers: {
+                title: 'Farmer\'s Reward',
+                desc: 'We received fresh rice and vegetables from a farmer we helped before!'
+            },
+            school_visit: {
+                title: 'School Visit',
+                desc: 'Visited a local elementary school. Ate lunch with kids and became popular.'
+            },
+            equipment_break: {
+                title: 'Teppo Pillar Broken',
+                desc: 'The teppo pillar snapped during intense training! Repairs needed, but it shows good spirit.'
+            },
+            stray_dog: {
+                title: 'Stray Dog',
+                desc: 'Found a stray dog outside. We are taking care of it temporarily.'
+            },
+            types: {
+                Good: 'GOOD',
+                Bad: 'BAD',
+                Flavor: 'INFO',
+                Special: 'SPECIAL'
+            }
+        },
+        date: {
+            format_training: '{{month}} {{year}}, Week {{week}}'
+        },
+        registration: {
+            title: 'Stable Registration',
+            subtitle: 'Establishment Form',
+            oyakata_label: 'Oyakata Name',
+            oyakata_hint: 'Ex: Takanohana',
+            stable_label: 'Stable Name',
+            stable_hint: 'Ex: Asahi',
+            prefix_label: 'Shikona Prefix',
+            prefix_hint: 'Ex: Asa',
+            reading_label: 'Prefix Reading (Romaji)',
+            reading_hint: 'Ex: Asa',
+            submit: 'Stamp Seal & Start',
+            note: '*Cannot be changed after submission',
+            back: 'Back'
+        },
+        management: {
+            title: 'Management',
+            subtitle: 'Stable Operations',
+            tabs: {
+                okami: 'Okami',
+                facility: 'Facility',
+                settings: 'Settings',
+                system: 'System'
+            },
+            financial: {
+                current_funds: 'CURRENT FUNDS',
+                last_month: 'LAST MONTH',
+                insufficient_funds: 'Insufficient funds'
+            },
+            okami: {
+                title: 'Okami\'s Skill',
+                desc: 'Higher Okami level improves wrestler care and operational efficiency. Affects stress relief and patron relations.',
+                current_level: 'LEVEL',
+                max_level_reached: 'Max Level Reached',
+                max_level_desc: 'No further upgrades needed',
+                upgrade_cost: 'Upgrade to Next Level',
+                approve_btn: 'Approve',
+                confirm_upgrade: 'Upgrade Okami Level?\nCost: ¥{{cost}}'
+            },
+            facility: {
+                title: 'Facility Investment',
+                desc: 'Improving training facilities permanently increases the natural growth rate (training effect) of all wrestlers.',
+                current: 'CURRENT',
+                effect: 'EFFECT',
+                upgrade_to: 'UPGRADE TO',
+                growth_mod: 'Growth Mod',
+                order_btn: 'Order Construction',
+                complete: 'All facility renovations complete',
+                confirm_upgrade: 'renovate to {{name}}?\nCost: ¥{{cost}}\nMod: x{{mod}}',
+                levels: {
+                    1: 'Outdoor Ring',
+                    2: 'Indoor Ring',
+                    3: 'Basic Equipment',
+                    4: 'Modern Gym',
+                    5: 'Sports Science Lab'
+                }
+            },
+            settings: {
+                auto_scout: 'Auto Recruitment',
+                auto_scout_desc: 'Automatically recruits new disciples (Maezumo) if the stable is understaffed after a tournament.',
+                auto_scout_note: '*Turn OFF if you want to select them manually.',
+                version: 'Game Version'
+            },
+            system: {
+                save_load_title: 'Save / Load',
+                save_btn: 'Save',
+                load_btn: 'Load',
+                local_storage_note: 'Saved to browser local storage',
+                backup_title: 'File Backup',
+                export_btn: 'Export JSON',
+                import_btn: 'Import JSON',
+                backup_desc: 'Download save data as a JSON file or import data from another device.',
+                reset_btn: 'Delete All Data & Reset',
+                alerts: {
+                    save_complete: 'Save Complete',
+                    load_confirm: 'Discard current progress and load previous save?',
+                    load_complete: 'Loaded',
+                    no_save_data: 'No save data found',
+                    import_confirm: 'Discard current progress and load from file?',
+                    import_complete: 'Loaded from file',
+                    reset_confirm_1: '[WARNING] Delete all data and start over?\nThis action cannot be undone.',
+                    reset_confirm_2: 'Are you sure?'
+                }
             }
         },
         cmd: {
@@ -128,6 +245,13 @@ export const en = {
             close: 'Close',
             confirm: 'Confirm',
         },
+        shikona_change: {
+            title: 'Rename Wrestler',
+            description: 'Rename {{name}}. Cost: {{cost}} TP.',
+            new_name_label: 'New Shikona',
+            new_reading_label: 'Reading (Romaji)',
+            submit: 'Rename'
+        },
         ui: {
             funds: 'Funds',
             date: 'Date',
@@ -139,6 +263,42 @@ export const en = {
             motivation: 'Motivation',
             level: 'Lv',
         },
+        modal: {
+            shikona_change: {
+                title: 'Rename Wrestler',
+                description: 'Rename {{name}}. Cost: {{cost}} TP.',
+                new_name_label: 'New Shikona',
+                new_reading_label: 'Reading (Romaji)',
+                submit: 'Rename'
+            }
+        },
+        sidebar: {
+            details_title: 'Wrestler Details',
+            matches_tab: 'Matches',
+            info_tab: 'Info',
+            list_hint: 'Select a wrestler from the list',
+            injury_status: 'Injured',
+            win: 'Win',
+            loss: 'Loss',
+            age_suffix: 'y.o.',
+            tenure: 'Tenure {{years}}y',
+            mind: 'Mind',
+            tech: 'Tech',
+            body: 'Body',
+            stress: 'Fatigue',
+            special_training: 'Special Training',
+            remaining_tp: 'TP: {{tp}}',
+            processing: 'Retirement',
+            retire_desc: 'Retire wrestler to receive severance pay.',
+            retire_btn: 'Advise Retirement',
+            retire_confirm: 'Retire {{name}}?\n\nExpected Severance: ¥{{amount}}',
+            training: {
+                shiko: 'Shiko (Body++)',
+                teppo: 'Teppo (Tech+ Body+)',
+                moushi_ai: 'Moushi-ai (Tech++ Mind+)',
+                meditation: 'Meditate (Mind++ Rest)'
+            }
+        },
         title: {
             newGame: 'New Game',
             continue: 'Continue',
@@ -147,10 +307,10 @@ export const en = {
             mode: {
                 establish: {
                     name: 'Establish',
-                    subtitle: 'ESTABLISH',
+                    subtitle: 'FOUNDING',
                     desc: 'Start your own stable from scratch.\nA difficult path, but the glory is yours.',
                     funds: 'Funds',
-                    funds_val: '3M (Low)',
+                    funds_val: '3M yen (Low)',
                     disciples: 'Disciples',
                     disciples_val: '1 (Rookie)',
                     difficulty: 'Difficulty',
@@ -158,10 +318,10 @@ export const en = {
                 },
                 inherit: {
                     name: 'Inherit',
-                    subtitle: 'INHERIT',
+                    subtitle: 'REBUILD',
                     desc: 'Rebuild a prestigious stable.\nResources are plenty, but expectations are high.',
                     funds: 'Funds',
-                    funds_val: '15M (High)',
+                    funds_val: '15M yen (High)',
                     disciples: 'Disciples',
                     disciples_val: '6 (Mixed)',
                     difficulty: 'Difficulty',
@@ -176,6 +336,7 @@ export const en = {
         },
         app: {
             title: 'Grand Sumo Manager',
+            subtitle: '~ Rise of the Oyakata ~',
         },
         log: {
             empty: 'No records yet...',
@@ -188,7 +349,8 @@ export const en = {
             match: {
                 day_end: 'Day {{day}} bouts concluded.',
                 kinboshi: '[KINBOSHI!] {{winner}} defeats Yokozuna {{loser}}! Cushions are flying!',
-                result: '{{winner}} wins. {{skills}}Technique: {{kimarite}}.'
+                result: '{{winner}} wins. {{skills}}Technique: {{kimarite}}.',
+                result_v2: '{{winner_reading}} wins. {{skills}}Technique: $t(kimarite.{{kimarite}}).'
             },
             heya: {
                 new_recruits: '{{count}} new disciples have joined the stable.',
@@ -205,8 +367,9 @@ export const en = {
                 revival: '[REVIVAL] {{name}} seized the last chance! Career continues!'
             },
             action: {
-                recruit_success: 'New disciple {{name}} joined! Starts in Maezumo next tournament.',
-                okami_upgrade: 'Okami-san leveled up to Lv {{level}}!',
+                recruit_success: 'New Recruit {{name}} has joined! Beginning Maezumo training.',
+                rename_success: '{{oldName}} has been renamed to {{newName}}!',
+                okami_upgrade: "Okami's level increased to {{level}}!",
                 skill_learned: '{{name}} realized a new secret skill: "{{skill}}"! ',
                 training_done: 'Special Training ({{type}}) complete. Mind+{{mind}} Tech+{{tech}} Body+{{body}}'
             },
@@ -225,7 +388,93 @@ export const en = {
                 prize_money: 'Won Prize Money: ¥{{amount}}!',
                 retired_summary: '{{count}} wrestlers retired.'
             },
-            event_log: '[EVENT] $t({{eventName}})'
+            event_log: '[EVENT] $t({{eventName}})',
+            achievement: {
+                unlock: 'Achievement Unlocked: $t(achievements.{{id}}.title)!'
+            }
+        },
+
+        // Skill Names
+        skill: {
+            IronHead: 'Iron Head',
+            GiantKiller: 'Giant Killer',
+            EscapeArtist: 'Escape Artist',
+            StaminaGod: 'Stamina God',
+            Bulldozer: 'Bulldozer',
+            Lightning: 'Lightning',
+            Intimidation: 'Intimidation'
+        },
+
+        // Achievements
+        achievements: {
+            first_win: { title: 'First Victory', desc: 'Record your first winning move' },
+            collector_beginner: { title: 'Technique Beginner', desc: 'Record 10 different kimarite' },
+            collector_master: { title: 'Technique Master', desc: 'Record 30 different kimarite' },
+            push_master: { title: 'Pushing Specialist', desc: 'Record 100 "Push" type moves' },
+            grapple_master: { title: 'Grappling Specialist', desc: 'Record 100 "Grapple" type moves' },
+            throw_master: { title: 'Throwing Specialist', desc: 'Record 50 "Throw" type moves' },
+            tech_master: { title: 'Technical Specialist', desc: 'Record 50 "Tech" type moves' },
+            special_move: { title: 'Unexpected Finish', desc: 'Record a "Special" type move' },
+            legendary_witness: { title: 'Witness of Legend', desc: 'Witness a "Legendary" rarity move' },
+            reverse_king: { title: 'Art of Reversal', desc: 'Record "Utchari" or "Izori"' },
+            kimarite_complete: { title: 'Grandmaster', desc: 'Witness ALL kimarite moves' }
+        },
+
+        // Collection Features
+        encyclopedia: {
+            title: 'Sumo Scrolls',
+            subtitle: 'Collection',
+            tabs: {
+                kimarite: 'Kimarite',
+                achievements: 'Achievements'
+            },
+            discovered: 'Discovered',
+            is_secret: 'Target is Secret',
+            secret_title: '?????',
+            count_suffix: ' times',
+            complete: 'Complete',
+            unlocked: 'UNLOCKED',
+            types: {
+                Push: 'Push / Thrust',
+                Grapple: 'Grapple / Yori',
+                Throw: 'Throw',
+                Tech: 'Technique',
+                Special: 'Special'
+            },
+            rarity: {
+                Common: 'Common',
+                Uncommon: 'Uncommon',
+                Rare: 'Rare',
+                Legendary: 'Legendary'
+            }
+        },
+        kimarite: {
+            // Push
+            oshidashi: 'Push Out', oshitaoshi: 'Push Down', tsukidashi: 'Thrust Out', tsukitaoshi: 'Thrust Down',
+
+            // Grapple
+            yorikiri: 'Force Out', yoritaoshi: 'Force Down', abisetaoshi: 'Backward Force Down',
+
+            // Throw
+            uwatenage: 'Overarm Throw', shitatenage: 'Underarm Throw', sukuinage: 'Beltless Arm Throw', kotenage: 'Armlock Throw',
+            uwatedashinage: 'Pulling Overarm Throw', shitatedashinage: 'Pulling Underarm Throw', kubinage: 'Neck Throw',
+            kakenage: 'Hooking Inner Thigh Throw', nichonage: 'Body Drop Throw', ipponzeoi: 'One-armed Shoulder Throw', koshinage: 'Hip Throw',
+            yaguranage: 'Inner Thigh Throw', tsukaminage: 'Lifting Throw',
+
+            // Tech
+            tsukiotoshi: 'Thrust Down', katasukashi: 'Under-shoulder Swing', sotogake: 'Outer Leg Trip', tottari: 'Arm Bar',
+            shitatehineri: 'Twisting Underarm Throw', kirigaeshi: 'Twisting Backward Leg Trip', ashitori: 'Leg Pick', uwatehineri: 'Twisting Overarm Throw',
+            watashikomi: 'Thigh Grabbing Push Down', uchigake: 'Inner Leg Trip', kainahineri: 'Arm Bar Twist', makiotoshi: 'Twist Down',
+            kegaeshi: 'Kick Back', amiuchi: 'Fisherman\'s Throw', susoharai: 'Backward Leg Trip', zubunehineri: 'Head Twist',
+            harimanage: 'Backward Belt Throw', uchimusou: 'Inner Thigh Propping Twist', tokurinage: 'Two-handed Head Twist', kubihineri: 'Neck Twist',
+            komatusukui: 'Over Thigh Scoop', kawazugake: 'Hooking Backward Counter', sabaori: 'Forward Force Down',
+
+            // Special
+            hatakikomi: 'Slap Down', hikiotoshi: 'Hand Pull Down', okuridashi: 'Rear Push Out', okuritaoshi: 'Rear Push Down',
+            kimedashi: 'Arm Barring Force Out', utchari: 'Backward Pivot Throw', isamiashi: 'Inadvertent Step Out', hikkake: 'Arm Grabbing Force Out',
+            tsuridashi: 'Lift Out', kimetaoshi: 'Arm Barring Force Down', tsukihiza: 'Knee Touch', okuriage: 'Rear Lift Out',
+            sukubikonashi: 'Neck Thrust Down', tsukite: 'Hand Touch', koshikudake: 'Inadvertent Collapse', fumidashi: 'Rear Step Out',
+            izori: 'Backward Body Drop', tsutaezori: 'Underarm Forward Body Drop', tasukizori: 'Reverse Backward Body Drop', shumokuzori: 'Bell Hammer Drop'
         },
         basho_result: {
             title: 'Banzuke Announcement',
@@ -309,10 +558,24 @@ export const en = {
             members: 'MEMBERS',
             contract_fee: 'CONTRACT FEE',
             rank_desc: {
-                s: 'Legendary Stable',
-                a: 'Prestigious Stable',
-                b: 'Established Stable',
-                c: 'Rising Stable'
+                s: 'Legendary',
+                a: 'Prestigious',
+                b: 'Established',
+                c: 'Rising',
+                d: 'Struggling',
+                e: 'Critical'
+            },
+            background: {
+                judo_pref_top4: 'HS Judo Prefectural Top 4',
+                wanpaku_national: 'Wanpaku Sumo National Competitor',
+                football_giant: 'American Football Giant',
+                wrestling_interhigh: 'HS Wrestling Inter-High',
+                fisherman_strength: 'Forged by Fishery Work',
+                tall_talent: '2m Tall Raw Talent',
+                junior_yokozuna: 'Junior High Yokozuna Title',
+                karate_kicks: 'Karate Background (Strong Legs)',
+                track_thrower: 'Former Throwing Athlete',
+                cheerleader: 'Former Cheer Squad Leader'
             }
         },
         flexibility: {
@@ -321,6 +584,56 @@ export const en = {
             normal: 'Normal',
             stiff: 'Stiff',
             unknown: 'Unknown'
+        },
+        history: {
+            title: 'Grand Sumo History',
+            subtitle: 'The Grand Chronicle',
+            close: 'CLOSE RECORD',
+            tabs: {
+                timeline: 'Timeline',
+                hall_of_fame: 'Hall of Fame'
+            },
+            hall_of_fame: {
+                champion: 'Champion',
+                second_place: '2nd Place',
+                third_place: '3rd Place',
+                wins: 'Wins',
+                legendary_yokozuna: 'Legendary Yokozuna',
+                table_rank: 'Rank',
+                table_rikishi: 'Rikishi / Stable',
+                table_victories: 'Victories'
+            },
+            timeline: {
+                table_head: {
+                    basho: 'Basho',
+                    division: 'Division',
+                    winner: 'Winner',
+                    stable: 'Stable',
+                    rank: 'Rank',
+                    record: 'Record'
+                },
+                empty: 'History will be written on the pages to come...'
+            },
+            empty: {
+                title: 'History has not begun yet',
+                desc: 'Records will appear here once a Makuuchi champion emerges.'
+            },
+            filter: {
+                Makuuchi: 'Makuuchi',
+                Juryo: 'Juryo',
+                Makushita: 'Makushita+',
+                All: 'All'
+            }
+        },
+        origin: {
+            Hokkaido: 'Hokkaido', Aomori: 'Aomori', Iwate: 'Iwate', Miyagi: 'Miyagi', Akita: 'Akita', Yamagata: 'Yamagata', Fukushima: 'Fukushima',
+            Ibaraki: 'Ibaraki', Tochigi: 'Tochigi', Gunma: 'Gunma', Saitama: 'Saitama', Chiba: 'Chiba', Tokyo: 'Tokyo', Kanagawa: 'Kanagawa',
+            Niigata: 'Niigata', Toyama: 'Toyama', Ishikawa: 'Ishikawa', Fukui: 'Fukui', Yamanashi: 'Yamanashi', Nagano: 'Nagano', Gifu: 'Gifu',
+            Shizuoka: 'Shizuoka', Aichi: 'Aichi', Mie: 'Mie', Shiga: 'Shiga', Kyoto: 'Kyoto', Osaka: 'Osaka', Hyogo: 'Hyogo', Nara: 'Nara',
+            Wakayama: 'Wakayama', Tottori: 'Tottori', Shimane: 'Shimane', Okayama: 'Okayama', Hiroshima: 'Hiroshima', Yamaguchi: 'Yamaguchi',
+            Tokushima: 'Tokushima', Kagawa: 'Kagawa', Ehime: 'Ehime', Kochi: 'Kochi', Fukuoka: 'Fukuoka', Saga: 'Saga', Nagasaki: 'Nagasaki',
+            Kumamoto: 'Kumamoto', Oita: 'Oita', Miyazaki: 'Miyazaki', Kagoshima: 'Kagoshima', Okinawa: 'Okinawa',
+            Mongolia: 'Mongolia', Foreign: 'Foreign'
         }
     }
 };

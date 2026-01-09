@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Wrestler, LogEntry, GamePhase, GameMode, Heya, Matchup, YushoRecord, SaveData, LogData } from '../types';
+import { Wrestler, LogEntry, GamePhase, GameMode, Heya, Matchup, YushoRecord, SaveData, LogData, Candidate } from '../types';
 import { GameEvent } from '../features/events/types';
 import { initializeGameData, InitialSettings } from '../features/game/logic/initialization';
 
@@ -28,6 +28,7 @@ interface GameState {
     usedNames: string[];
     consultingWrestlerId: string | null; // 現在相談中の力士ID
     matchesProcessed: boolean; // 今日、既に勝敗判定とログ出力を行ったか？
+    candidates: Candidate[]; // スカウト候補リスト
 }
 
 interface GameContextProps extends GameState {
@@ -64,7 +65,15 @@ interface GameContextProps extends GameState {
     setMatchesProcessed: React.Dispatch<React.SetStateAction<boolean>>;
     autoRecruitAllowed: boolean;
     setAutoRecruitAllowed: React.Dispatch<React.SetStateAction<boolean>>;
+    candidates: Candidate[];
+    setCandidates: React.Dispatch<React.SetStateAction<Candidate[]>>;
     getSaveData: () => SaveData;
+
+    // Collection
+    kimariteCounts: Record<string, number>;
+    setKimariteCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+    unlockedAchievements: string[];
+    setUnlockedAchievements: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -102,6 +111,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [consultingWrestlerId, setConsultingWrestlerId] = useState<string | null>(null);
     const [matchesProcessed, setMatchesProcessed] = useState<boolean>(false);
     const [autoRecruitAllowed, setAutoRecruitAllowed] = useState<boolean>(true);
+    const [candidates, setCandidates] = useState<Candidate[]>([]);
+
+    // Collection
+    const [kimariteCounts, setKimariteCounts] = useState<Record<string, number>>({});
+    const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
 
     const registerName = (name: string) => {
         setUsedNames(prev => [...prev, name]);
@@ -128,6 +142,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (data.usedNames) {
             setUsedNames(data.usedNames);
         }
+
+        // Initialize Collection
+        setKimariteCounts({});
+        setUnlockedAchievements([]);
 
         // Initial Log
         const entry: LogEntry = {
@@ -168,7 +186,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 trainingPoints,
                 matchesProcessed,
                 todaysMatchups,
-                autoRecruitAllowed
+                autoRecruitAllowed,
+                kimariteCounts,
+                unlockedAchievements
             },
             wrestlers,
             heyas,
@@ -193,6 +213,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setBashoFinished(data.gameState.bashoFinished);
         setLastMonthBalance(data.gameState.lastMonthBalance);
         setAutoRecruitAllowed(data.gameState.autoRecruitAllowed ?? true);
+
+        // Collection (Backwards Compat)
+        setKimariteCounts(data.gameState.kimariteCounts || {});
+        setUnlockedAchievements(data.gameState.unlockedAchievements || []);
 
         // Restore Arrays
         setWrestlers(data.wrestlers);
@@ -278,7 +302,13 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setMatchesProcessed,
             autoRecruitAllowed,
             setAutoRecruitAllowed,
-            getSaveData
+            candidates,
+            setCandidates,
+            getSaveData,
+            kimariteCounts,
+            setKimariteCounts,
+            unlockedAchievements,
+            setUnlockedAchievements
         }}>
             {children}
         </GameContext.Provider>

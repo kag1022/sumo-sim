@@ -2,6 +2,8 @@
 import React, { useState, useMemo } from 'react';
 import { YushoRecord } from '../../../types';
 import { getWesternYearFromBashoId } from '../../../utils/time';
+import { useTranslation } from 'react-i18next';
+import { Crown, Landmark } from 'lucide-react';
 
 interface HistoryModalProps {
     history?: YushoRecord[];
@@ -10,13 +12,17 @@ interface HistoryModalProps {
 
 interface ChampionStats {
     name: string;
+    nameEn?: string;
     heya: string;
+    heyaEn?: string;
     count: number;
     lastRank: string;
     lastBasho: string;
 }
 
 export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClose }) => {
+    const { t, i18n } = useTranslation();
+    const isEn = i18n.language === 'en';
     const [activeTab, setActiveTab] = useState<'timeline' | 'hallOfFame'>('timeline');
     const [rankFilter, setRankFilter] = useState<string>('Makuuchi');
 
@@ -27,7 +33,9 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
             if (!counts[r.wrestlerName]) {
                 counts[r.wrestlerName] = {
                     name: r.wrestlerName,
+                    nameEn: r.wrestlerNameEn,
                     heya: r.heyaName,
+                    heyaEn: r.heyaNameEn,
                     count: 0,
                     lastRank: r.rank,
                     lastBasho: r.bashoId
@@ -62,15 +70,15 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                             <span className="font-serif font-black text-2xl">史</span>
                         </div>
                         <div>
-                            <h2 className="text-3xl font-black font-serif text-slate-900 tracking-tight">大相撲 史記</h2>
-                            <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">The Grand Chronicle</p>
+                            <h2 className="text-3xl font-black font-serif text-slate-900 tracking-tight">{t('history.title')}</h2>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">{t('history.subtitle')}</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
                         className="text-stone-400 hover:text-[#b7282e] transition-colors font-serif font-bold text-sm tracking-widest border-b border-transparent hover:border-[#b7282e]"
                     >
-                        CLOSE RECORD
+                        {t('history.close')}
                     </button>
                 </div>
 
@@ -80,14 +88,14 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                         onClick={() => setActiveTab('timeline')}
                         className={`px-6 py-4 text-sm font-bold transition-all relative overflow-hidden group ${activeTab === 'timeline' ? 'bg-[#fcf9f2] text-[#b7282e] border-x border-stone-200 -mb-px pt-4 pb-4 shadow-[0_-2px_5px_rgba(0,0,0,0.02)]' : 'text-stone-400 hover:text-stone-600'}`}
                     >
-                        <span>歴代優勝者</span>
+                        <span>{t('history.tabs.timeline')}</span>
                         {activeTab === 'timeline' && <div className="absolute top-0 left-0 w-full h-1 bg-[#b7282e]"></div>}
                     </button>
                     <button
                         onClick={() => setActiveTab('hallOfFame')}
                         className={`px-6 py-4 text-sm font-bold transition-all relative overflow-hidden group ${activeTab === 'hallOfFame' ? 'bg-[#fcf9f2] text-[#b7282e] border-x border-stone-200 -mb-px pt-4 pb-4 shadow-[0_-2px_5px_rgba(0,0,0,0.02)]' : 'text-stone-400 hover:text-stone-600'}`}
                     >
-                        <span>歴代最強力士</span>
+                        <span>{t('history.tabs.hall_of_fame')}</span>
                         {activeTab === 'hallOfFame' && <div className="absolute top-0 left-0 w-full h-1 bg-[#b7282e]"></div>}
                     </button>
                 </div>
@@ -105,11 +113,11 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                         {/* 2nd Place */}
                                         {leaderboard[1] && (
                                             <div className="bg-white border border-slate-200 shadow-lg p-6 flex flex-col items-center relative rounded-sm">
-                                                <div className="absolute -top-4 bg-slate-200 text-slate-600 font-bold px-3 py-1 text-xs rounded-full shadow-sm">2nd Place</div>
-                                                <div className="text-xl font-bold text-slate-800 mb-1 font-serif mt-2">{leaderboard[1].name}</div>
-                                                <div className="text-xs text-slate-500 mb-4">{leaderboard[1].heya}</div>
+                                                <div className="absolute -top-4 bg-slate-200 text-slate-600 font-bold px-3 py-1 text-xs rounded-full shadow-sm">{t('history.hall_of_fame.second_place')}</div>
+                                                <div className="text-xl font-bold text-slate-800 mb-1 font-serif mt-2">{isEn && leaderboard[1].nameEn ? leaderboard[1].nameEn : leaderboard[1].name}</div>
+                                                <div className="text-xs text-slate-500 mb-4">{isEn && leaderboard[1].heyaEn ? leaderboard[1].heyaEn : leaderboard[1].heya}</div>
                                                 <div className="text-4xl font-black text-slate-300 font-serif">
-                                                    {leaderboard[1].count}<span className="text-sm font-bold ml-1 text-slate-400">Wins</span>
+                                                    {leaderboard[1].count}<span className="text-sm font-bold ml-1 text-slate-400">{t('history.hall_of_fame.wins')}</span>
                                                 </div>
                                             </div>
                                         )}
@@ -118,16 +126,16 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                         {leaderboard[0] && (
                                             <div className="bg-white border-2 border-[#b7282e] shadow-xl p-8 flex flex-col items-center relative z-10 rounded-sm transform md:-translate-y-4">
                                                 <div className="absolute -top-5 bg-[#b7282e] text-white font-bold px-4 py-1.5 text-sm rounded-full shadow-md flex items-center gap-2">
-                                                    <span>👑</span> Champion
+                                                    <Crown className="w-4 h-4 text-white" /> {t('history.hall_of_fame.champion')}
                                                 </div>
-                                                <div className="mt-4 text-3xl font-black text-[#b7282e] mb-1 font-serif">{leaderboard[0].name}</div>
-                                                <div className="text-sm text-slate-500 mb-6 font-bold">{leaderboard[0].heya}</div>
+                                                <div className="mt-4 text-3xl font-black text-[#b7282e] mb-1 font-serif">{isEn && leaderboard[0].nameEn ? leaderboard[0].nameEn : leaderboard[0].name}</div>
+                                                <div className="text-sm text-slate-500 mb-6 font-bold">{isEn && leaderboard[0].heyaEn ? leaderboard[0].heyaEn : leaderboard[0].heya}</div>
                                                 <div className="text-6xl font-black text-slate-800 font-serif leading-none">
                                                     {leaderboard[0].count}
-                                                    <span className="text-lg font-bold text-[#b7282e] ml-1">Wins</span>
+                                                    <span className="text-lg font-bold text-[#b7282e] ml-1">{t('history.hall_of_fame.wins')}</span>
                                                 </div>
                                                 <div className="mt-4 text-[10px] uppercase tracking-widest text-[#b7282e] font-bold border-t border-[#b7282e] pt-2 w-full text-center">
-                                                    Legendary Yokozuna
+                                                    {t('history.hall_of_fame.legendary_yokozuna')}
                                                 </div>
                                             </div>
                                         )}
@@ -135,11 +143,11 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                         {/* 3rd Place */}
                                         {leaderboard[2] && (
                                             <div className="bg-white border border-slate-200 shadow-lg p-6 flex flex-col items-center relative rounded-sm">
-                                                <div className="absolute -top-4 bg-amber-700 text-white font-bold px-3 py-1 text-xs rounded-full shadow-sm">3rd Place</div>
-                                                <div className="text-xl font-bold text-slate-800 mb-1 font-serif mt-2">{leaderboard[2].name}</div>
-                                                <div className="text-xs text-slate-500 mb-4">{leaderboard[2].heya}</div>
+                                                <div className="absolute -top-4 bg-amber-700 text-white font-bold px-3 py-1 text-xs rounded-full shadow-sm">{t('history.hall_of_fame.third_place')}</div>
+                                                <div className="text-xl font-bold text-slate-800 mb-1 font-serif mt-2">{isEn && leaderboard[2].nameEn ? leaderboard[2].nameEn : leaderboard[2].name}</div>
+                                                <div className="text-xs text-slate-500 mb-4">{isEn && leaderboard[2].heyaEn ? leaderboard[2].heyaEn : leaderboard[2].heya}</div>
                                                 <div className="text-4xl font-black text-amber-900/20 font-serif">
-                                                    {leaderboard[2].count}<span className="text-sm font-bold ml-1 text-slate-400">Wins</span>
+                                                    {leaderboard[2].count}<span className="text-sm font-bold ml-1 text-slate-400">{t('history.hall_of_fame.wins')}</span>
                                                 </div>
                                             </div>
                                         )}
@@ -150,9 +158,9 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                         <table className="w-full text-left">
                                             <thead className="bg-stone-100 text-stone-500 text-xs uppercase font-bold border-b border-stone-200">
                                                 <tr>
-                                                    <th className="px-6 py-4">Rank</th>
-                                                    <th className="px-6 py-4">Rikishi / Heya</th>
-                                                    <th className="px-6 py-4 text-right">Victories</th>
+                                                    <th className="px-6 py-4">{t('history.hall_of_fame.table_rank')}</th>
+                                                    <th className="px-6 py-4">{t('history.hall_of_fame.table_rikishi')}</th>
+                                                    <th className="px-6 py-4 text-right">{t('history.hall_of_fame.table_victories')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-stone-100">
@@ -160,8 +168,8 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                                     <tr key={champ.name} className="hover:bg-amber-50/50 transition-colors">
                                                         <td className="px-6 py-4 font-mono text-stone-400 font-bold">#{i + 4}</td>
                                                         <td className="px-6 py-4">
-                                                            <div className="font-bold text-slate-800 font-serif text-lg">{champ.name}</div>
-                                                            <div className="text-xs text-stone-500">{champ.heya}</div>
+                                                            <div className="font-bold text-slate-800 font-serif text-lg">{isEn && champ.nameEn ? champ.nameEn : champ.name}</div>
+                                                            <div className="text-xs text-stone-500">{isEn && champ.heyaEn ? champ.heyaEn : champ.heya}</div>
                                                         </td>
                                                         <td className="px-6 py-4 text-right font-bold text-[#b7282e] font-serif text-xl">
                                                             {champ.count}
@@ -174,9 +182,9 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                 </div>
                             ) : (
                                 <div className="text-center py-32 opacity-40">
-                                    <div className="text-6xl mb-4 grayscale">🏛️</div>
-                                    <h3 className="text-2xl font-serif text-slate-400 font-bold">歴史はまだ始まっていません</h3>
-                                    <p className="text-slate-500 mt-2 font-serif">幕内優勝者が出るとここに記録されます。</p>
+                                    <Landmark className="w-16 h-16 mb-4 text-slate-300 opacity-50 inline-block" />
+                                    <h3 className="text-2xl font-serif text-slate-400 font-bold">{t('history.empty.title')}</h3>
+                                    <p className="text-slate-500 mt-2 font-serif">{t('history.empty.desc')}</p>
                                 </div>
                             )}
                         </div>
@@ -187,7 +195,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                         <div>
                             {/* Filters */}
                             <div className="flex gap-2 mb-8 justify-center">
-                                {['Makuuchi', 'Juryo', 'Makushita', 'All'].map(filter => (
+                                {(['Makuuchi', 'Juryo', 'Makushita', 'All'] as const).map(filter => (
                                     <button
                                         key={filter}
                                         onClick={() => setRankFilter(filter)}
@@ -196,7 +204,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                             : 'bg-white text-stone-500 border-stone-200 hover:border-stone-400 hover:text-stone-700'
                                             }`}
                                     >
-                                        {filter === 'Makuuchi' ? '幕内' : filter === 'Juryo' ? '十両' : filter === 'Makushita' ? '幕下以下' : '全て'}
+                                        {t(`history.filter.${filter}`)}
                                     </button>
                                 ))}
                             </div>
@@ -208,12 +216,12 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                 <table className="w-full text-sm text-left relative z-0">
                                     <thead className="bg-stone-50 text-stone-500 font-bold border-b border-stone-200">
                                         <tr>
-                                            <th className="px-6 py-4 whitespace-nowrap pl-8">Basho</th>
-                                            <th className="px-6 py-4 whitespace-nowrap">Division</th>
-                                            <th className="px-6 py-4">Winner</th>
-                                            <th className="px-6 py-4 hidden md:table-cell">Stable</th>
-                                            <th className="px-6 py-4 hidden sm:table-cell">Rank</th>
-                                            <th className="px-6 py-4 text-right">Record</th>
+                                            <th className="px-6 py-4 whitespace-nowrap pl-8">{t('history.timeline.table_head.basho')}</th>
+                                            <th className="px-6 py-4 whitespace-nowrap">{t('history.timeline.table_head.division')}</th>
+                                            <th className="px-6 py-4">{t('history.timeline.table_head.winner')}</th>
+                                            <th className="px-6 py-4 hidden md:table-cell">{t('history.timeline.table_head.stable')}</th>
+                                            <th className="px-6 py-4 hidden sm:table-cell">{t('history.timeline.table_head.rank')}</th>
+                                            <th className="px-6 py-4 text-right">{t('history.timeline.table_head.record')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-stone-100">
@@ -229,10 +237,10 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                                     <td className="px-6 py-4 font-bold text-xs text-stone-500 uppercase tracking-wider">{record.division}</td>
                                                     <td className="px-6 py-4">
                                                         <div className={`font-serif font-bold ${record.division === 'Makuuchi' ? 'text-[#b7282e] text-lg' : 'text-slate-800'}`}>
-                                                            {record.wrestlerName}
+                                                            {isEn && record.wrestlerNameEn ? record.wrestlerNameEn : record.wrestlerName}
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 text-stone-500 text-xs font-bold hidden md:table-cell">{record.heyaName}</td>
+                                                    <td className="px-6 py-4 text-stone-500 text-xs font-bold hidden md:table-cell">{isEn && record.heyaNameEn ? record.heyaNameEn : record.heyaName}</td>
                                                     <td className="px-6 py-4 text-xs text-stone-500 hidden sm:table-cell font-serif">{record.rank}</td>
                                                     <td className="px-6 py-4 text-right font-bold font-mono text-slate-700">
                                                         {record.wins}-{record.losses}
@@ -242,7 +250,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                                         ) : (
                                             <tr>
                                                 <td colSpan={6} className="px-4 py-24 text-center text-stone-400 font-serif text-lg">
-                                                    歴史はこれからのページに刻まれます...
+                                                    {t('history.timeline.empty')}
                                                 </td>
                                             </tr>
                                         )}

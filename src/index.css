@@ -5,6 +5,31 @@
     --font-sans: "Zen Kaku Gothic New", "Noto Sans JP", scan-serif;
 }
 
+/* Washi Texture */
+.bg-pattern-washi {
+    background-color: #fcf9f2;
+    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d6cbb0' fill-opacity='0.15' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Yagasuri (Arrow Feather) Pattern - Subtle */
+.bg-pattern-yagasuri {
+    background-color: #fcf9f2;
+    background-image: linear-gradient(135deg, #efe8d5 25%, transparent 25%), linear-gradient(225deg, #efe8d5 25%, transparent 25%), linear-gradient(45deg, #efe8d5 25%, transparent 25%), linear-gradient(315deg, #efe8d5 25%, transparent 25%);
+    background-position: 10px 0, 10px 0, 0 0, 0 0;
+    background-size: 20px 20px;
+    background-repeat: repeat;
+}
+
+/* Seigaiha (Wave) Pattern - CSS only approximation */
+.bg-pattern-seigaiha {
+    background-color: #fcf9f2;
+    background-image: radial-gradient(circle at 50% 100%, transparent 60%, #e0d8c3 61%, #e0d8c3 65%, transparent 66%),
+                      radial-gradient(circle at 0 100%, transparent 60%, #e0d8c3 61%, #e0d8c3 65%, transparent 66%),
+                      radial-gradient(circle at 100% 100%, transparent 60%, #e0d8c3 61%, #e0d8c3 65%, transparent 66%);
+    background-size: 40px 20px;
+    background-position: 0 0, 20px 10px, -20px 10px;
+}
+
 body {
     background-color: #fcf9f2; /* Washi-like off-white */
     color: #1e293b;

@@ -10,7 +10,8 @@ interface DailyMatchListProps {
 }
 
 const DailyMatchList: React.FC<DailyMatchListProps> = ({ matchups, onAdvice, currentTp }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const isEn = i18n.language === 'en';
 
     // Sekitori: Makuuchi or Juryo
     const sekitoriMatches = matchups.filter(m =>
@@ -97,7 +98,7 @@ const DailyMatchList: React.FC<DailyMatchListProps> = ({ matchups, onAdvice, cur
                                     <div className="flex items-center gap-2 justify-end">
                                         <div className="flex flex-col items-end">
                                             <span className={`font-serif text-[13px] leading-none ${isPlayerEast ? 'font-bold text-slate-900 border-b-2 border-amber-400 pb-0.5' : ''} ${eastWin ? 'font-bold' : ''}`}>
-                                                {m.east.name}
+                                                {isEn ? m.east.reading : m.east.name}
                                             </span>
                                             <div className="flex gap-2 items-center mt-0.5 text-[9px] text-slate-400 font-mono">
                                                 <span>{m.east.currentBashoStats.wins}{t('matches.wins')} {m.east.currentBashoStats.losses}{t('matches.losses')}</span>
@@ -132,7 +133,7 @@ const DailyMatchList: React.FC<DailyMatchListProps> = ({ matchups, onAdvice, cur
                                                     disabled={currentTp < 5}
                                                     className="text-[9px] bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-1 py-0.5 rounded shadow-sm disabled:opacity-50"
                                                 >
-                                                    🗣️助言(-5)
+                                                    {t('matches.advice_action')}(-5)
                                                 </button>
                                             )}
                                             {isPlayerWest && !m.tacticalBonus?.west && (
@@ -141,11 +142,11 @@ const DailyMatchList: React.FC<DailyMatchListProps> = ({ matchups, onAdvice, cur
                                                     disabled={currentTp < 5}
                                                     className="text-[9px] bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-1 py-0.5 rounded shadow-sm disabled:opacity-50"
                                                 >
-                                                    🗣️助言(-5)
+                                                    {t('matches.advice_action')}(-5)
                                                 </button>
                                             )}
                                             {(m.tacticalBonus?.east || m.tacticalBonus?.west) && (
-                                                <span className="text-[9px] text-amber-600 font-bold">指示済</span>
+                                                <span className="text-[9px] text-amber-600 font-bold">{t('matches.advised')}</span>
                                             )}
                                         </div>
                                     )}
@@ -156,7 +157,7 @@ const DailyMatchList: React.FC<DailyMatchListProps> = ({ matchups, onAdvice, cur
                                     <div className="flex items-center gap-2 justify-start">
                                         <div className="flex flex-col items-start">
                                             <span className={`font-serif text-[13px] leading-none ${isPlayerWest ? 'font-bold text-slate-900 border-b-2 border-amber-400 pb-0.5' : ''} ${westWin ? 'font-bold' : ''}`}>
-                                                {m.west.name}
+                                                {isEn ? m.west.reading : m.west.name}
                                             </span>
                                             <div className="flex gap-2 items-center mt-0.5 text-[9px] text-slate-400 font-mono">
                                                 <span>{formatShortRank(m.west.rank)}</span>

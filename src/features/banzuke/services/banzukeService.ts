@@ -55,7 +55,9 @@ export const processBanzukeUpdate = (
             division: div as Division,
             wrestlerId: winner.id,
             wrestlerName: winner.name,
+            wrestlerNameEn: winner.reading,
             heyaName: heya ? heya.name : 'Unknown',
+            heyaNameEn: heya ? (heya.nameEn || heya.name) : 'Unknown', // Fallback
             rank: formatRank(winner.rank),
             wins: winner.currentBashoStats.wins,
             losses: winner.currentBashoStats.losses
