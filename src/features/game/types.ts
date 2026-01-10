@@ -56,6 +56,7 @@ export interface SaveData {
     timestamp: number;
     gameState: GameState;
     wrestlers: Wrestler[];
+    retiredWrestlers: Wrestler[];
     heyas: Heya[];
     yushoHistory: YushoRecord[];
     logs: LogEntry[];

@@ -1,9 +1,9 @@
-
 import React, { useState, useMemo } from 'react';
 import { useGame } from '../../../context/GameContext';
 import { KIMARITE_DATA, KimariteDef, KimariteType } from '../../match/data/kimariteData';
 import { ACHIEVEMENTS } from '../data/achievements';
-import { X, Book, Trophy, Lock } from 'lucide-react';
+import { SKILL_REGISTRY, SkillTier, SkillDef } from '../../wrestler/data/skillRegistry';
+import { X, Book, Trophy, Lock, BookOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface EncyclopediaModalProps {
@@ -12,7 +12,7 @@ interface EncyclopediaModalProps {
 
 export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({ onClose }) => {
     const { kimariteCounts, unlockedAchievements } = useGame();
-    const [activeTab, setActiveTab] = useState<'kimarite' | 'achievements'>('kimarite');
+    const [activeTab, setActiveTab] = useState<'kimarite' | 'skills' | 'achievements'>('kimarite');
     const { t } = useTranslation();
 
     // Kimarite Tab Logic
@@ -28,6 +28,24 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({ onClose })
         KIMARITE_DATA.forEach(k => groups[k.type].push(k));
         return groups;
     }, []);
+
+    // Skill Tab Logic
+    // ----------------------------------------------------
+    const skillsByTier: Record<SkillTier, SkillDef[]> = {
+        'S': [], 'A': [], 'B': [], 'C': []
+    };
+    Object.values(SKILL_REGISTRY).forEach(skill => {
+        skillsByTier[skill.tier].push(skill);
+    });
+
+    const getTierColor = (tier: SkillTier) => {
+        switch (tier) {
+            case 'S': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+            case 'A': return 'text-red-600 bg-red-50 border-red-200';
+            case 'B': return 'text-blue-600 bg-blue-50 border-blue-200';
+            case 'C': return 'text-gray-600 bg-gray-50 border-gray-200';
+        }
+    };
 
     // Achievement Tab Logic
     // ----------------------------------------------------
@@ -59,18 +77,28 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({ onClose })
                 <div className="flex border-b border-slate-200 bg-white">
                     <button
                         onClick={() => setActiveTab('kimarite')}
-                        className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${activeTab === 'kimarite'
-                                ? 'border-[#b7282e] text-[#b7282e] bg-red-50/50'
-                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                        className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 flex items-center justify-center gap-2 ${activeTab === 'kimarite'
+                            ? 'border-[#b7282e] text-[#b7282e] bg-red-50/50'
+                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                             }`}
                     >
                         {t('encyclopedia.tabs.kimarite')}
                     </button>
                     <button
+                        onClick={() => setActiveTab('skills')}
+                        className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 flex items-center justify-center gap-2 ${activeTab === 'skills'
+                            ? 'border-[#b7282e] text-[#b7282e] bg-red-50/50'
+                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                            }`}
+                    >
+                        <BookOpen className="w-4 h-4" />
+                        {t('dictionary.title')}
+                    </button>
+                    <button
                         onClick={() => setActiveTab('achievements')}
-                        className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${activeTab === 'achievements'
-                                ? 'border-[#b7282e] text-[#b7282e] bg-red-50/50'
-                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                        className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 flex items-center justify-center gap-2 ${activeTab === 'achievements'
+                            ? 'border-[#b7282e] text-[#b7282e] bg-red-50/50'
+                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                             }`}
                     >
                         {t('encyclopedia.tabs.achievements')}
@@ -78,7 +106,7 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({ onClose })
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
+                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin bg-[#fcf9f2]">
 
                     {/* KIMARITE TAB */}
                     {activeTab === 'kimarite' && (
@@ -131,6 +159,30 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({ onClose })
                                                 </div>
                                             );
                                         })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* SKILL TAB */}
+                    {activeTab === 'skills' && (
+                        <div className="space-y-6">
+                            {(['S', 'A', 'B', 'C'] as SkillTier[]).map(tier => (
+                                <div key={tier}>
+                                    <h3 className={`text-lg font-bold px-3 py-1 mb-2 border-l-4 rounded-r flex items-center gap-2 ${getTierColor(tier)}`}>
+                                        {t(`rank.${tier}`)}
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {skillsByTier[tier].map(skill => (
+                                            <div key={skill.id} className="p-3 border rounded shadow-sm bg-white hover:shadow-md transition-shadow">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-bold text-slate-800">{t(`skills.${skill.id}.name`)}</span>
+                                                    <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{skill.effectType}</span>
+                                                </div>
+                                                <p className="text-sm text-slate-600">{t(`skills.${skill.id}.desc`)}</p>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             ))}

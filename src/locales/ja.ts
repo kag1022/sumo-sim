@@ -14,6 +14,10 @@ export const ja = {
             MaeZumo: '前相撲',
             East: '東',
             West: '西',
+            S: 'Sランク',
+            A: 'Aランク',
+            B: 'Bランク',
+            C: 'Cランク',
         },
         rank_short: {
             Yokozuna: '横',
@@ -248,6 +252,9 @@ export const ja = {
             back: '戻る',
             close: '閉じる',
             confirm: '確認',
+            encyclopedia: '図鑑',
+            next_day: '翌日へ',
+            next_week: '翌週へ'
         },
         ui: {
             funds: '資金',
@@ -293,8 +300,50 @@ export const ja = {
                 shiko: '四股 (体++)',
                 teppo: '鉄砲 (技+ 体+)',
                 moushi_ai: '申し合い (技++ 心+)',
-                meditation: '瞑想 (心++ 休)'
+                meditation: '瞑想 (心++ 休)',
+                limit_info: '今週の特訓: {{current}}/{{max}}',
+                limit_reached: '上限'
             }
+        },
+        dictionary: {
+            title: '秘技図鑑',
+            title_manage: '秘技管理',
+            owned_skills: '所持スキル',
+            no_skills: 'スキルを所持していません',
+            forget: '忘れる',
+            forget_cost: '(-10 Pt)'
+        },
+        skills: {
+            YokozunaSumo: { name: '横綱相撲', desc: '格下の相手を精神的に圧倒し、能力を大きく下げる' },
+            DemonFace: { name: '鬼の形相', desc: '土俵際で驚異的な粘りを見せ、逆転率が超大幅上昇' },
+            Unstoppable: { name: '重戦車・極', desc: '「体」属性が極限まで強化され、押し出しが確実に決まる' },
+            Godspeed: { name: '神速', desc: '立ち合いで相手より早く動き、一瞬で勝負を決める' },
+            IronWall: { name: '鉄壁の守り', desc: '相手のあらゆる攻撃を無効化し、自滅を誘う' },
+            Herculean: { name: '怪力無双', desc: '常人離れした怪力で、組み合った相手を軽々と持ち上げる' },
+            Technician: { name: '業師', desc: '「技」属性判定時、ボーナスが大幅に加算される' },
+            LightningFlash: { name: '電光石火', desc: '「技」属性の速攻が決まりやすくなる' },
+            GiantKiller: { name: '巨漢殺し', desc: '自分より重い相手に対して戦闘力が上昇する' },
+            LionHeart: { name: '獅子奮迅', desc: '連敗中など、追い込まれた状況で能力が発揮される' },
+            Steamroller: { name: '怒涛の寄り', desc: '一度攻め込むと止まらない。連続攻撃成功率アップ' },
+            Resilience: { name: '粘り腰', desc: '土俵際で倒れにくくなる' },
+            ThrustMaster: { name: '突き押し名人', desc: '突き・押し技の威力が上昇する' },
+            IronHead: { name: '鉄の額', desc: '立ち合いの衝撃に強くなる' },
+            Bulldozer: { name: '重戦車', desc: '「体」属性判定時、ボーナスが加算される' },
+            EscapeArtist: { name: 'うっちゃり', desc: '土俵際で逆転しやすくなる' },
+            Agility: { name: '身軽', desc: '相手の投げ技を回避しやすくなる' },
+            GrupFighter: { name: '四つ相撲', desc: '組み合った状態での攻防に強くなる' },
+            StaminaGod: { name: '無尽蔵', desc: '長期戦になってもスタミナが減りにくい' },
+            BasicTraining: { name: '基礎体力', desc: '怪我をしにくくなる' },
+            Cautious: { name: '慎重', desc: '変化技にかかりにくくなる' },
+            Daring: { name: '度胸', desc: '初顔合わせの相手に強くなる' },
+            HardWorker: { name: '稽古熱心', desc: '稽古効果が少し上がる' },
+            BigEater: { name: '大食漢', desc: '体重が増えやすくなる' },
+            LuckyBoy: { name: '強運', desc: '際どい判定で有利になることがある' },
+            CrowdPleaser: { name: '人気者', desc: '勝利時の獲得資金が少し増える' },
+            GlassKnees: { name: 'ガラスの膝', desc: '怪我をしやすくなる' },
+            MoodSwinger: { name: 'ムラっ気', desc: '調子の良し悪しが激しい' },
+            SlowStarter: { name: 'スロースターター', desc: '場所序盤で負けやすくなる' },
+            StageFright: { name: 'あがり症', desc: '大一番で力を発揮できない' }
         },
         title: {
             newGame: 'はじめから',
@@ -549,10 +598,55 @@ export const ja = {
             full: '満員',
             no_funds: '資金不足',
             inspect_action: '検査へ進む',
+            // Labels
+            dept_name: '人事部',
+            inspection_record: '検査記録',
+            passed_stamp: '合格',
+            name_label: '氏名',
+            age_origin_label: '年齢 / 出身',
+            physique_label: '体格',
+            current_rank_label: '現在のランク',
+            funds_label: '資金',
+            members_label: '在籍数',
+            contract_fee_label: '契約金',
+            close_panel: '閉じる',
+            potential_label: '素質',
+            flexibility_label: '柔軟性',
+            rank_suffix: 'ランク',
+            reputation_prefix: '(評判',
+            reputation_suffix: ')',
             current_rank: '現在の階級',
             funds: '資金',
-            members: 'メンバー',
-            contract_fee: '契約料',
+            members: '在籍力士',
+            contract_fee: '契約金',
+
+            encyclopedia: {
+                title: '大相撲図鑑',
+                subtitle: '記録と収集',
+                discovered: '発見済み',
+                count_suffix: '回',
+                tabs: {
+                    kimarite: '決まり手図鑑',
+                    achievements: '実績'
+                },
+                types: {
+                    Push: '突き・押し',
+                    Grapple: '寄り・組手',
+                    Throw: '投げ技',
+                    Tech: '特殊技・捻り',
+                    Special: '非技・反則'
+                },
+                rarity: {
+                    Common: '基本',
+                    Uncommon: '応用',
+                    Rare: '稀少',
+                    Legendary: '伝説'
+                },
+                secret_title: '？？？',
+                is_secret: 'この実績を解除すると詳細が表示されます',
+                unlocked: '解除済み',
+                complete: '達成率'
+            },
             rank_desc: {
                 s: '至高のブランド',
                 a: '名門部屋',

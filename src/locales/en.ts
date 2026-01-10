@@ -14,6 +14,10 @@ export const en = {
             MaeZumo: 'Mae-Zumo',
             East: 'East',
             West: 'West',
+            S: 'Tier S',
+            A: 'Tier A',
+            B: 'Tier B',
+            C: 'Tier C',
         },
         rank_short: {
             Yokozuna: 'Y',
@@ -244,14 +248,17 @@ export const en = {
             back: 'Back',
             close: 'Close',
             confirm: 'Confirm',
+            encyclopedia: 'Encyclopedia',
+            next_day: 'Next Day',
+            next_week: 'Next Week',
         },
         shikona_change: {
             title: 'Rename Wrestler',
             description: 'Rename {{name}}. Cost: {{cost}} TP.',
             new_name_label: 'New Shikona',
             new_reading_label: 'Reading (Romaji)',
-            submit: 'Rename'
         },
+
         ui: {
             funds: 'Funds',
             date: 'Date',
@@ -296,8 +303,50 @@ export const en = {
                 shiko: 'Shiko (Body++)',
                 teppo: 'Teppo (Tech+ Body+)',
                 moushi_ai: 'Moushi-ai (Tech++ Mind+)',
-                meditation: 'Meditate (Mind++ Rest)'
+                meditation: 'Meditate (Mind++ Rest)',
+                limit_info: 'Weekly: {{current}}/{{max}}',
+                limit_reached: 'Limit'
             }
+        },
+        dictionary: {
+            title: 'Skill Book',
+            title_manage: 'Skill Management',
+            owned_skills: 'Owned Skills',
+            no_skills: 'No skills learned',
+            forget: 'Forget',
+            forget_cost: '(-10 Pt)'
+        },
+        skills: {
+            YokozunaSumo: { name: 'Yokozuna Sumo', desc: 'Overwhelms lower-ranked opponents, strictly reducing their stats.' },
+            DemonFace: { name: 'Demon Face', desc: 'Shows a demonic expression at the edge, massively increasing reversal chance.' },
+            Unstoppable: { name: 'Unstoppable Tank', desc: 'Body stats are maximized; push-outs become nearly guaranteed.' },
+            Godspeed: { name: 'Godspeed', desc: 'Moves faster than the opponent at the tachiai, ending the match instantly.' },
+            IronWall: { name: 'Iron Wall', desc: 'Nullifies all opponent attacks, inducing self-destruction.' },
+            Herculean: { name: 'Herculean Strength', desc: 'Uses superhuman strength to easily lift opponents.' },
+            Technician: { name: 'Technician', desc: 'Significant bonus applied during Technique checks.' },
+            LightningFlash: { name: 'Lightning Flash', desc: 'Increases the success rate of swift Technique attacks.' },
+            GiantKiller: { name: 'Giant Killer', desc: 'Combat power increases against heavier opponents.' },
+            LionHeart: { name: 'Lion Heart', desc: 'Stats increase when cornered or on a losing streak.' },
+            Steamroller: { name: 'Steamroller', desc: 'Unstoppable once the attack starts. Increases consecutive attack success.' },
+            Resilience: { name: 'Resilience', desc: 'Harder to knock down at the edge of the ring.' },
+            ThrustMaster: { name: 'Thrust Master', desc: 'Increases power of thrusting and pushing techniques.' },
+            IronHead: { name: 'Iron Head', desc: 'Resistant to the impact of the tachiai.' },
+            Bulldozer: { name: 'Bulldozer', desc: 'Bonus applied during Body checks.' },
+            EscapeArtist: { name: 'Escape Artist', desc: 'Increases reversal chance at the edge.' },
+            Agility: { name: 'Agility', desc: 'Easier to dodge opponents throwing techniques.' },
+            GrupFighter: { name: 'Grup Fighter', desc: 'Stronger in grappling situations.' },
+            StaminaGod: { name: 'Stamina God', desc: 'Stamina depletes slowly even in long matches.' },
+            BasicTraining: { name: 'Basic Training', desc: 'Less prone to injury.' },
+            Cautious: { name: 'Cautious', desc: 'Less likely to fall for trick plays.' },
+            Daring: { name: 'Daring', desc: 'Stronger against opponents faced for the first time.' },
+            HardWorker: { name: 'Hard Worker', desc: 'Slightly increases training effectiveness.' },
+            BigEater: { name: 'Big Eater', desc: 'Gain weight more easily.' },
+            LuckyBoy: { name: 'Lucky Boy', desc: 'May get favorable rulings on close calls.' },
+            CrowdPleaser: { name: 'Crowd Pleaser', desc: 'Slightly increases prize money on win.' },
+            GlassKnees: { name: 'Glass Knees', desc: 'Highly prone to injury.' },
+            MoodSwinger: { name: 'Mood Swinger', desc: 'Condition fluctuates wildly.' },
+            SlowStarter: { name: 'Slow Starter', desc: 'More likely to lose in the early days of a basho.' },
+            StageFright: { name: 'Stage Fright', desc: 'Underperforms in crucial matches.' }
         },
         title: {
             newGame: 'New Game',
@@ -548,7 +597,23 @@ export const en = {
             shikona_registration: 'Register Shikona',
             shikona_prefix_hint: '*Stable Prefix: {{prefix}}',
             placeholder_example: 'Ex: Asashoryu',
-            reject: 'Pass',
+            // Labels
+            dept_name: 'Personnel',
+            inspection_record: 'INSPECTION RECORD',
+            passed_stamp: 'PASSED',
+            name_label: 'NAME',
+            age_origin_label: 'AGE / ORIGIN',
+            physique_label: 'PHYSIQUE',
+            current_rank_label: 'CURRENT RANK',
+            funds_label: 'FUNDS',
+            members_label: 'MEMBERS',
+            contract_fee_label: 'CONTRACT FEE',
+            close_panel: 'CLOSE PANEL',
+            potential_label: 'Potential',
+            flexibility_label: 'Flexibility',
+            rank_suffix: ' Rank',
+            reputation_prefix: '(Rep',
+            reputation_suffix: ')',
             approve_join: 'Approve',
             full: 'Full',
             no_funds: 'No Funds',
@@ -557,6 +622,34 @@ export const en = {
             funds: 'FUNDS',
             members: 'MEMBERS',
             contract_fee: 'CONTRACT FEE',
+
+            encyclopedia: {
+                title: 'Sumo Encyclopedia',
+                subtitle: 'Records & Collection',
+                discovered: 'Discovered',
+                count_suffix: 'x',
+                tabs: {
+                    kimarite: 'Techniques',
+                    achievements: 'Achievements'
+                },
+                types: {
+                    Push: 'Push/Thrust',
+                    Grapple: 'Grapple/Yorikiri',
+                    Throw: 'Throws',
+                    Tech: 'Technical',
+                    Special: 'Special/Rare'
+                },
+                rarity: {
+                    Common: 'Common',
+                    Uncommon: 'Uncommon',
+                    Rare: 'Rare',
+                    Legendary: 'Legendary'
+                },
+                secret_title: '???',
+                is_secret: 'Unlock this achievement to view details',
+                unlocked: 'UNLOCKED',
+                complete: 'Complete'
+            },
             rank_desc: {
                 s: 'Legendary',
                 a: 'Prestigious',

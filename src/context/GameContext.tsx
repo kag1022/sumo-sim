@@ -8,8 +8,9 @@ import { initializeGameData, InitialSettings } from '../features/game/logic/init
 interface GameState {
     currentDate: Date;
     funds: number;
-    wrestlers: Wrestler[];
     heyas: Heya[];
+    wrestlers: Wrestler[];
+    retiredWrestlers: Wrestler[];
     logs: LogEntry[];
     gamePhase: GamePhase; // Renamed from gameMode
     gameMode: GameMode; // New field for Establish/Inherit
@@ -34,6 +35,7 @@ interface GameState {
 interface GameContextProps extends GameState {
     setFunds: React.Dispatch<React.SetStateAction<number>>;
     setWrestlers: React.Dispatch<React.SetStateAction<Wrestler[]>>;
+    setRetiredWrestlers: React.Dispatch<React.SetStateAction<Wrestler[]>>;
     setHeyas: React.Dispatch<React.SetStateAction<Heya[]>>;
     advanceDate: (days: number) => void;
     addLog: (log: string | LogData, type?: 'info' | 'warning' | 'error') => void;
@@ -88,6 +90,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [currentDate, setCurrentDate] = useState<Date>(new Date(2025, 0, 1));
     const [funds, setFundsState] = useState<number>(0);
     const [wrestlers, setWrestlers] = useState<Wrestler[]>([]);
+    const [retiredWrestlers, setRetiredWrestlers] = useState<Wrestler[]>([]);
     const [heyas, setHeyas] = useState<Heya[]>([]);
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [gamePhase, setGamePhase] = useState<GamePhase>('training');
@@ -131,6 +134,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const data = initializeGameData(settings);
         setHeyas(data.heyas);
         setWrestlers(data.wrestlers);
+        setRetiredWrestlers([]);
         setFundsState(data.initialFunds);
         setOyakataName(settings.oyakataName);
         if (settings.mode) {
@@ -170,7 +174,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const getSaveData = (): SaveData => {
         return {
-            version: 1,
+            version: 2,
             timestamp: Date.now(),
             gameState: {
                 currentDate: currentDate.toISOString(),
@@ -191,6 +195,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 unlockedAchievements
             },
             wrestlers,
+            retiredWrestlers,
             heyas,
             yushoHistory,
             logs,
@@ -220,6 +225,13 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         // Restore Arrays
         setWrestlers(data.wrestlers);
+
+        if (data.version >= 2 && data.retiredWrestlers) {
+            setRetiredWrestlers(data.retiredWrestlers);
+        } else {
+            setRetiredWrestlers([]);
+        }
+
         setHeyas(data.heyas);
         setYushoHistory(data.yushoHistory);
         setLogs(data.logs);
@@ -249,7 +261,13 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             params: typeof log !== 'string' ? log.params : undefined,
             type: typeof log !== 'string' ? (log.type || type) : type,
         };
-        setLogs((prev) => [entry, ...prev]);
+        setLogs((prev) => {
+            const newLogs = [entry, ...prev];
+            if (newLogs.length > 200) {
+                return newLogs.slice(0, 200);
+            }
+            return newLogs;
+        });
     };
 
     return (
@@ -257,6 +275,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             currentDate,
             funds,
             wrestlers,
+            retiredWrestlers,
             heyas,
             logs,
             gamePhase,
@@ -266,6 +285,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             yushoWinners,
             setFunds,
             setWrestlers,
+            setRetiredWrestlers,
             setHeyas,
             advanceDate,
             addLog,

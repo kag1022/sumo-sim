@@ -22,6 +22,7 @@ export const useGameTime = () => {
         currentDate,
         funds,
         wrestlers,
+        retiredWrestlers,
         heyas,
         gamePhase,
         gameMode,
@@ -354,7 +355,7 @@ export const useGameTime = () => {
      */
     const triggerAutoSave = (currentState: any) => {
         const data: SaveData = {
-            version: 1,
+            version: 2,
             timestamp: Date.now(),
             gameState: {
                 currentDate: currentDate.toISOString(),
@@ -375,6 +376,7 @@ export const useGameTime = () => {
                 unlockedAchievements
             },
             wrestlers: currentState.wrestlers,
+            retiredWrestlers,
             heyas,
             yushoHistory,
             logs,

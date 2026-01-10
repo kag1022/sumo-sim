@@ -19,7 +19,7 @@ const Button: React.FC<ButtonProps> = ({
     children,
     ...props
 }) => {
-    const baseStyles = "inline-flex items-center justify-center font-bold transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none rounded-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1";
+    const baseStyles = "inline-flex items-center justify-center font-bold transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none rounded-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 whitespace-nowrap";
 
     const variants = {
         primary: "bg-[#b7282e] hover:bg-[#a02027] text-white border border-[#b7282e] focus:ring-[#b7282e]",

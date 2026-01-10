@@ -42,38 +42,38 @@ const WrestlerList: React.FC<WrestlerListProps> = ({ wrestlers, onSelect }) => {
                 >
                     {/* Rank Badge */}
                     <div className={`
-                        w-14 flex-shrink-0 text-center font-bold font-serif flex flex-col items-center justify-center border-r border-slate-100 pr-2
+                        w-16 flex-shrink-0 text-center font-bold font-serif flex flex-col items-center justify-center border-r border-slate-100 pr-2 mr-2
                         ${wrestler.isSekitori ? 'text-[#b7282e]' : 'text-slate-500'}
                     `}>
-                        <div className="text-[9px] opacity-60 leading-none mb-1">
+                        <div className="text-[9px] opacity-60 leading-none mb-1 uppercase tracking-tighter">
                             {t('history.timeline.table_head.rank')}
                         </div>
-                        <div className="text-base leading-none">
+                        <div className={`${isEn ? 'text-xs tracking-tight' : 'text-base'} leading-none`}>
                             {formatRank(wrestler.rank).split(/(\d|筆)/)[0].replace(/[東西]/g, '')}
                         </div>
                     </div>
 
                     {/* Info */}
-                    <div className="ml-3 flex-1 min-w-0">
+                    <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-baseline mb-1">
-                            <h3 className={`font-serif font-bold text-base truncate ${wrestler.isSekitori ? 'text-slate-900' : 'text-slate-700'}`}>
+                            <h3 className={`font-serif font-bold truncate pr-2 ${isEn ? 'text-sm' : 'text-base'} ${wrestler.isSekitori ? 'text-slate-900' : 'text-slate-700'}`}>
                                 {isEn ? wrestler.reading : wrestler.name}
                             </h3>
                             {/* Age Badge */}
-                            <span className={`text-[10px] font-mono px-1.5 rounded-sm ${wrestler.age >= 30 ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 text-slate-500'}`}>
+                            <span className={`text-[10px] font-mono px-1.5 rounded-sm whitespace-nowrap ${wrestler.age >= 30 ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 text-slate-500'}`}>
                                 {wrestler.age}{isEn ? '' : '歳'}
                             </span>
                         </div>
 
                         {/* Sub Info Row */}
-                        <div className="flex items-center gap-3 text-[10px] text-slate-500 font-mono">
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono gap-2">
                             {/* Full Rank for Detail */}
-                            <span className="text-slate-400 font-sans">
+                            <span className="text-slate-400 font-sans truncate min-w-0 flex-1">
                                 {formatRank(wrestler.rank, wrestler.rankSide, wrestler.rankNumber)}
                             </span>
 
                             {/* Stats Stub - simplified for list */}
-                            <div className="flex gap-2 ml-auto opacity-70 group-hover:opacity-100 transition-opacity">
+                            <div className="flex gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity whitespace-nowrap flex-shrink-0">
                                 <span title={isEn ? "Mind" : "心"}>{isEn ? "M:" : "心"}{Math.floor(wrestler.stats.mind)}</span>
                                 <span title={isEn ? "Tech" : "技"}>{isEn ? "T:" : "技"}{Math.floor(wrestler.stats.technique)}</span>
                                 <span title={isEn ? "Body" : "体"}>{isEn ? "B:" : "体"}{Math.floor(wrestler.stats.body)}</span>

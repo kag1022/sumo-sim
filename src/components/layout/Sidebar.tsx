@@ -6,8 +6,9 @@ import { formatRank } from '../../utils/formatting';
 import DailyMatchList from '../../features/match/components/DailyMatchList';
 import Button from '../ui/Button';
 import { calculateSeverance } from '../../features/wrestler/logic/retirement';
-import { AlertTriangle, Scale, Edit2 } from 'lucide-react';
+import { AlertTriangle, Scale, Edit2, BookOpen } from 'lucide-react';
 import { ShikonaChangeModal } from '../../features/heya/components/ShikonaChangeModal';
+import { SkillBookModal } from '../../features/wrestler/components/SkillBookModal';
 import { useTranslation } from 'react-i18next';
 
 interface SidebarProps {
@@ -20,6 +21,10 @@ interface SidebarProps {
  * サイドバーコンポーネント
  * 力士詳細情報と取組リストを表示
  */
+import { getWeekId } from '../../utils/time';
+
+// ... existing imports
+
 export const Sidebar = ({
     selectedWrestler,
     onRetireWrestler,
@@ -30,6 +35,7 @@ export const Sidebar = ({
         gamePhase,
         trainingPoints,
         todaysMatchups,
+        currentDate // Added
     } = useGame();
     const { t, i18n } = useTranslation();
 
@@ -37,6 +43,7 @@ export const Sidebar = ({
 
     const [sidebarTab, setSidebarTab] = useState<'info' | 'matches'>('info');
     const [showRenameModal, setShowRenameModal] = useState(false);
+    const [showSkillBookModal, setShowSkillBookModal] = useState(false);
 
     // Auto-switch tabs based on phase
     useEffect(() => {
@@ -207,39 +214,80 @@ export const Sidebar = ({
                                         <div className="mb-6">
                                             <div className="flex justify-between items-center mb-3">
                                                 <h4 className="font-bold text-slate-800 text-sm font-serif">{t('sidebar.special_training')}</h4>
-                                                <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">{t('sidebar.remaining_tp', { tp: trainingPoints })}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-[10px] font-bold ${(function () {
+                                                        if (!activeSelectedWrestler) return 'text-slate-400';
+                                                        const currentWeekId = getWeekId(currentDate);
+                                                        const history = activeSelectedWrestler.trainingHistory;
+                                                        const weeklyCount = (history?.weekId === currentWeekId) ? history.count : 0;
+                                                        return weeklyCount >= 5 ? 'text-red-600' : 'text-slate-500';
+                                                    })()
+                                                        }`}>
+                                                        {(function () {
+                                                            if (!activeSelectedWrestler) return '';
+                                                            const currentWeekId = getWeekId(currentDate);
+                                                            const history = activeSelectedWrestler.trainingHistory;
+                                                            const weeklyCount = (history?.weekId === currentWeekId) ? history.count : 0;
+                                                            return t('sidebar.training.limit_info', { current: weeklyCount, max: 5 });
+                                                        })()}
+                                                    </span>
+                                                    <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">{t('sidebar.remaining_tp', { tp: trainingPoints })}</span>
+                                                </div>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-2">
-                                                <button
-                                                    onClick={() => doSpecialTraining(selectedWrestler.id, 'shiko')}
-                                                    disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured'}
-                                                    className="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 transition-colors"
-                                                >
-                                                    {t('sidebar.training.shiko')}
-                                                </button>
-                                                <button
-                                                    onClick={() => doSpecialTraining(selectedWrestler.id, 'teppo')}
-                                                    disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured'}
-                                                    className="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 transition-colors"
-                                                >
-                                                    {t('sidebar.training.teppo')}
-                                                </button>
-                                                <button
-                                                    onClick={() => doSpecialTraining(selectedWrestler.id, 'moushi_ai')}
-                                                    disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured'}
-                                                    className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 transition-colors"
-                                                >
-                                                    {t('sidebar.training.moushi_ai')}
-                                                </button>
-                                                <button
-                                                    onClick={() => doSpecialTraining(selectedWrestler.id, 'meditation')}
-                                                    disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured'}
-                                                    className="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 transition-colors"
-                                                >
-                                                    {t('sidebar.training.meditation')}
-                                                </button>
+                                                {(function () {
+                                                    const currentWeekId = getWeekId(currentDate);
+                                                    const history = activeSelectedWrestler?.trainingHistory;
+                                                    const weeklyCount = (history?.weekId === currentWeekId) ? history.count : 0;
+                                                    const isLimitReached = weeklyCount >= 5;
+
+                                                    return (
+                                                        <>
+                                                            <button
+                                                                onClick={() => doSpecialTraining(selectedWrestler.id, 'shiko')}
+                                                                disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured' || isLimitReached}
+                                                                className="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                                title={isLimitReached ? t('sidebar.training.limit_reached') : ''}
+                                                            >
+                                                                {t('sidebar.training.shiko')}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => doSpecialTraining(selectedWrestler.id, 'teppo')}
+                                                                disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured' || isLimitReached}
+                                                                className="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                                title={isLimitReached ? t('sidebar.training.limit_reached') : ''}
+                                                            >
+                                                                {t('sidebar.training.teppo')}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => doSpecialTraining(selectedWrestler.id, 'moushi_ai')}
+                                                                disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured' || isLimitReached}
+                                                                className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                                title={isLimitReached ? t('sidebar.training.limit_reached') : ''}
+                                                            >
+                                                                {t('sidebar.training.moushi_ai')}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => doSpecialTraining(selectedWrestler.id, 'meditation')}
+                                                                disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured' || isLimitReached}
+                                                                className="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                                title={isLimitReached ? t('sidebar.training.limit_reached') : ''}
+                                                            >
+                                                                {t('sidebar.training.meditation')}
+                                                            </button>
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
+
+                                            <button
+                                                onClick={() => setShowSkillBookModal(true)}
+                                                className="w-full mt-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-1 rounded-sm transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <BookOpen className="w-3 h-3" />
+                                                <span>{t('dictionary.title_manage')}</span>
+                                            </button>
                                         </div>
 
                                         <div className="bg-stone-50 p-3 rounded-sm border border-stone-200">
@@ -287,6 +335,15 @@ export const Sidebar = ({
                     onRename={renameWrestler}
                 />
             )}
+
+            {showSkillBookModal && (
+                <SkillBookModal
+                    isOpen={showSkillBookModal}
+                    onClose={() => setShowSkillBookModal(false)}
+                    selectedWrestlerId={activeSelectedWrestler?.id}
+                />
+            )}
+
         </div>
     );
 };

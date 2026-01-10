@@ -9,4 +9,15 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-i18next', 'i18next'],
+          ui: ['lucide-react']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  }
 })

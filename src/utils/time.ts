@@ -34,6 +34,12 @@ export const formatHybridDate = (date: Date, mode: GamePhase): string => {
     }
 };
 
+export const getWeekId = (date: Date): string => {
+    const year = date.getFullYear();
+    const week = getWeekNumber(date);
+    return `${year}-W${week.toString().padStart(2, '0')}`;
+};
+
 export const getWesternYearFromBashoId = (bashoId: string): number | null => {
     // 1. Try parsing "2025年..." format
     const matchJP = bashoId.match(/^(\d{4})年/);

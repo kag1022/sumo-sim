@@ -1,17 +1,16 @@
+import { getWeekId } from '../../../utils/time';
 import { useGame } from '../../../context/GameContext';
 import { Candidate } from '../../../types';
-import { SKILL_INFO } from '../logic/skills';
 import { MAX_PLAYERS_PER_HEYA } from '../../../utils/constants';
 import { calculateSeverance } from '../logic/retirement';
 import { calculateSpecialTrainingResult } from '../logic/training';
 import { generateWrestler } from '../logic/generator';
 import { formatRank } from '../../../utils/formatting';
 
-/**
- * 力士に対するアクションを管理するフック
- * 採用、引退、特別指導、助言などを担当
- */
+import { useTranslation } from 'react-i18next';
+
 export const useWrestlerActions = () => {
+    const { t } = useTranslation();
     const {
         funds,
         setFunds,
@@ -27,6 +26,8 @@ export const useWrestlerActions = () => {
         setRetiringQueue,
         setConsultingWrestlerId,
         setCandidates,
+        setRetiredWrestlers,
+        currentDate // Added
     } = useGame();
 
     /**
@@ -107,6 +108,7 @@ export const useWrestlerActions = () => {
                     type: 'info'
                 }, 'info');
                 setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
+                setRetiredWrestlers(prev => [...prev, wrestler]);
             }
         }
     };
@@ -134,6 +136,7 @@ export const useWrestlerActions = () => {
             }, 'info');
             setRetiringQueue(prev => prev.filter(w => w.id !== wrestlerId));
             setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
+            setRetiredWrestlers(prev => [...prev, wrestler]);
         }
     };
 
@@ -146,17 +149,44 @@ export const useWrestlerActions = () => {
         const wrestler = wrestlers.find(w => w.id === wrestlerId);
         if (!wrestler || trainingPoints <= 0) return;
 
+        // Check Weekly Limit
+        const currentWeekId = getWeekId(currentDate);
+        const history = wrestler.trainingHistory || { weekId: currentWeekId, count: 0 };
+
+        // Reset count if new week
+        if (history.weekId !== currentWeekId) {
+            history.weekId = currentWeekId;
+            history.count = 0;
+        }
+
+        if (history.count >= 5) {
+            addLog({
+                key: 'log.error.training_limit', // New key (generic error or make specific) or just return
+                message: "今週の特訓上限（5回）に達しています！",
+                type: 'warning'
+            }, 'warning');
+            return;
+        }
+
         setTrainingPoints(prev => prev - 1);
 
         const result = calculateSpecialTrainingResult(wrestler, menuType);
 
-        setWrestlers(prev => prev.map(w => w.id === wrestlerId ? result.updatedWrestler : w));
+        // Update Wrestler with result AND new history
+        setWrestlers(prev => prev.map(w =>
+            w.id === wrestlerId
+                ? {
+                    ...result.updatedWrestler,
+                    trainingHistory: { weekId: currentWeekId, count: history.count + 1 }
+                }
+                : w
+        ));
 
         if (result.learnedSkill) {
             addLog({
                 key: 'log.action.skill_learned',
-                params: { name: wrestler.name, skill: SKILL_INFO[result.learnedSkill].name },
-                message: `${wrestler.name}は特訓の末、秘技『${SKILL_INFO[result.learnedSkill].name}』を閃いた！`,
+                params: { name: wrestler.name, skill: t(`skills.${result.learnedSkill}.name`) },
+                message: `${wrestler.name}は特訓の末、秘技『${t(`skills.${result.learnedSkill}.name`)}』を閃いた！`,
                 type: 'info'
             }, 'info');
         }
@@ -235,6 +265,7 @@ export const useWrestlerActions = () => {
             }
 
             setWrestlers(prev => prev.filter(w => w.id !== wrestlerId));
+            setRetiredWrestlers(prev => [...prev, wrestler]);
         } else {
             addLog({
                 key: 'log.consult.persuade_success',
@@ -314,6 +345,44 @@ export const useWrestlerActions = () => {
         }, 'info');
     };
 
+    /**
+     * スキルを忘れる（TP消費）
+     * @param wrestlerId 対象力士ID
+     * @param skillId 忘れるスキルID
+     */
+    const forgetSkill = (wrestlerId: string, skillId: string) => {
+        const wrestler = wrestlers.find(w => w.id === wrestlerId);
+        if (!wrestler) return;
+
+        const COST = 10;
+        if (trainingPoints < COST) {
+            addLog({
+                key: 'log.error.insufficient_tp',
+                params: { amount: COST },
+                message: "TPが足りません！",
+                type: 'error'
+            }, 'error');
+            return;
+        }
+
+        if (!wrestler.skills.includes(skillId as any)) return;
+
+        setTrainingPoints(prev => prev - COST);
+
+        setWrestlers(prev => prev.map(w =>
+            w.id === wrestlerId
+                ? { ...w, skills: w.skills.filter(s => s !== skillId) }
+                : w
+        ));
+
+        addLog({
+            key: 'log.action.forget_skill',
+            params: { name: wrestler.name, skill: t(`skills.${skillId}.name`) },
+            message: `${wrestler.name} は '${t(`skills.${skillId}.name`)}' を忘れました。`,
+            type: 'info'
+        }, 'info');
+    };
+
     return {
         recruitWrestler,
         retireWrestler,
@@ -323,5 +392,6 @@ export const useWrestlerActions = () => {
         handleRetirementConsultation,
         checkForRetirementConsultation,
         renameWrestler,
+        forgetSkill,
     };
 };

@@ -59,4 +59,4 @@ const LogWindow: React.FC = () => {
     );
 };
 
-export default LogWindow;
+export default React.memo(LogWindow);

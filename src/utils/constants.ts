@@ -68,3 +68,5 @@ export const TP_RECOVER_WEEKLY = 5;
 export const TP_REWARD_WIN = 1;
 export const TP_REWARD_KACHIKOSHI = 10;
 export const TP_REWARD_YUSHO = 50;
+
+export const MAX_LOG_ENTRIES = 200;

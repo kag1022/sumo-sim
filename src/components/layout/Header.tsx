@@ -40,9 +40,9 @@ export const Header = ({
 
     const formattedDate = useMemo(() => {
         const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
 
         if (gamePhase === 'tournament') {
-            // Use Intl API for correct date formatting based on current language
             return currentDate.toLocaleDateString(i18n.language === 'ja' ? 'ja-JP' : 'en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -52,23 +52,13 @@ export const Header = ({
         } else {
             // Training Phase: Use localized template
             const week = getWeekNumber(currentDate);
-            // JP: 11 (number), EN: Nov (short string)
-            // To support both cleanly, we can pass both and let the template choose, 
-            // OR use logic here. 
-            // en.ts template: '{{month}} {{year}}, Week {{week}}' -> expects Month Name?
-            // If we pass localized month string:
 
-
-            // For JP, 'numeric' gives '11月' or '11'? Chrome 'ja-JP' month:numeric gives '11月' usually? 
-            // Let's verify: new Date().toLocaleDateString('ja-JP', {month:'numeric'}) -> '1月' or '1'. 
-            // Actually it's better to pass raw number for JP template which has '月' hardcoded?
-            // existing ja.ts: '{{year}}年 {{month}}月 第{{week}}週' -> expects number.
-
-            const monthVal = i18n.language === 'ja'
-                ? (currentDate.getMonth() + 1) // Pass number 11
-                : currentDate.toLocaleDateString('en-US', { month: 'short' }); // Pass "Nov"
-
-            return t('date.format_training', { year, month: monthVal, week });
+            if (i18n.language === 'en') {
+                const monthName = currentDate.toLocaleDateString('en-US', { month: 'short' });
+                return t('date.format_training', { year, month: monthName, week });
+            } else {
+                return t('date.format_training', { year, month, week });
+            }
         }
     }, [currentDate, gamePhase, t, i18n.language]);
 
@@ -138,7 +128,7 @@ export const Header = ({
                                 className="text-[10px] font-bold px-2 py-1 rounded-sm border border-white/30 hover:bg-white/10 transition-colors uppercase tracking-wider bg-amber-900/40 flex items-center"
                             >
                                 <Book className="w-3 h-3 mr-1" />
-                                <span>図鑑</span>
+                                <span>{t('cmd.encyclopedia')}</span>
                             </button>
                             <button
                                 onClick={onShowManagement}
@@ -160,7 +150,7 @@ export const Header = ({
                                 size="sm"
                                 onClick={onShowScout}
                             >
-                                スカウト
+                                {t('cmd.scout')}
                             </Button>
                         )}
 
@@ -171,7 +161,7 @@ export const Header = ({
                             className="shadow-md"
                         >
                             <div className="flex items-center gap-2">
-                                <span>{gamePhase === 'tournament' ? '翌日へ' : '翌週へ'}</span>
+                                <span>{gamePhase === 'tournament' ? t('cmd.next_day') : t('cmd.next_week')}</span>
                                 <ChevronRight className="w-4 h-4" />
                             </div>
                         </Button>
