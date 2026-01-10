@@ -1,162 +1,164 @@
-# Sumo Simulation Game (大相撲部屋経営シミュレーション)
+# Sumo Sim (相撲部屋経営シミュレーション / Sumo Stable Management Simulation)
 
-## 1. プロジェクト概要
-**「伝統と革新の融合」**をテーマにした、大相撲部屋経営シミュレーションゲームです。
-プレイヤーは親方となり、弟子のスカウトから育成、本場所での采配、そして部屋の経営至るまで、相撲部屋の全てを管理します。
-
-### デザインコンセプト: "Sumo Modern Traditional"
-UI/UXは、伝統的な相撲の美学と現代的なウェブアプリケーションの利便性を融合させています。
-- **色彩**: ベンガラ色 (`#b7282e`) をブランドカラーとし、背景には和紙色 (`#fcf9f2`) を使用。
-- **フォント**: 見出しには明朝体 (Serif) を使用して品格を、データ表示にはゴシック体 (Sans) を使用して可読性を確保。
-- **メタファー**: 「商家の大福帳」「番付表」「儀式」などの伝統的なモチーフをモダンなUIコンポーネントに落とし込んでいます。
+**[日本語](#日本語-japanese) | [English](#english-英語)**
 
 ---
 
-## 2. ゲームシステム詳細
+<a id="日本語-japanese"></a>
 
-### 2.1 ゲームモード
-ゲーム開始時に、プレイヤーは自身のプレイスタイルに合わせてモードを選択できます。
+## 🇯🇵 日本語 (Japanese)
 
-| モード名 | 開始資金 | 初期弟子数 | 難易度 | 特徴 |
-| :--- | :--- | :--- | :--- | :--- |
-| **独立 (Establish)** | ¥3,000,000 | 1名 | Hard | ゼロからの立ち上げ。資金繰りが厳しく、経営手腕が問われる。 |
-| **継承 (Inherit)** | ¥15,000,000 | 6名 | Normal | 名門部屋の継承。ある程度の戦力と資金がある状態でスタート。 |
+### 📋 プロジェクト概要 (Project Overview)
+本プロジェクトは、React 19 + TypeScript + Vite で構築された、現代的なUIを持つ相撲部屋経営シミュレーションゲームです。
+プレイヤーは親方となり、弟子のスカウト、育成、本場所での采配を行い、最強の部屋を目指します。
 
-### 2.2 進行サイクル
-ゲームは「週単位の育成パート」と「日単位の本場所パート」を交互に繰り返します。
+*   **タイトル:** Sumo Sim (仮称)
+*   **ジャンル:** 経営シミュレーション / スポーツ
+*   **プラットフォーム:** Web (PC/Mobile) - レスポンシブ対応
+*   **デザイン:** "Sumo Modern Traditional" - 伝統的な和の色（ベンガラ色、和紙色）と現代的なフラットデザインの融合。
 
-1.  **育成フェーズ (偶数月・場所前)**
-    *   **期間**: 数週間
-    *   **アクション**: 
-        *   **稽古指示**: 四股（体）、鉄砲（技）、申し合い（心・技・体）からメニューを選択。
-        *   **特別指導**: 親方の指導力ポイント（TP）を消費し、個別指導を行い能力を大幅アップ。稀に**「秘技」**を習得。
-        *   **スカウト**: 新弟子候補を調査し、入門試験（有料）を経て採用。
-        *   **経営**: 女将さんの支援レベルアップ、施設の改修。
-    *   **ランダムイベント**: 毎週15%の確率で、タニマチの支援や不祥事、季節イベントなどが発生。
+### 🚀 主な機能 (Core Features)
 
-2.  **本場所フェーズ (奇数月)**
-    *   **期間**: 15日間
-    *   **アクション**:
-        *   **取組観戦**: 弟子の取組結果を確認。
-        *   **結果**: 勝敗により資金（懸賞金など）や評判が変動。
-    *   **千秋楽**: 優勝決定後、番付編成会議が行われ、翌場所の番付が決定。引退者には断髪式が行われる。
+#### 1. 部屋経営 (Management)
+*   **資金管理 (Funds):** スカウト料、育成費用、施設維持費などを管理。
+*   **TP (Training Points):** 指導力ポイント。週ごとに回復し、特別指導やイベントで使用 (最大100pt)。
+*   **評判 (Reputation):** 部屋の格を表す指標。ランク（S〜E）として可視化され、スカウトの質に影響。
 
----
+#### 2. 力士育成 (Wrestler Development)
+*   **ステータス:**
+    *   **素質 (Potential):** 成長限界 (S〜Eランク)。
+    *   **体格:** 身長・体重。当たりや寄りの強さに影響。
+    *   **柔軟性 (Flexibility):** 怪我耐性や技の発動率。
+*   **四股名 (Shikona):** 出身地や部屋ごとの冠文字（例: 「琴」「北」）に基づき、漢字と読み（Romaji）を自動生成。
+*   **スキル (Skills):** 「突き押し」「四つ相撲」などのスタイルや特殊能力をスキルブックで着脱可能。
 
-### 2.3 力士 (Wrestler) システム
+#### 3. 本場所・番付 (Basho & Banzuke)
+*   **番付システム:** 横綱から序ノ口まで、史実に基づく定員・昇降格ルールを実装。
+*   **カド番・引退:** 大関のカド番制度や、成績不振・年齢による引退勧告ロジック。
+*   **取組:** スイス式トーナメントに近い形式で、成績の近い力士とマッチング。
 
-#### パラメータ
-力士は以下のステータスを持ちます。
-- **心 (Mind)**: 精神力。プレッシャーへの耐性、長期戦での粘り強さ。
-- **技 (Technique)**: 技術。決まり手の多彩さ、相手の崩しやすさ。
-- **体 (Body)**: 身体能力。当たり負けしない強さ、スタミナ。
-- **素質 (Potential)**: 能力の成長限界値（S〜Eランク）。スカウト時の「検査」で判明。
-- **体重・身長**: 当たりの強さや相性に影響。
+#### 4. 新弟子スカウト (Scout)
+*   **スカウト報告:** 毎週、スカウトマンから候補者リストが届く。
+*   **新弟子検査:** 資金を支払い、詳細なステータス（素質・柔軟性）を「検査」で明らかにする。
+*   **入門:** 四股名を授与し、部屋に迎え入れる。
 
-#### 秘技 (Skills)
-特別なトレーニングで習得する特殊能力。取組中に発動し、戦況を覆します。
-*   `IronHead` (鉄の額): 常に戦闘力+5%
-*   `GiantKiller` (巨漢殺し): 格上・重量級相手に戦闘力+15%
-*   `EscapeArtist` (逃げ足): ピンチ時に逆転の技が出やすい
-*   他、多数実装
+#### 5. ローカライズ (Localization / i18n)
+*   **完全対応:** UIの全テキストは `ja` (日本語) と `en` (英語) に切り替え可能。
+*   **厳格な分離:** 言語設定に基づき、表示テキストを完全に切り替える（英語モードに日本語を残さない）。
 
-#### 進退・引退
-*   **引退相談**: 力士が限界を感じると親方（プレイヤー）に相談を持ちかけます。
-    *   **承認**: 引退を受け入れ、断髪式へ。功労金が支払われる。
-    *   **説得**: 「まだやれる」と奮起させ、ラストチャンスを与える（失敗時は強制引退）。
-*   **断髪式**: 厳かなUIで執り行われる儀式。力士のキャリアを称え、第二の人生へ送り出します。
+### 🛠 技術スタック (Tech Stack)
 
----
+| カテゴリ | 技術 | 解説 |
+| --- | --- | --- |
+| **Frontend** | React 19 | 最新のReact。Hooks中心の設計。 |
+| **Language** | TypeScript | 厳格な型定義 (Strict mode)。 |
+| **Build** | Vite | 高速なビルド・HMR。 |
+| **Styling** | Tailwind CSS v4 | 最新のCSSエンジン。変数活用。 |
+| **State** | Zustand | 軽量なグローバル状態管理。 |
+| **i18n** | i18next | 国際化対応。 |
+| **Test** | Vitest | ユニットテスト。 |
 
-### 2.4 マッチング・勝敗ロジック
-*   **スイス式トーナメント**: 近い成績の力士同士が当たりやすいリアルなマッチングシステム。
-*   **勝敗判定**: 
-    1.  基礎戦闘力（心技体）の比較。
-    2.  体重差補正、相性補正。
-    3.  **スキル発動判定**によるバフ/デバフ。
-    4.  ランダム要素と「現在の調子（Stress等）」の加味。
-*   **決まり手**: 勝敗決定時のパラメーター差分に基づき、多彩な決まり手（寄り切り、押し出し、うっちゃり等）が選定されます。
-
-### 2.5 経営・イベントシステム
-*   **資金 (Funds)**:
-    *   収入: 本場所手当、懸賞金、賞金、タニマチからの寄付、引退時の功労金。
-    *   支出: スカウト費用、施設維持費、税金（イベント）。
-*   **評判 (Reputation)**:
-    *   部屋の格を表す数値。高いほど良いスカウト候補が現れやすく、タニマチイベントが良いものになる。
-*   **イベントエンジン**:
-    *   汎用イベント（各種ボーナス/ペナルティ）、季節イベント（花見、猛暑）、不祥事（夜遊び）などが動的に発生。
-    *   モーダルUIによる没入感のあるイベント演出。
-
----
-
-## 3. 技術スタック (Tech Stack)
-
-### Frontend
-- **Framework**: React 18+ (via Vite)
-- **Language**: TypeScript 5.x
-- **Styling**: Tailwind CSS (Utility-first CSS)
-    - カスタムカラーパレット (`tailwind.config.js`) によるテーマ管理
-- **Icons**: Lucide React
-- **Animation**: CSS Transitions, Keyframes for modal effects
-
-### State Management
-- **React Context API**: 
-    - `GameContext`: ゲーム全体の進行状態、資金、日時、アクティブなイベント等を管理。
-    - カスタムフック (`useGameLoop`) にビジネスロジックを集約。
-
-### Data Structure
-- **Immutability**: 状態更新は基本的にイミュータブルに行い、予測可能な状態遷移を保証。
-- **Persistence**: `localStorage` を使用したオートセーブ機能（`SaveData`型）。
-
----
-
-## 4. ディレクトリ構造
+### 📂 ディレクトリ構造 (Directory Structure)
 
 ```
 src/
-├── components/         # 汎用UIコンポーネント (Button, Modal, Card等)
-├── context/            # Global State (GameContext)
-├── features/           # 機能別モジュール
-│   ├── banzuke/        # 番付・履歴ロジック
-│   ├── events/         # ランダムイベントシステム
-│   ├── game/           # ゲーム初期化・モード設定
-│   ├── heya/           # 部屋経営・リソース管理
-│   ├── match/          # 取組・勝敗判定・ログ
-│   └── wrestler/       # 力士データ・育成・スカウト・引退
-├── hooks/              # ゲームループ、イベントハンドリング
-├── utils/              # 汎用ユーティリティ (乱数、フォーマット)
-└── App.tsx             # エントリーポイント
+├── features/           # 機能単位のモジュール (Domain Driven)
+│   ├── banzuke/        # 番付ロジック
+│   ├── game/           # ゲームループ・進行
+│   ├── heya/           # 部屋経営
+│   ├── match/          # 取組・勝敗判定
+│   └── wrestler/       # 力士データ・スカウト
+├── components/         # 汎用UI (Button, Modal)
+├── locales/            # 言語ファイル (ja.ts, en.ts)
+└── store/              # Zustand ストア
 ```
 
 ---
 
-## 5. インストール・開発ガイド
+<a id="english-英語"></a>
 
-### 前提条件
-- Node.js (v18以上推奨)
-- npm
+## 🇺🇸 English
 
-### 手順
+### 📋 Project Overview
+**Sumo Sim** is a modern Sumo Stable Management Simulation game built with React 19, TypeScript, and Vite.
+Players take on the role of an "Oyakata" (Stable Master), scouting young talents, training them, and commanding them in tournaments to build the strongest stable.
+
+*   **Title:** Sumo Sim
+*   **Genre:** Management Simulation / Sports
+*   **Platform:** Web (PC/Mobile) - Responsive
+*   **Design:** "Sumo Modern Traditional" - A fusion of traditional aesthetics (Bengala red, Washi paper cream) and modern flat UI.
+
+### 🚀 Core Features
+
+#### 1. Stable Management
+*   **Funds:** Manage finances for scouting, training, and facility maintenance.
+*   **TP (Training Points):** Action points for coaching. Recovers weekly, used for special training (Max 100pt).
+*   **Reputation:** Indicates the prestige of the stable (Rank S-E). Higher reputation attracts better recruits.
+
+#### 2. Wrestler Development
+*   **Stats:**
+    *   **Potential:** Growth limit and speed (Grade S-E).
+    *   **Physique:** Height and Weight, affecting collision power.
+    *   **Flexibility:** Injury resistance and skill activation rates.
+*   **Shikona (Ring Name):** Automatically generated Kanji and Romaji names based on origin and stable prefixes (e.g., "Koto", "Kita").
+*   **Skills:** Equipable skills and techniques (e.g., "Pusher/Thruster", "Grappler") managed via Skill Books.
+
+#### 3. Basho (Tournament) & Banzuke (Rankings)
+*   **Ranking System:** Full pyramid from Yokozuna to Jonokuchi with historically accurate quotas and promotion/demotion rules.
+*   **Kadoban & Retirement:** Logic for Ozeki demotion (Kadoban) and retirement decisions based on performance/age.
+*   **Matchmaking:** Dynamic matching logic pairing wrestlers with similar records (Swiss-system style).
+
+#### 4. Scouting
+*   **Recruitment:** Weekly reports of potential candidates.
+*   **Inspection:** Spend funds to "Inspect" candidates and reveal hidden stats (Potential, Flexibility).
+*   **Entry:** Grant a Shikona and officially accept them into the stable.
+
+#### 5. Localization (i18n)
+*   **Full Support:** Complete toggle between Japanese (JA) and English (EN).
+*   **Strict Separation:** UI ensures no mixed languages; English mode displays pure English (including Romaji names), and Japanese mode displays pure Japanese.
+
+### 🛠 Tech Stack
+
+| Category | Technology | Note |
+| --- | --- | --- |
+| **Frontend** | React 19 | Latest React features. |
+| **Language** | TypeScript | Strict type safety. |
+| **Build** | Vite | Fast HMR and build. |
+| **Styling** | Tailwind CSS v4 | Utility-first CSS. |
+| **State** | Zustand | Lightweight state management. |
+| **i18n** | i18next | Internationalization. |
+| **Test** | Vitest | Unit testing framework. |
+
+### 📂 Directory Structure
+
+```
+src/
+├── features/           # Feature-based modules
+│   ├── banzuke/        # Ranking logic
+│   ├── game/           # Game loop & time
+│   ├── heya/           # Stable management
+│   ├── match/          # Match simulation
+│   └── wrestler/       # Wrestler data & scout
+├── components/         # Shared UI components
+├── locales/            # Translation files (ja.ts, en.ts)
+└── store/              # Zustand stores
+```
+
+---
+
+## 🔧 Installation
+
 ```bash
-# クローン
-git clone <repository-url>
-
-# ディレクトリ移動
-cd sumo-sim
-
-# 依存パッケージのインストール
+# Install dependencies
 npm install
 
-# 開発サーバーの起動 (localhost:5173)
+# Run development server
 npm run dev
-```
+# -> http://localhost:5173
 
-### ビルド
-```bash
+# Build for production
 npm run build
+
+# Run tests
+npm test
 ```
-
----
-
-## 6. ライセンス
-Private Project. All rights reserved.
