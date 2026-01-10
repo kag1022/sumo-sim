@@ -3,16 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { useGame } from '../../context/GameContext';
 import { getWeekNumber } from '../../utils/time';
 import { MAX_TP } from '../../utils/constants';
-import Button from '../ui/Button';
-import { Book, ChevronRight, History, Briefcase } from 'lucide-react';
+import { Book, History, Building2, UserPlus, Menu } from 'lucide-react';
 
 interface HeaderProps {
     onShowScout: () => void;
     onShowManagement: () => void;
     onShowHistory: () => void;
     onShowEncyclopedia: () => void;
+    onShowHeyaList: () => void;
     onShowHelp: () => void;
-    onAdvance: () => void;
+    onMenuClick?: () => void;
 }
 
 /**
@@ -24,8 +24,9 @@ export const Header = ({
     onShowManagement,
     onShowHistory,
     onShowEncyclopedia,
+    onShowHeyaList,
     onShowHelp,
-    onAdvance,
+    onMenuClick
 }: HeaderProps) => {
     const {
         currentDate,
@@ -50,9 +51,7 @@ export const Header = ({
                 weekday: 'short'
             });
         } else {
-            // Training Phase: Use localized template
             const week = getWeekNumber(currentDate);
-
             if (i18n.language === 'en') {
                 const monthName = currentDate.toLocaleDateString('en-US', { month: 'short' });
                 return t('date.format_training', { year, month: monthName, week });
@@ -63,128 +62,100 @@ export const Header = ({
     }, [currentDate, gamePhase, t, i18n.language]);
 
     return (
-        <header className="bg-[#b7282e] text-white py-3 shadow-md sticky top-0 z-50 border-b border-[#a02027]">
-            <div className="container mx-auto px-4 flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold font-serif tracking-widest leading-none drop-shadow-sm">{t('app.title')}</h1>
-                    <p className="text-xs opacity-90 tracking-wide font-light">{t('app.subtitle')}</p>
+        <header className="bg-slate-900 text-white p-2 md:p-3 shadow-md flex flex-col gap-2 z-20 relative">
+            {/* Top Row: Title, Date, Funds */}
+            <div className="flex justify-between items-center w-full">
+                <div className="flex items-center gap-2">
+                    {/* Mobile Menu Button */}
+                    <button
+                        onClick={onMenuClick}
+                        className="md:hidden p-1.5 hover:bg-slate-800 rounded-sm text-slate-300 hover:text-white transition-colors"
+                    >
+                        <Menu className="w-6 h-6" />
+                    </button>
+
+                    <h1 className="text-lg md:text-xl font-bold tracking-wider flex items-center gap-2">
+                        <span className="text-xl md:text-2xl text-yellow-500">⚡</span>
+                        <span className="hidden xs:inline">SUMO SIM</span>
+                        <span className="text-[10px] opacity-50 font-normal self-end mb-1">v0.2</span>
+                    </h1>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    {/* Status & Date Group */}
-                    <div className="flex items-center gap-4 bg-[#8c1c22] px-4 py-1.5 rounded-sm border border-[#a02027]/50 shadow-inner">
-                        {/* Status Badge */}
-                        <div className={`px-2 py-0.5 rounded-sm text-[10px] font-bold tracking-wider uppercase border ${gamePhase === 'tournament' ? 'bg-amber-400 text-amber-950 border-amber-300' : 'bg-blue-800 text-blue-100 border-blue-700'}`}>
+                <div className="flex items-center gap-3 md:gap-6">
+                    {/* Date Display */}
+                    <div className="flex flex-col items-end">
+                        <div className="text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-wider">
                             {gamePhase === 'tournament' ? t('ui.tournament') : t('ui.training')}
                         </div>
-
-                        {/* Date */}
-                        <div className="text-center leading-tight">
-                            <span className="font-serif font-bold text-lg">{formattedDate}</span>
+                        <div className="text-sm md:text-lg font-bold font-mono text-white leading-none">
+                            {formattedDate}
                         </div>
                     </div>
 
-                    <div className="w-px h-8 bg-white/20"></div>
-
-                    {/* Funds */}
-                    <div className="flex flex-col items-end min-w-[120px]">
-                        <div className={`text-[10px] font-bold ${lastMonthBalance && lastMonthBalance >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                            {lastMonthBalance !== null && (
-                                <span>(先月: {lastMonthBalance >= 0 ? '+' : ''}{lastMonthBalance.toLocaleString()})</span>
-                            )}
+                    {/* Funds Display */}
+                    <div className="flex flex-col items-end min-w-[80px] md:min-w-[100px]">
+                        <div className="text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-wider">{t('ui.funds')}</div>
+                        <div className={`text-sm md:text-lg font-bold font-mono leading-none ${funds < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                            ¥{funds.toLocaleString()}
                         </div>
-                        <div className={`text-3xl font-mono font-bold tracking-tighter leading-none ${funds < 0 ? 'text-red-300' : 'text-[#f2d07e]'} drop-shadow-sm`}>
-                            ¥ {funds.toLocaleString()}
-                        </div>
-                    </div>
-
-                    <div className="w-px h-8 bg-white/20"></div>
-
-                    {/* Okami & Management */}
-                    <div className="flex flex-col items-end gap-1">
-                        <div className="flex items-center gap-2 text-[10px] font-mono mb-0.5 opacity-90">
-                            <span>{t('ui.okami')} LV:</span>
-                            <span className="font-bold text-amber-300 text-xs">{okamiLevel}</span>
-                            <span className="opacity-50">|</span>
-                            <span>{t('ui.reputation')}:</span>
-                            <span className="font-bold text-white text-xs">{reputation}</span>
-                            <span className="opacity-50">|</span>
-                            <span>TP:</span>
-                            <span className={`font-bold text-xs ${trainingPoints < 10 ? 'text-red-300' : 'text-amber-300'}`}>
-                                {trainingPoints}/{MAX_TP}
-                            </span>
-                        </div>
-
-                        <div className="flex gap-2">
-                            <button
-                                onClick={onShowHistory}
-                                className="text-[10px] font-bold px-2 py-1 rounded-sm border border-white/30 hover:bg-white/10 transition-colors uppercase tracking-wider flex items-center"
-                            >
-                                <History className="w-3 h-3 mr-1" />
-                                <span>{t('cmd.history')}</span>
-                            </button>
-                            <button
-                                onClick={onShowEncyclopedia}
-                                className="text-[10px] font-bold px-2 py-1 rounded-sm border border-white/30 hover:bg-white/10 transition-colors uppercase tracking-wider bg-amber-900/40 flex items-center"
-                            >
-                                <Book className="w-3 h-3 mr-1" />
-                                <span>{t('cmd.encyclopedia')}</span>
-                            </button>
-                            <button
-                                onClick={onShowManagement}
-                                className="bg-[#8c1c22] hover:bg-[#7a181d] text-white text-[10px] font-bold px-3 py-1 rounded-sm shadow-sm border border-white/10 transition-colors uppercase tracking-wider flex items-center"
-                            >
-                                <Briefcase className="w-3 h-3 mr-1" />
-                                <span>{t('cmd.manage')}</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="w-px h-8 bg-white/20"></div>
-
-                    {/* Action Group */}
-                    <div className="flex items-center gap-3">
-                        {gamePhase === 'training' && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={onShowScout}
-                            >
-                                {t('cmd.scout')}
-                            </Button>
-                        )}
-
-                        <Button
-                            variant={gamePhase === 'tournament' ? 'primary' : 'action'}
-                            size="md"
-                            onClick={onAdvance}
-                            className="shadow-md"
-                        >
-                            <div className="flex items-center gap-2">
-                                <span>{gamePhase === 'tournament' ? t('cmd.next_day') : t('cmd.next_week')}</span>
-                                <ChevronRight className="w-4 h-4" />
+                        {lastMonthBalance !== null && lastMonthBalance !== 0 && (
+                            <div className={`text-[9px] md:text-[10px] font-mono leading-tight ${lastMonthBalance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                {lastMonthBalance > 0 ? '+' : ''}{lastMonthBalance.toLocaleString()}
                             </div>
-                        </Button>
+                        )}
+                    </div>
+                </div>
+            </div>
 
-                        <div className="flex gap-1 ml-2">
-                            <button
-                                onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'ja' : 'en')}
-                                className="w-6 h-6 flex items-center justify-center rounded-sm bg-black/20 hover:bg-black/40 text-[10px] font-bold text-amber-300/80 border border-white/10 transition-colors"
-                            >
-                                {i18n.language === 'en' ? 'EN' : 'JP'}
-                            </button>
-                            <button
-                                onClick={onShowHelp}
-                                className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/10 transition-all"
-                            >
-                                ?
-                            </button>
+            {/* Bottom Row: Action Buttons */}
+            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 md:pb-0 custom-scrollbar">
+                {/* Global Status Indicators */}
+                <div className="flex items-center gap-3 md:gap-4 shrink-0 px-1 border-r border-slate-700 pr-3 md:pr-4">
+                    <div className="flex items-center gap-1.5 md:gap-2" title={t('ui.reputation')}>
+                        <span className="text-amber-400 text-xs md:text-sm">★</span>
+                        <div className="flex flex-col">
+                            <span className="text-[8px] md:text-[9px] uppercase text-slate-500 font-bold leading-none">{t('ui.reputation')}</span>
+                            <span className="text-xs md:text-sm font-bold leading-none">{reputation}</span>
                         </div>
                     </div>
+                    <div className="flex items-center gap-1.5 md:gap-2" title={t('ui.okami')}>
+                        <span className="text-pink-400 text-xs md:text-sm">❀</span>
+                        <div className="flex flex-col">
+                            <span className="text-[8px] md:text-[9px] uppercase text-slate-500 font-bold leading-none">{t('ui.okami')}</span>
+                            <span className="text-xs md:text-sm font-bold leading-none">Lv.{okamiLevel}</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 md:gap-2" title={t('header.tp_title')}>
+                        <span className="text-blue-400 text-xs md:text-sm">◆</span>
+                        <div className="flex flex-col">
+                            <span className="text-[8px] md:text-[9px] uppercase text-slate-500 font-bold leading-none">{t('header.tp')}</span>
+                            <span className="text-xs md:text-sm font-bold leading-none">{trainingPoints}/{MAX_TP}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={onShowScout} className="p-1.5 md:p-2 hover:bg-slate-700 rounded-sm text-slate-300 hover:text-white transition-colors" title={t('cmd.scout')}>
+                        <UserPlus className="w-4 h-4 md:w-5 md:h-5" />
+                    </button>
+                    <button onClick={onShowManagement} className="p-1.5 md:p-2 hover:bg-slate-700 rounded-sm text-slate-300 hover:text-white transition-colors" title={t('cmd.manage')}>
+                        <Building2 className="w-4 h-4 md:w-5 md:h-5" />
+                    </button>
+                    <button onClick={onShowHistory} className="p-1.5 md:p-2 hover:bg-slate-700 rounded-sm text-slate-300 hover:text-white transition-colors" title={t('cmd.history')}>
+                        <History className="w-4 h-4 md:w-5 md:h-5" />
+                    </button>
+                    <button onClick={onShowEncyclopedia} className="p-1.5 md:p-2 hover:bg-slate-700 rounded-sm text-slate-300 hover:text-white transition-colors" title={t('cmd.encyclopedia')}>
+                        <Book className="w-4 h-4 md:w-5 md:h-5" />
+                    </button>
+                    <button onClick={onShowHeyaList} className="p-1.5 md:p-2 hover:bg-slate-700 rounded-sm text-slate-300 hover:text-white transition-colors" title={t('header.heya_list_title')}>
+                        <span className="text-xs font-bold border border-current rounded-sm px-1">{t('header.heya_list_btn')}</span>
+                    </button>
+                    <button onClick={onShowHelp} className="p-1.5 md:p-2 hover:bg-slate-700 rounded-sm text-slate-300 hover:text-white transition-colors text-xs font-bold" title={t('cmd.help')}>
+                        ?
+                    </button>
                 </div>
             </div>
         </header>
     );
 };
-
-export default Header;

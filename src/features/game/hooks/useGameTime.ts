@@ -6,11 +6,11 @@ import { generateCandidates } from '../../wrestler/logic/scouting';
 import { MAX_TP, TP_RECOVER_WEEKLY } from '../../../utils/constants';
 import { checkForWeeklyEvent } from '../../events/logic/eventEngine';
 import { saveGame } from '../../../utils/storage';
-import { formatHybridDate } from '../../../utils/time';
+import { formatHybridDate, isBanzukeAnnouncementDay } from '../../../utils/time';
 
 // Services
 import { processDailyMatches } from '../../match/services/matchService';
-import { processBanzukeUpdate } from '../../banzuke/services/banzukeService';
+import { calculateYusho, applyBanzukeUpdate } from '../../banzuke/services/banzukeService';
 import { processMonthlyResources } from '../../heya/services/resourceService';
 
 /**
@@ -87,10 +87,48 @@ export const useGameTime = () => {
                 }
             }
 
+            // Check for Banzuke Announcement Collision
+            // We iterate 1 to 7 to see if we hit the day
+            let announcementCollisionDate: Date | null = null;
+            for (let i = 1; i <= 7; i++) {
+                const checkDate = new Date(currentDate);
+                checkDate.setDate(checkDate.getDate() + i);
+                if (isBanzukeAnnouncementDay(checkDate)) {
+                    announcementCollisionDate = checkDate;
+                    daysToAdvance = i; // Stop exactly on announcement day
+                    break;
+                }
+            }
+
             // Training & Passive Growth Logic
             let updatedWrestlers = [...wrestlers];
 
-            if (collisionDay !== -1) {
+            if (announcementCollisionDate) {
+                // Banzuke Announcement Event
+                addLog({
+                    key: 'log.tourney.banzuke_announce',
+                    message: "新番付発表の日を迎えました。",
+                    type: 'info'
+                }, 'info');
+
+                // Perform Update
+                const banzukeResult = applyBanzukeUpdate(updatedWrestlers, announcementCollisionDate);
+
+                updatedWrestlers = banzukeResult.updatedWrestlers;
+                setRetiringQueue(prev => [...prev, ...banzukeResult.retiringQueue]);
+
+                if (banzukeResult.fundsChange !== 0) {
+                    setFunds(prev => prev + banzukeResult.fundsChange);
+                }
+
+                banzukeResult.logs.forEach(l => addLog(l, 'info'));
+
+                // Show Modal (Reuse BashoFinished flag for result modal)
+                setBashoFinished(true);
+
+                nextWrestlersState = updatedWrestlers;
+
+            } else if (collisionDay !== -1) {
                 daysToAdvance = collisionDay - currentDate.getDate();
                 setGamePhase('tournament');
                 addLog({
@@ -196,9 +234,31 @@ export const useGameTime = () => {
                     stress: Math.max(0, w.stress - totalRelief)
                 }));
 
-                if (collisionDay === -1) {
-                    nextWrestlersState = updatedWrestlers;
+                if (announcementCollisionDate) {
+                    // Apply Banzuke Update on TOP of grown wrestlers
+                    const banzukeResult = applyBanzukeUpdate(updatedWrestlers, announcementCollisionDate);
+
+                    updatedWrestlers = banzukeResult.updatedWrestlers; // New ranks, same stats (decayed/grown)
+                    setRetiringQueue(prev => [...prev, ...banzukeResult.retiringQueue]);
+
+                    if (banzukeResult.fundsChange !== 0) {
+                        setFunds(prev => prev + banzukeResult.fundsChange);
+                    }
+                    banzukeResult.logs.forEach(l => addLog(l, 'info'));
+
+                    addLog({
+                        key: 'log.tourney.banzuke_announce',
+                        message: "新番付発表の日を迎えました。",
+                        type: 'warning'
+                    }, 'warning');
+
+                    setBashoFinished(true); // Open "New Banzuke" Modal
                 }
+
+                nextWrestlersState = updatedWrestlers; // Commit this state
+
+                // The previous `if (announcementCollisionDate)` block was early in code. I will remove it or ensure this logic prevails.
+                // I will delete the early block and rely on this flow.
 
                 setWrestlers(nextWrestlersState);
                 triggerAutoSave({ wrestlers: nextWrestlersState, heyas, funds, reputation, okamiLevel });
@@ -295,32 +355,37 @@ export const useGameTime = () => {
      * @param finalWrestlers 場所終了時点の力士リスト
      */
     const handleBashoEnd = (finalWrestlers: import('../../../types').Wrestler[]) => {
-        setBashoFinished(true);
+        // setBashoFinished(true); // <--- REMOVED: Do not show old modal immediately
         setGamePhase('training');
 
         const banzukeDateId = formatHybridDate(currentDate, 'tournament');
 
-        // USE SERVICE: Banzuke Update
-        const banzukeResult = processBanzukeUpdate(finalWrestlers, heyas, currentDate, banzukeDateId);
+        // USE SERVICE: Yusho determination (Do NOT update ranks yet)
+        const yushoResult = calculateYusho(finalWrestlers, heyas, banzukeDateId);
 
-        // Apply Updates
-        setYushoWinners(banzukeResult.yushoWinners);
-        setYushoHistory(prev => [...prev, ...banzukeResult.yushoHistoryEntry]);
+        // Apply Yusho Updates (Show Yusho Modal immediately? YES. YushoModal checks `yushoWinners` state?)
+        // Wait, YushoModal is triggered how?
+        // MainGameScreen: `<YushoModal winners={yushoWinners} onClose={...} />`
+        // It shows if `yushoWinners` has content? OR if some state?
+        // Ah, current MainGameScreen logic: 
+        // `<YushoModal winners={yushoWinners} onClose={() => setYushoWinners({})} />` 
+        // (If `yushoWinners` is not empty, it shows?)
+        // Let's check MainGameScreen later.
+        // Assuming setting `yushoWinners` triggers the modal.
 
-        if (banzukeResult.fundsChange !== 0) {
-            setFunds(prev => prev + banzukeResult.fundsChange);
+        setYushoWinners(yushoResult.winnersMap);
+        setYushoHistory(prev => [...prev, ...yushoResult.yushoHistoryEntry]);
+
+        if (yushoResult.fundsChange !== 0) {
+            setFunds(prev => prev + yushoResult.fundsChange);
         }
 
-        banzukeResult.logs.forEach(l => addLog(l, 'info'));
+        yushoResult.logs.forEach(l => addLog(l, 'info'));
 
-        setRetiringQueue(prev => [...prev, ...banzukeResult.retiringQueue]);
+        // Important: Ranks are NOT updated yet. They will be updated ~2 weeks before next Basho.
 
-        // Apply wrestler updates (Banzuke + Retirement Status)
-        let currentWrestlers = banzukeResult.updatedWrestlers;
-
-        // USE SERVICE: Resources (Recruiting, Monthly Balance)
         const resourceResult = processMonthlyResources(
-            currentWrestlers,
+            finalWrestlers, // Use current wrestlers (old ranks)
             heyas,
             okamiLevel,
             reputation,
@@ -331,7 +396,7 @@ export const useGameTime = () => {
         setFunds(prev => prev + resourceResult.fundsChange);
         resourceResult.logs.forEach(l => addLog(l, 'info'));
 
-        // Final wrestler update
+        // Update wrestlers (just resources/states, NOT ranks)
         setWrestlers(resourceResult.updatedWrestlers);
 
         addLog({

@@ -1,0 +1,23 @@
+src/components/layout/Header.tsx(6,25): error TS6133: 'Briefcase' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(8,1): error TS6133: 'calculateSeverance' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(13,1): error TS6133: 'getWeekId' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(97,5): error TS6133: 'onClearSelection' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(104,9): error TS6133: 'trainingPoints' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(110,13): error TS6133: 'doSpecialTraining' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(112,12): error TS6133: 'sidebarTab' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(159,11): error TS6133: 'getAge' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(161,15): error TS6133: 'birthYear' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(167,11): error TS6133: 'getPhysique' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(282,39): error TS2304: Cannot find name 'isRetiring'.
+src/components/layout/Sidebar.tsx(284,45): error TS2322: Type '"danger"' is not assignable to type 'ButtonVariant | undefined'.
+src/components/layout/Sidebar.tsx(286,60): error TS2304: Cannot find name 'setIsRetiring'.
+src/components/layout/Sidebar.tsx(296,112): error TS2304: Cannot find name 'severancePay'.
+src/components/layout/Sidebar.tsx(301,68): error TS2304: Cannot find name 'setIsRetiring'.
+src/components/layout/Sidebar.tsx(306,53): error TS2322: Type '"danger"' is not assignable to type 'ButtonVariant | undefined'.
+src/components/layout/Sidebar.tsx(310,57): error TS2304: Cannot find name 'setIsRetiring'.
+src/components/layout/Sidebar.tsx(334,53): error TS2322: Type '{ matches: Matchup[]; currentDate: Date; }' is not assignable to type 'IntrinsicAttributes & DailyMatchListProps'.
+  Property 'matches' does not exist on type 'IntrinsicAttributes & DailyMatchListProps'.
+src/components/layout/Sidebar.tsx(348,25): error TS2322: Type '{ isOpen: boolean; onClose: () => void; wrestlerId: string; currentName: string; onRename: (newName: string, newReading: string) => void; }' is not assignable to type 'IntrinsicAttributes & ShikonaChangeModalProps'.
+  Property 'wrestlerId' does not exist on type 'IntrinsicAttributes & ShikonaChangeModalProps'. Did you mean 'wrestler'?
+src/components/layout/Sidebar.tsx(358,25): error TS2322: Type '{ isOpen: boolean; onClose: () => void; wrestler: Wrestler; }' is not assignable to type 'IntrinsicAttributes & SkillBookModalProps'.
+  Property 'wrestler' does not exist on type 'IntrinsicAttributes & SkillBookModalProps'.

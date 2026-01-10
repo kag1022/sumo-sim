@@ -37,6 +37,22 @@ const HEYA_SUFFIXES = [
     { char: '花', read: 'hana' }
 ];
 
+// 親方名データ (年寄名跡 - 架空/古風な名称)
+const OYAKATA_NAMES = [
+    '巌山', '虎髭', '鬼面', '大文字', '剣岳', '鉄心', '轟', '疾風', '雲竜', '阿蘇',
+    '薩摩', '越後', '磐城', '剛山', '猛虎', '荒波', '磐石', '鉄壁', '金剛', '天空',
+    '怒涛', '稲妻', '暁', '響', '飛龍', '武蔵', '相模', '安芸', '備前', '長門',
+    '周防', '対馬', '隠岐', '佐渡', '能登', '加賀', '越中', '越前', '若狭', '丹後',
+    '但馬', '因幡', '出雲', '石見', '美作', '備中', '備後', '伊予', '土佐', '阿波', '讃岐'
+];
+
+// 部屋所在地 (Districts - 江戸〜東京の下町中心)
+const DISTRICTS = [
+    '東京都墨田区両国', '東京都墨田区向島', '東京都江東区清澄', '東京都江東区亀戸',
+    '東京都台東区浅草', '東京都台東区千束', '東京都荒川区南千住', '東京都江戸川区西葛西',
+    '東京都足立区綾瀬', '東京都葛飾区新小岩', '千葉県松戸市', '埼玉県草加市'
+];
+
 // 出身地リスト (Prefectures)
 export const PREFECTURES = [
     'Hokkaido', 'Aomori', 'Iwate', 'Miyagi', 'Akita', 'Yamagata', 'Fukushima',
@@ -122,6 +138,21 @@ export const generateHeyas = (): Heya[] => {
             const prefixCharMatch = prefixDataMatch?.char || name[0];
             const prefixReadMatch = prefixDataMatch?.read || '';
 
+            // Specialty Logic
+            let specialty: import('../../../types').HeyaSpecialty = 'Balanced';
+            const roll = Math.random();
+            if (tier.mod >= 1.2) {
+                // Strong stables have distinct styles
+                if (roll < 0.33) specialty = 'Power';
+                else if (roll < 0.66) specialty = 'Tech';
+                else specialty = 'Stamina';
+            } else {
+                // Weaker stables often lack focus or are generalists
+                if (roll < 0.1) specialty = 'Power';
+                else if (roll < 0.2) specialty = 'Tech';
+                else if (roll < 0.3) specialty = 'Stamina';
+            }
+
             heyas.push({
                 id: `heya-${overallIndex++}`,
                 name: name,
@@ -130,7 +161,12 @@ export const generateHeyas = (): Heya[] => {
                 shikonaPrefixReading: prefixReadMatch,
                 strengthMod: tier.mod,
                 facilityLevel: tier.level,
-                wrestlerCount: 0
+                wrestlerCount: 0,
+                // New Fields
+                oyakataName: getRandom(OYAKATA_NAMES) + '親方', // e.g. "雷親方"
+                location: getRandom(DISTRICTS),
+                foundedYear: 1800 + Math.floor(Math.random() * 220), // 1800-2020ish
+                specialty
             });
         }
     });
@@ -190,10 +226,17 @@ export const generateWrestler = (heya: Heya, rank: Rank = 'Jonokuchi', usedNames
     const baseStat = rank === 'Jonokuchi' ? 15 : 40;
     const variation = () => Math.floor(Math.random() * 10);
 
+    let mBonus = 1.0;
+    let tBonus = 1.0;
+    let bBonus = 1.0;
+    if (heya.specialty === 'Power') bBonus = 1.1;
+    if (heya.specialty === 'Tech') tBonus = 1.1;
+    if (heya.specialty === 'Stamina') mBonus = 1.1;
+
     const stats = {
-        mind: Math.min(potential, baseStat + variation()),
-        technique: Math.min(potential, baseStat + variation()),
-        body: Math.min(potential, baseStat + variation())
+        mind: Math.min(100, Math.max(1, Math.floor((Math.min(potential, baseStat + variation())) * mBonus))),
+        technique: Math.min(100, Math.max(1, Math.floor((Math.min(potential, baseStat + variation())) * tBonus))),
+        body: Math.min(100, Math.max(1, Math.floor((Math.min(potential, baseStat + variation())) * bBonus)))
     };
 
     let uniqueId = `cpu-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -303,10 +346,18 @@ export const generateFullRoster = (existingHeyas: Heya[], usedNames: string[] = 
             const variation = () => Math.floor(Math.random() * 20) - 10;
             const mod = heya.strengthMod;
 
+            let mBonus = 1.0;
+            let tBonus = 1.0;
+            let bBonus = 1.0;
+
+            if (heya.specialty === 'Power') bBonus = 1.1;
+            if (heya.specialty === 'Tech') tBonus = 1.1;
+            if (heya.specialty === 'Stamina') mBonus = 1.1;
+
             const stats = {
-                mind: Math.min(100, Math.max(1, Math.floor((baseStat + variation()) * mod))),
-                technique: Math.min(100, Math.max(1, Math.floor((baseStat + variation()) * mod))),
-                body: Math.min(100, Math.max(1, Math.floor((baseStat + variation()) * mod)))
+                mind: Math.min(100, Math.max(1, Math.floor((baseStat + variation()) * mod * mBonus))),
+                technique: Math.min(100, Math.max(1, Math.floor((baseStat + variation()) * mod * tBonus))),
+                body: Math.min(100, Math.max(1, Math.floor((baseStat + variation()) * mod * bBonus)))
             };
 
             wrestlers.push({

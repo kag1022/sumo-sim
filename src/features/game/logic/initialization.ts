@@ -147,9 +147,14 @@ export const initializeGameData = (settings: InitialSettings) => {
         nameEn: settings.stableName, // Todo: Add English input in start screen
         shikonaPrefix: settings.shikonaPrefix,
         shikonaPrefixReading: settings.shikonaPrefixReading,
-        strengthMod: 1.0,
-        facilityLevel: 1,
-        wrestlerCount: playerWrestlers.length
+        strengthMod: settings.mode === 'Establish' ? 0.8 : 1.0,
+        facilityLevel: settings.mode === 'Establish' ? 1 : 2,
+        wrestlerCount: playerWrestlers.length,
+        // Added properties
+        oyakataName: settings.oyakataName,
+        location: settings.location || settings.hometown || '東京都墨田区',
+        foundedYear: settings.mode === 'Establish' ? 2025 : 1990,
+        specialty: (settings.specialty as import('../../../types').HeyaSpecialty) || 'Balanced'
     };
 
     // 4. Combine all wrestlers

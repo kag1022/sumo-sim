@@ -93,7 +93,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                     {/* Header: File Tab Style */}
                     <div className="bg-[#b7282e] p-4 text-center border-b-4 border-[#8c1c22]">
                         <h3 className="text-2xl font-black font-serif text-white tracking-widest">{t('scout.inspection_report')}</h3>
-                        <div className="text-white/60 text-[10px] font-bold mt-1 uppercase tracking-[0.2em]">Inspection Record</div>
+                        <div className="text-white/60 text-[10px] font-bold mt-1 uppercase tracking-[0.2em]">{t('scout.inspection_record')}</div>
                     </div>
 
                     {!examPassed ? (
@@ -107,21 +107,21 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                             {/* Stamp */}
                             <div className="absolute top-20 right-8 w-24 h-24 border-4 border-[#b7282e] rounded-full flex flex-col items-center justify-center -rotate-12 opacity-80 mask-stamp">
                                 <span className="text-[#b7282e] font-black font-serif text-3xl">{t('scout.passed')}</span>
-                                <span className="text-[#b7282e] text-[10px] font-bold uppercase border-t border-[#b7282e] w-16 text-center mt-1">PASSED</span>
+                                <span className="text-[#b7282e] text-[10px] font-bold uppercase border-t border-[#b7282e] w-16 text-center mt-1">{t('scout.passed_stamp')}</span>
                             </div>
 
                             {/* Candidate Info Grid */}
                             <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-8 text-stone-700 text-sm border-b-2 border-stone-200 pb-6 border-dashed">
                                 <div>
-                                    <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">NAME</div>
+                                    <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">{t('scout.name_label')}</div>
                                     <div className="font-serif font-bold text-xl leading-none">{i18n.language === 'en' ? selectedCandidate.reading : selectedCandidate.name}</div>
                                 </div>
                                 <div>
-                                    <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">AGE / ORIGIN</div>
+                                    <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">{t('scout.age_origin_label')}</div>
                                     <div className="font-bold">{selectedCandidate.age}{i18n.language === 'en' ? '' : '歳'} / {t(`origin.${selectedCandidate.origin}`)}</div>
                                 </div>
                                 <div>
-                                    <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">PHYSIQUE</div>
+                                    <div className="text-[10px] font-bold text-[#b7282e] uppercase mb-1">{t('scout.physique_label')}</div>
                                     <div className="font-mono font-bold text-lg">{selectedCandidate.height}cm / {selectedCandidate.weight}kg</div>
                                 </div>
                                 <div className="col-span-2 mt-2 bg-stone-100 p-3 rounded-sm border border-stone-200">
@@ -131,7 +131,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                                             {renderPotential(selectedCandidate.potential, true, true)}
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-[10px] font-bold text-stone-500 uppercase">FLEXIBILITY</div>
+                                            <div className="text-[10px] font-bold text-stone-500 uppercase">{t('scout.flexibility_label').toUpperCase()}</div>
                                             <div className="font-bold text-stone-700">{getFlexibilityText(selectedCandidate.flexibility, true)}</div>
                                         </div>
                                     </div>
@@ -271,17 +271,17 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                                             {/* Body Stats */}
                                             <div className="flex items-center gap-4 text-sm font-mono font-bold text-slate-600 mb-6 pb-4 border-b border-dashed border-slate-100">
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] text-slate-400 font-sans uppercase">HEIGHT</span>
+                                                    <span className="text-[9px] text-slate-400 font-sans uppercase">{t('scout.height_label')}</span>
                                                     {c.height}cm
                                                 </div>
                                                 <div className="w-px h-6 bg-slate-100"></div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] text-slate-400 font-sans uppercase">WEIGHT</span>
+                                                    <span className="text-[9px] text-slate-400 font-sans uppercase">{t('scout.weight_label')}</span>
                                                     {c.weight}kg
                                                 </div>
                                                 <div className="w-px h-6 bg-slate-100"></div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] text-slate-400 font-sans uppercase">AGE</span>
+                                                    <span className="text-[9px] text-slate-400 font-sans uppercase">{t('scout.age_label_simple')}</span>
                                                     {c.age}
                                                 </div>
                                             </div>
@@ -289,11 +289,11 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                                             {/* Hidden Potential Hint */}
                                             <div className="space-y-2 mb-4 flex-1">
                                                 <div className="flex justify-between items-center text-xs">
-                                                    <span className="font-bold text-slate-400">素質</span>
+                                                    <span className="font-bold text-slate-400">{t('scout.potential_label')}</span>
                                                     {renderPotential(c.potential, isRevealed)}
                                                 </div>
                                                 <div className="flex justify-between items-center text-xs">
-                                                    <span className="font-bold text-slate-400">柔軟性</span>
+                                                    <span className="font-bold text-slate-400">{t('scout.flexibility_label')}</span>
                                                     <span className="font-bold text-stone-300">???</span>
                                                 </div>
                                             </div>
@@ -321,7 +321,7 @@ const ScoutPanel: React.FC<ScoutPanelProps> = ({ candidates, funds, currentCount
                                                 <span>{isFull ? t('scout.full') : !canAffordFee ? t('scout.no_funds') : t('scout.inspect_action')}</span>
                                                 {canAffordFee && !isFull && (
                                                     <span className="text-[10px] font-normal opacity-70 group-hover/btn:opacity-100">
-                                                        (¥{(INSPECTION_FEE / 10000)}万)
+                                                        {t('scout.inspect_cost_hint', { val: INSPECTION_FEE / 10000 })}
                                                     </span>
                                                 )}
                                             </button>

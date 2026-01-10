@@ -4,44 +4,48 @@ import { updateBanzuke } from '../logic/banzuke';
 import { shouldRetire, shouldUpdateMaxRank, calculateSeverance } from '../../wrestler/logic/retirement';
 import { formatRank } from '../../../utils/formatting';
 
-interface BashoEndResult {
-    updatedWrestlers: Wrestler[];
-    yushoWinners: Record<string, Wrestler>;
-    yushoHistoryEntry: YushoRecord[];
-    retiringQueue: Wrestler[];
-    consultingCandidates: Wrestler[];
-    logs: (string | import('../../../types').LogData)[];
-    fundsChange: number; // For retiring wrestler severance
-}
+
 
 /**
  * 場所終了時の処理（優勝決定、番付編成、引退判定）
  */
-export const processBanzukeUpdate = (
+// Helper to get division
+const rankToDivision = (rank: string): string => {
+    if (['Yokozuna', 'Ozeki', 'Sekiwake', 'Komusubi', 'Maegashira'].includes(rank)) return 'Makuuchi';
+    return rank;
+};
+
+export interface YushoResult {
+    winnersMap: Record<string, Wrestler>;
+    yushoHistoryEntry: YushoRecord[];
+    logs: (string | import('../../../types').LogData)[];
+    fundsChange: number;
+}
+
+/**
+ * 優勝者を決定する (Determine Yusho Winners)
+ */
+export const calculateYusho = (
     wrestlers: Wrestler[],
     heyas: Heya[],
-    currentDate: Date,
-    banzukeDateId: string // e.g. "Year 1 - Jan"
-): BashoEndResult => {
+    banzukeDateId: string
+): YushoResult => {
     const logs: (string | import('../../../types').LogData)[] = [];
     let fundsChange = 0;
 
-    // 1. Determine Yusho Winners
     const divisions = ['Makuuchi', 'Juryo', 'Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi'];
     const winnersMap: Record<string, Wrestler> = {};
 
-    const rankToDivision = (rank: string): string => {
-        if (['Yokozuna', 'Ozeki', 'Sekiwake', 'Komusubi', 'Maegashira'].includes(rank)) return 'Makuuchi';
-        return rank;
-    };
-
     divisions.forEach(division => {
+        // Only consider wrestlers active in this basho (not absent entire time?) 
+        // Existing logic just filters by rank.
         const divisionWrestlers = wrestlers.filter(w => rankToDivision(w.rank) === division);
 
         if (divisionWrestlers.length > 0) {
             divisionWrestlers.sort((a, b) => {
                 if (b.currentBashoStats.wins !== a.currentBashoStats.wins) return b.currentBashoStats.wins - a.currentBashoStats.wins;
                 return 0; // Higher rank wins tie (simplified)
+                // Real Sumo: Playoff if tie. Simplified: Rank wins.
             });
             winnersMap[division] = divisionWrestlers[0];
         }
@@ -57,7 +61,7 @@ export const processBanzukeUpdate = (
             wrestlerName: winner.name,
             wrestlerNameEn: winner.reading,
             heyaName: heya ? heya.name : 'Unknown',
-            heyaNameEn: heya ? (heya.nameEn || heya.name) : 'Unknown', // Fallback
+            heyaNameEn: heya ? (heya.nameEn || heya.name) : 'Unknown',
             rank: formatRank(winner.rank),
             wins: winner.currentBashoStats.wins,
             losses: winner.currentBashoStats.losses
@@ -66,28 +70,69 @@ export const processBanzukeUpdate = (
 
     const makuuchiWinner = winnersMap['Makuuchi'];
     if (makuuchiWinner) {
-        logs.push(`幕内最高優勝: ${makuuchiWinner.name} (${makuuchiWinner.currentBashoStats.wins}勝${makuuchiWinner.currentBashoStats.losses}敗)`);
+        logs.push({
+            key: 'log.tourney.yusho_makuuchi',
+            params: { name: makuuchiWinner.name, wins: makuuchiWinner.currentBashoStats.wins, losses: makuuchiWinner.currentBashoStats.losses },
+            message: `幕内最高優勝: ${makuuchiWinner.name} (${makuuchiWinner.currentBashoStats.wins}勝${makuuchiWinner.currentBashoStats.losses}敗)`,
+            type: 'warning'
+        });
         if (makuuchiWinner.heyaId === 'player_heya') {
             fundsChange += 10000000;
-            logs.push("優勝賞金 1,000万円を獲得しました！");
+            logs.push({
+                key: 'log.tourney.prize_money',
+                params: { amount: '1,000' },
+                message: "優勝賞金 1,000万円を獲得しました！",
+                type: 'info'
+            });
         }
     }
 
-    // 2. Promotion (Shinjo)
+    return {
+        winnersMap,
+        yushoHistoryEntry: newRecords,
+        logs,
+        fundsChange
+    };
+};
+
+export interface BanzukeUpdateResult {
+    updatedWrestlers: Wrestler[];
+    retiringQueue: Wrestler[];
+    consultingCandidates: Wrestler[];
+    logs: (string | import('../../../types').LogData)[];
+    fundsChange: number;
+}
+
+/**
+ * 番付編成と引退処理を行う (Update Ranks & Handle Retirement)
+ */
+export const applyBanzukeUpdate = (
+    wrestlers: Wrestler[],
+    currentDate: Date
+): BanzukeUpdateResult => {
+    const logs: (string | import('../../../types').LogData)[] = [];
+    let fundsChange = 0;
+
+    // 1. Promotion (Shinjo)
     let updatedWrestlers = wrestlers.map(w => {
         if (w.rank === 'MaeZumo') {
             if (w.heyaId === 'player_heya') {
-                logs.push(`【新序出世】${w.name} が序ノ口に昇進しました！`);
+                logs.push({
+                    key: 'log.wrestler.promotion_shinjo',
+                    params: { name: w.name },
+                    message: `【新序出世】${w.name} が序ノ口に昇進しました！`,
+                    type: 'info'
+                });
             }
             return { ...w, rank: 'Jonokuchi' as const, rankNumber: 50 };
         }
         return w;
     });
 
-    // 3. Update Banzuke
+    // 2. Update Banzuke
     let nextWrestlers = updateBanzuke(updatedWrestlers);
 
-    // 4. Retirement & Aging
+    // 3. Retirement & Aging
     const survivingWrestlers: Wrestler[] = [];
     const retiringQueue: Wrestler[] = [];
     const consultingCandidates: Wrestler[] = [];
@@ -110,7 +155,6 @@ export const processBanzukeUpdate = (
                     type: 'info'
                 });
             } else if (retirementCheck.shouldConsult) {
-                // Determine if consulting
                 const updatedWrestler = {
                     ...w,
                     retirementStatus: 'Thinking' as const,
@@ -133,8 +177,6 @@ export const processBanzukeUpdate = (
             if (isPlayerHeya && w.isSekitori) {
                 retiringQueue.push(w);
             } else if (isPlayerHeya) {
-                // Immediate retirement for non-sekitori player wrestlers?
-                // Logic in hook was: add severance to funds immediately.
                 fundsChange += calculateSeverance(w);
             }
         } else {
@@ -176,15 +218,24 @@ export const processBanzukeUpdate = (
         }
     });
 
-    logs.push(`${retiredCount}名の力士が引退しました。`);
+    logs.push({
+        key: 'log.info.retired_count',
+        params: { count: retiredCount },
+        message: `${retiredCount}名の力士が引退しました。`,
+        type: 'info'
+    });
 
     return {
         updatedWrestlers: survivingWrestlers,
-        yushoWinners: winnersMap,
-        yushoHistoryEntry: newRecords,
         retiringQueue,
-        consultingCandidates, // Added to surviving in loop, but useful to know
+        consultingCandidates,
         logs,
         fundsChange
     };
 };
+
+/**
+ * Legacy wrapper for backward compatibility if needed, 
+ * or just remove it if I update all calls. 
+ * I will remove the old function to force update.
+ */

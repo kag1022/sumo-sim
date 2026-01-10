@@ -11,6 +11,10 @@ import { generateFullRoster, generateHeyas } from '../../wrestler/logic/generato
 import { updateBanzuke } from '../../banzuke/logic/banzuke';
 import { MAX_PLAYERS_PER_HEYA } from '../../../utils/constants';
 import { AchievementSystem } from '../../collection/components/AchievementSystem';
+// New Imports for Design
+import { ChevronRight, Dumbbell, Zap, Swords, Coffee } from 'lucide-react';
+import Button from '../../../components/ui/Button';
+import { useTranslation } from 'react-i18next';
 
 // Dummy data generation
 const generateDummyWrestlers = (): Wrestler[] => {
@@ -148,19 +152,23 @@ const generateDummyWrestlers = (): Wrestler[] => {
 
 /**
  * メインゲーム画面コンポーネント
- * Header, Sidebar, GameModals を組み合わせてゲームUIを構成
+ * Updated to "Sumo Modern Dashboard"
  */
 export const MainGameScreen = () => {
     const { wrestlers, setWrestlers, setHeyas, gamePhase } = useGame();
     const { advanceTime, recruitWrestler, retireWrestler } = useGameLoop();
+    const { t } = useTranslation();
 
     // UI State
     const [selectedWrestler, setSelectedWrestler] = useState<Wrestler | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile Sidebar State
     const [showScout, setShowScout] = useState(false);
     const [showManagement, setShowManagement] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [showEncyclopedia, setShowEncyclopedia] = useState(false);
+    const [showHeyaList, setShowHeyaList] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
+    const [showLog, setShowLog] = useState(false); // Default hidden
     const [trainingType, setTrainingType] = useState<TrainingType>('shiko');
 
     // Initialize Data once
@@ -190,117 +198,173 @@ export const MainGameScreen = () => {
     // Filter for Display: Only Player's Heya
     const playerWrestlers = wrestlers.filter(w => w.heyaId === 'player_heya');
 
+    // Mukofuda (Wood Tag) Card Component
+    const MukofudaCard = ({ type, label, subLabel, icon: Icon }: any) => {
+        const isSelected = trainingType === type;
+        return (
+            <button
+                onClick={() => setTrainingType(type)}
+                className={`
+                    relative group flex flex-col items-center justify-center p-3 rounded-sm transition-all duration-300 w-full
+                    ${isSelected
+                        ? 'bg-[#f0e6d2] shadow-md -translate-y-1 z-10'
+                        : 'bg-[#fcf9f2] hover:bg-[#fffdf9] hover:shadow-sm hover:-translate-y-0.5'
+                    }
+                    border-2 ${isSelected ? 'border-[#b7282e]' : 'border-[#d4c5a9]'}
+                `}
+            >
+                {/* Wood Texture Overlay (CSS Pattern) */}
+                <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 1px, transparent 10px)' }}></div>
+
+                {/* Hole for string (Visual) */}
+                <div className="w-2 h-2 rounded-full bg-[#5c4a3d] absolute top-1.5 left-1/2 -translate-x-1/2 shadow-inner"></div>
+
+                <div className={`mb-1 mt-1 ${isSelected ? 'text-[#b7282e]' : 'text-slate-400'}`}>
+                    <Icon className="w-6 h-6" />
+                </div>
+                <div className={`font-serif font-bold text-sm mb-0.5 ${isSelected ? 'text-[#2c1a1b]' : 'text-slate-600'}`}>
+                    {label}
+                </div>
+                <div className="text-[10px] font-mono text-slate-500">
+                    {subLabel}
+                </div>
+
+                {/* Selection Badge */}
+                {isSelected && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#b7282e] rounded-full shadow-sm"></div>
+                )}
+            </button>
+        );
+    };
+
     return (
-        <div className="min-h-screen bg-[#fcf9f2] text-slate-800 font-sans flex flex-col">
+        <div className="min-h-screen bg-[#fcf9f2] text-slate-800 font-sans flex flex-col overflow-hidden relative">
             {/* Header */}
             <Header
                 onShowScout={() => setShowScout(true)}
                 onShowManagement={() => setShowManagement(true)}
                 onShowHistory={() => setShowHistory(true)}
                 onShowEncyclopedia={() => setShowEncyclopedia(true)}
+                onShowHeyaList={() => setShowHeyaList(true)}
                 onShowHelp={() => setShowHelp(true)}
-                onAdvance={handleAdvance}
+                onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
             />
 
             {/* Main Content */}
-            <main className="container mx-auto px-4 py-6 flex-1 overflow-hidden flex flex-col">
-                <div className="flex flex-col md:flex-row gap-6 items-start h-full">
-                    {/* Left Column: Controls & List */}
-                    <div className="flex-1 w-full space-y-4 flex flex-col h-full overflow-hidden">
+            <main className="container mx-auto px-4 py-4 flex-1 overflow-hidden flex flex-col relative z-0">
+                <div className="flex flex-col md:flex-row gap-4 h-full relative">
 
-                        {/* Training Control Panel */}
+                    {/* Left Column: Training & List */}
+                    <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-hidden h-full pb-16 md:pb-0"> {/* Added padding for mobile action bar */}
+
+                        {/* Training Selector (Mukofuda Style) */}
                         <div className={`transition-all duration-500 shrink-0 ${gamePhase === 'tournament' ? 'opacity-50 pointer-events-none grayscale' : 'opacity-100'}`}>
-                            <div className="bg-white p-4 rounded-sm shadow-sm border-t-4 border-[#b7282e] relative">
-                                <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none">
-                                    {/* Decorative Icon or Pattern stub */}
-                                    <span className="font-serif text-4xl">稽古</span>
-                                </div>
+                            <div className="flex items-center gap-2 mb-2 px-1">
+                                <span className="w-1.5 h-4 bg-[#b7282e] rounded-full"></span>
+                                <h3 className="font-serif font-bold text-slate-800">{t('training.title')}</h3>
+                            </div>
 
-                                <h3 className="font-serif font-bold text-lg mb-3 flex items-center gap-2 text-slate-800">
-                                    <span className="w-2 h-2 rounded-full bg-[#b7282e]"></span>
-                                    今週の育成方針
-                                </h3>
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <label className={`
-                      group relative overflow-hidden flex flex-col px-3 py-2 rounded-sm border cursor-pointer transition-all hover:shadow-md
-                      ${trainingType === 'shiko'
-                                            ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-400'
-                                            : 'bg-white border-slate-200 hover:border-slate-300'}
-                  `}>
-                                        <input type="radio" value="shiko" checked={trainingType === 'shiko'} onChange={() => setTrainingType('shiko')} className="accent-[#b7282e] absolute top-2 right-2" />
-                                        <div className="font-serif font-bold text-slate-800 mb-1">基礎固め週</div>
-                                        <div className="text-xs text-slate-500">体+ (リスク:極低)</div>
-                                        {trainingType === 'shiko' && <div className="absolute inset-0 border-2 border-amber-400 pointer-events-none rounded-sm"></div>}
-                                    </label>
-
-                                    <label className={`
-                      group relative overflow-hidden flex flex-col px-3 py-2 rounded-sm border cursor-pointer transition-all hover:shadow-md
-                       ${trainingType === 'teppo'
-                                            ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-400'
-                                            : 'bg-white border-slate-200 hover:border-slate-300'}
-                  `}>
-                                        <input type="radio" value="teppo" checked={trainingType === 'teppo'} onChange={() => setTrainingType('teppo')} className="accent-[#b7282e] absolute top-2 right-2" />
-                                        <div className="font-serif font-bold text-slate-800 mb-1">鉄砲特訓週</div>
-                                        <div className="text-xs text-slate-500">技+ (リスク:極低)</div>
-                                        {trainingType === 'teppo' && <div className="absolute inset-0 border-2 border-amber-400 pointer-events-none rounded-sm"></div>}
-                                    </label>
-
-                                    <label className={`
-                      group relative overflow-hidden flex flex-col px-3 py-2 rounded-sm border cursor-pointer transition-all hover:shadow-md
-                       ${trainingType === 'moushi_ai'
-                                            ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-400'
-                                            : 'bg-white border-slate-200 hover:border-slate-300'}
-                  `}>
-                                        <input type="radio" value="moushi_ai" checked={trainingType === 'moushi_ai'} onChange={() => setTrainingType('moushi_ai')} className="accent-[#b7282e] absolute top-2 right-2" />
-                                        <div className="font-serif font-bold text-slate-800 mb-1">強化合宿</div>
-                                        <div className="text-xs text-slate-500">全++ (リスク:5%)</div>
-                                        {trainingType === 'moushi_ai' && <div className="absolute inset-0 border-2 border-amber-400 pointer-events-none rounded-sm"></div>}
-                                    </label>
-
-                                    <label className={`
-                      group relative overflow-hidden flex flex-col px-3 py-2 rounded-sm border cursor-pointer transition-all hover:shadow-md
-                       ${trainingType === 'rest'
-                                            ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-400'
-                                            : 'bg-white border-slate-200 hover:border-slate-300'}
-                  `}>
-                                        <input type="radio" value="rest" checked={trainingType === 'rest'} onChange={() => setTrainingType('rest')} className="accent-blue-500 absolute top-2 right-2" />
-                                        <div className="font-serif font-bold text-slate-800 mb-1">積極的休養</div>
-                                        <div className="text-xs text-slate-500">怪我回復</div>
-                                        {trainingType === 'rest' && <div className="absolute inset-0 border-2 border-blue-400 pointer-events-none rounded-sm"></div>}
-                                    </label>
-                                </div>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                <MukofudaCard
+                                    type="shiko"
+                                    label={t('training.modes.shiko.label')}
+                                    subLabel={t('training.modes.shiko.sub')}
+                                    icon={Dumbbell}
+                                />
+                                <MukofudaCard
+                                    type="teppo"
+                                    label={t('training.modes.teppo.label')}
+                                    subLabel={t('training.modes.teppo.sub')}
+                                    icon={Zap}
+                                />
+                                <MukofudaCard
+                                    type="moushi_ai"
+                                    label={t('training.modes.moushi_ai.label')}
+                                    subLabel={t('training.modes.moushi_ai.sub')}
+                                    icon={Swords}
+                                />
+                                <MukofudaCard
+                                    type="rest"
+                                    label={t('training.modes.rest.label')}
+                                    subLabel={t('training.modes.rest.sub')}
+                                    icon={Coffee}
+                                />
                             </div>
                         </div>
 
-                        {/* List - SHOW PLAYER WRESTLERS ONLY */}
-                        <div className="flex flex-col flex-1 overflow-hidden bg-white rounded-sm shadow-sm border border-slate-200">
-                            <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                <h2 className="text-lg font-bold font-serif text-slate-800 flex items-center gap-2">
-                                    <span className="w-1 h-5 bg-[#b7282e]"></span>
-                                    所属力士一覧
+                        {/* Roster List */}
+                        <div className="flex-1 flex flex-col bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden relative">
+                            {/* Japanese Pattern Background */}
+                            <div className="absolute top-0 right-0 w-32 h-32 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#b7282e 20%, transparent 20%)', backgroundSize: '10px 10px' }}></div>
+
+                            <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 backdrop-blur-sm z-10">
+                                <h2 className="font-bold font-serif text-slate-800 flex items-center gap-2">
+                                    <span className="text-[#b7282e]">◆</span>
+                                    {t('heya.roster')}
                                 </h2>
                                 <span className="text-xs font-mono bg-slate-200 px-2 py-0.5 rounded text-slate-600">
                                     {playerWrestlers.length} / {MAX_PLAYERS_PER_HEYA}
                                 </span>
                             </div>
 
-                            <div className="flex-1 overflow-hidden p-2">
+                            <div className="flex-1 overflow-hidden p-2 z-10">
                                 <WrestlerList wrestlers={playerWrestlers} onSelect={setSelectedWrestler} />
                             </div>
                         </div>
                     </div>
 
-                    {/* Info Panel (Sidebar) */}
+                    {/* Right Column: Sidebar (Drawer) */}
                     <Sidebar
                         selectedWrestler={selectedWrestler}
                         onRetireWrestler={retireWrestler}
                         onClearSelection={() => setSelectedWrestler(null)}
+                        isOpen={isSidebarOpen}
+                        onClose={() => setIsSidebarOpen(false)}
                     />
                 </div>
             </main>
 
-            {/* Log Window Area */}
-            <LogWindow />
+            {/* Floating Action Bar (Bottom Right) */}
+            <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3 pointer-events-none">
+                {/* Re-enable pointer events for buttons */}
+
+                {/* Next Turn Button */}
+                <div className="pointer-events-auto">
+                    <Button
+                        variant={gamePhase === 'tournament' ? 'primary' : 'action'}
+                        size="lg"
+                        onClick={handleAdvance}
+                        className="shadow-xl border-2 border-white/20 transform hover:-translate-y-1 transition-transform"
+                    >
+                        <div className="flex items-center gap-3 px-2">
+                            <span className="font-serif font-bold text-lg">
+                                {gamePhase === 'tournament' ? t('cmd.next_day') : t('cmd.next_week')}
+                            </span>
+                            <ChevronRight className="w-5 h-5 animate-pulse" />
+                        </div>
+                    </Button>
+                </div>
+
+                {/* Log Toggle Button (Above Action) */}
+                <div className="pointer-events-auto">
+                    <button
+                        onClick={() => setShowLog(!showLog)}
+                        className={`
+                            rounded-full w-12 h-12 flex items-center justify-center shadow-lg border-2 border-white/20 transition-all hover:scale-105 active:scale-95
+                            ${showLog ? 'bg-slate-700 text-white' : 'bg-white text-slate-600'}
+                        `}
+                        title={t('log_btn.tooltip')}
+                    >
+                        <span className="font-serif font-bold text-xs writing-vertical-rl">{t('log_btn.label')}</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Mobile Drawer Placeholder (if Sidebar is hidden on mobile, need drawer) */}
+            {/* NOTE: Sidebar is 'hidden md:flex'. We need a mobile solution. For now sticking to desktop layout focus, but maybe add a 'Show Detail' button for mobile later? */}
+
+            {/* Log Window - Side Drawer */}
+            <LogWindow isOpen={showLog} onClose={() => setShowLog(false)} />
 
             {/* Systems */}
             <AchievementSystem />
@@ -311,11 +375,13 @@ export const MainGameScreen = () => {
                 showHistory={showHistory}
                 showScout={showScout}
                 showEncyclopedia={showEncyclopedia}
+                showHeyaList={showHeyaList}
                 showHelp={showHelp}
                 onCloseManagement={() => setShowManagement(false)}
                 onCloseHistory={() => setShowHistory(false)}
                 onCloseScout={() => setShowScout(false)}
                 onCloseEncyclopedia={() => setShowEncyclopedia(false)}
+                onCloseHeyaList={() => setShowHeyaList(false)}
                 onCloseHelp={() => setShowHelp(false)}
                 onRecruit={(candidate, name) => {
                     recruitWrestler(candidate, name);

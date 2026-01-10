@@ -1,5 +1,17 @@
 export const en = {
     translation: {
+        common: {
+            age_suffix: ' y.o.',
+            career_record: 'Career Record',
+            cancel: 'Cancel'
+        },
+        header: {
+            app_title: 'SUMO SIM',
+            tp: 'TP',
+            tp_title: 'Training Points',
+            heya_list_title: 'Stable List',
+            heya_list_btn: 'LIST'
+        },
         rank: {
             Yokozuna: 'Yokozuna',
             Ozeki: 'Ozeki',
@@ -11,13 +23,14 @@ export const en = {
             Sandanme: 'Sandanme',
             Jonidan: 'Jonidan',
             Jonokuchi: 'Jonokuchi',
-            MaeZumo: 'Mae-Zumo',
+            MaeZumo: 'Maezumo',
+            Makuuchi: 'Makuuchi', // Added division
             East: 'East',
             West: 'West',
-            S: 'Tier S',
-            A: 'Tier A',
-            B: 'Tier B',
-            C: 'Tier C',
+            S: 'Legend',
+            A: 'Elite',
+            B: 'Proven',
+            C: 'New',
         },
         rank_short: {
             Yokozuna: 'Y',
@@ -32,6 +45,29 @@ export const en = {
             Jonokuchi: 'Jk',
             MaeZumo: 'Mz'
         },
+        wrestler: {
+            age: 'Age',
+            age_label: 'Age: ',
+            age_suffix: '',
+            weight: 'Weight',
+            weight_suffix: 'kg',
+            career: 'Career',
+            career_suffix: 'y',
+            stress: 'Stress',
+            stress_suffix: '%',
+            injury: 'INJURY'
+        },
+        stats: {
+            mind: 'Mind',
+            tech: 'Tech',
+            body: 'Body',
+            mind_abbr: 'M',
+            tech_abbr: 'T',
+            body_abbr: 'B',
+            height_weight: 'Height / Weight',
+            attributes: 'Attributes'
+        },
+
         matches: {
             title: 'Daily Matches',
             division_hint: 'Makuuchi / Juryo',
@@ -179,6 +215,7 @@ export const en = {
                 last_month: 'LAST MONTH',
                 insufficient_funds: 'Insufficient funds'
             },
+
             okami: {
                 title: 'Okami\'s Skill',
                 desc: 'Higher Okami level improves wrestler care and operational efficiency. Affects stress relief and patron relations.',
@@ -187,7 +224,17 @@ export const en = {
                 max_level_desc: 'No further upgrades needed',
                 upgrade_cost: 'Upgrade to Next Level',
                 approve_btn: 'Approve',
-                confirm_upgrade: 'Upgrade Okami Level?\nCost: ¥{{cost}}'
+                confirm_upgrade: 'Upgrade Okami Level?\nCost: ¥{{cost}}',
+                levels: {
+                    1: 'Novice',
+                    2: 'Apprentice',
+                    3: 'Capable',
+                    4: 'Expert',
+                    5: 'Matriarch'
+                },
+                current_effect: 'Effect',
+                next_effect: 'Next',
+                locked: 'Locked'
             },
             facility: {
                 title: 'Facility Investment',
@@ -205,7 +252,9 @@ export const en = {
                     3: 'Basic Equipment',
                     4: 'Modern Gym',
                     5: 'Sports Science Lab'
-                }
+                },
+                locked: 'Locked (Funds)',
+                max_level_label: 'Max Level'
             },
             settings: {
                 auto_scout: 'Auto Recruitment',
@@ -251,6 +300,7 @@ export const en = {
             encyclopedia: 'Encyclopedia',
             next_day: 'Next Day',
             next_week: 'Next Week',
+            rename: 'Rename'
         },
         shikona_change: {
             title: 'Rename Wrestler',
@@ -305,8 +355,12 @@ export const en = {
                 moushi_ai: 'Moushi-ai (Tech++ Mind+)',
                 meditation: 'Meditate (Mind++ Rest)',
                 limit_info: 'Weekly: {{current}}/{{max}}',
+
                 limit_reached: 'Limit'
-            }
+            },
+            no_selection: 'No Wrestler Selected',
+            select_instruction: 'Select a wrestler from the list to view details',
+            todays_matches: 'Today\'s Matches'
         },
         dictionary: {
             title: 'Skill Book',
@@ -344,19 +398,23 @@ export const en = {
             LuckyBoy: { name: 'Lucky Boy', desc: 'May get favorable rulings on close calls.' },
             CrowdPleaser: { name: 'Crowd Pleaser', desc: 'Slightly increases prize money on win.' },
             GlassKnees: { name: 'Glass Knees', desc: 'Highly prone to injury.' },
-            MoodSwinger: { name: 'Mood Swinger', desc: 'Condition fluctuates wildly.' },
-            SlowStarter: { name: 'Slow Starter', desc: 'More likely to lose in the early days of a basho.' },
-            StageFright: { name: 'Stage Fright', desc: 'Underperforms in crucial matches.' }
         },
         title: {
-            newGame: 'New Game',
+            game_title: 'Sumo Stable Simulation',
+            hero_title: 'GRAND SUMO',
             continue: 'Continue',
-            subtitle: '- Stable Master Story -',
-            mode_select: 'New Game Setup',
+            continue_desc: 'Year {{year}} {{month}} - {{rank}}',
+            new_game: 'Start New Stable',
+            new_game_desc: 'Establish a new stable from scratch',
+            collection: 'Techniques',
+            support: 'Become a Patron',
+            credits: 'Credits',
+            version: 'Ver {{version}}',
+            mode_select: 'Select Mode',
             mode: {
                 establish: {
                     name: 'Establish',
-                    subtitle: 'FOUNDING',
+                    subtitle: 'ESTABLISH',
                     desc: 'Start your own stable from scratch.\nA difficult path, but the glory is yours.',
                     funds: 'Funds',
                     funds_val: '3M yen (Low)',
@@ -526,7 +584,7 @@ export const en = {
             izori: 'Backward Body Drop', tsutaezori: 'Underarm Forward Body Drop', tasukizori: 'Reverse Backward Body Drop', shumokuzori: 'Bell Hammer Drop'
         },
         basho_result: {
-            title: 'Banzuke Announcement',
+            title: 'New Banzuke Announcement',
             flash: 'Promotion News',
             division: 'Division',
             shikona: 'Shikona',
@@ -585,6 +643,45 @@ export const en = {
             promote_makuuchi: '[New Makuuchi]',
             promote_juryo: '[New Juryo]'
         },
+        heya_list: {
+            title: 'Stable Directory',
+            oyakata: 'Master',
+            location: 'Location',
+            founded: 'Founded',
+            specialty: 'Style',
+            wrestlers: 'Wrestlers',
+            specialty_types: {
+                Power: 'Power',
+                Tech: 'Tech',
+                Stamina: 'Stamina',
+                Balanced: 'Balance'
+            },
+            rank: {
+                S: 'Legend',
+                A: 'Elite',
+                B: 'Proven',
+                C: 'New'
+            },
+            close: 'Close'
+        },
+        yusho: {
+            title: 'Division Champions',
+            subtitle: 'Championship Results',
+            your_heya: 'Your Stable',
+            next: 'Next'
+        },
+        banzuke: {
+            announcement: {
+                title: 'Banzuke Announcement',
+                subtitle: '{{year}} {{month}} Grand Tournament',
+                promoted: 'Promoted',
+                demoted: 'Demoted',
+                stay: 'No Change',
+                new_recruit: 'New Recruit',
+                close: 'Close',
+                hero_title: 'Top Promotions'
+            }
+        },
         scout: {
             title: 'New Recruits',
             subtitle: 'Recruitment & Scouting',
@@ -622,6 +719,10 @@ export const en = {
             funds: 'FUNDS',
             members: 'MEMBERS',
             contract_fee: 'CONTRACT FEE',
+            height_label: 'HEIGHT',
+            weight_label: 'WEIGHT',
+            age_label_simple: 'AGE',
+            inspect_cost_hint: '(¥{{val}}0k)',
 
             encyclopedia: {
                 title: 'Sumo Encyclopedia',
@@ -727,6 +828,19 @@ export const en = {
             Tokushima: 'Tokushima', Kagawa: 'Kagawa', Ehime: 'Ehime', Kochi: 'Kochi', Fukuoka: 'Fukuoka', Saga: 'Saga', Nagasaki: 'Nagasaki',
             Kumamoto: 'Kumamoto', Oita: 'Oita', Miyazaki: 'Miyazaki', Kagoshima: 'Kagoshima', Okinawa: 'Okinawa',
             Mongolia: 'Mongolia', Foreign: 'Foreign'
+        },
+        training: {
+            title: 'Training Routine',
+            modes: {
+                shiko: { label: 'Basics', sub: 'Body+ (Safe)' },
+                teppo: { label: 'Teppo', sub: 'Tech+ (Safe)' },
+                moushi_ai: { label: 'Camp', sub: 'All++ (Risk)' },
+                rest: { label: 'Active Rest', sub: 'Recovery' }
+            }
+        },
+        log_btn: {
+            label: 'Log',
+            tooltip: 'Show Log'
         }
     }
 };

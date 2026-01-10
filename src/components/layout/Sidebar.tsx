@@ -1,65 +1,120 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Wrestler } from '../../types';
 import { useGame } from '../../context/GameContext';
 import { useGameLoop } from '../../hooks/useGameLoop';
 import { formatRank } from '../../utils/formatting';
 import DailyMatchList from '../../features/match/components/DailyMatchList';
 import Button from '../ui/Button';
-import { calculateSeverance } from '../../features/wrestler/logic/retirement';
-import { AlertTriangle, Scale, Edit2, BookOpen } from 'lucide-react';
+import { Edit2, BookOpen, X } from 'lucide-react';
 import { ShikonaChangeModal } from '../../features/heya/components/ShikonaChangeModal';
 import { SkillBookModal } from '../../features/wrestler/components/SkillBookModal';
 import { useTranslation } from 'react-i18next';
+import { calculateSeverance } from '../../features/wrestler/logic/retirement'; // Re-added as it is used logic
 
 interface SidebarProps {
     selectedWrestler: Wrestler | null;
     onRetireWrestler: (wrestlerId: string) => void;
     onClearSelection: () => void;
+    isOpen?: boolean;
+    onClose?: () => void;
 }
 
-/**
- * サイドバーコンポーネント
- * 力士詳細情報と取組リストを表示
- */
-import { getWeekId } from '../../utils/time';
+// Simple Radar Chart Component
+const RadarChart = ({ stats, labels }: { stats: { m: number, t: number, b: number }, labels: [string, string, string] }) => {
+    // 0-100 scale. Center 50,50. Radius 40.
+    const r = 40;
 
-// ... existing imports
+    // Axis 1: Top (Mind) - Angle -90 deg (or 270)
+    // Axis 2: Bottom Right (Tech) - Angle 30 deg
+    // Axis 3: Bottom Left (Body) - Angle 150 deg
+
+    // Helper to get coords
+    const getPoint = (value: number, angleDeg: number) => {
+        // Actually typical svg: 0 is right. -90 is top.
+        // wait, let's use standard trig with offset.
+        // Angle 0 = Top: (c, c-r)
+        // Let's manually calculcate for Triangle
+        // Top: (50, 10)
+        // Bot Right: (50 + r*sin(120), 50 - r*cos(120)) -> (50 + 34.6, 50 - (-20)) = (84.6, 70)
+        // Bot Left: (50 - 34.6, 70) = (15.4, 70)
+
+        // Let's use clean rotation.
+        // 0 deg = Up. 120 deg = Right Down. 240 deg = Left Down.
+        const normalized = Math.min(100, Math.max(0, value)) / 100;
+        const dist = normalized * r;
+
+        // Up (Mind)
+        if (angleDeg === 0) return { x: 50, y: 50 - dist };
+        // Right Down (Tech)
+        if (angleDeg === 120) return { x: 50 + dist * 0.866, y: 50 + dist * 0.5 };
+        // Left Down (Body)
+        if (angleDeg === 240) return { x: 50 - dist * 0.866, y: 50 + dist * 0.5 };
+        return { x: 50, y: 50 };
+    };
+
+    const pM = getPoint(stats.m, 0);
+    const pT = getPoint(stats.t, 120);
+    const pB = getPoint(stats.b, 240);
+
+    const polyPoints = `${pM.x},${pM.y} ${pT.x},${pT.y} ${pB.x},${pB.y}`;
+
+    const bgM = getPoint(100, 0);
+    const bgT = getPoint(100, 120);
+    const bgB = getPoint(100, 240);
+    const bgPoly = `${bgM.x},${bgM.y} ${bgT.x},${bgT.y} ${bgB.x},${bgB.y}`;
+
+    return (
+        <div className="relative w-32 h-32 mx-auto">
+            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm">
+                {/* Background Triangle */}
+                <polygon points={bgPoly} fill="#fcf9f2" stroke="#e2e8f0" strokeWidth="1" />
+                {/* Mid lines */}
+                <line x1="50" y1="50" x2={bgM.x} y2={bgM.y} stroke="#e2e8f0" strokeWidth="0.5" />
+                <line x1="50" y1="50" x2={bgT.x} y2={bgT.y} stroke="#e2e8f0" strokeWidth="0.5" />
+                <line x1="50" y1="50" x2={bgB.x} y2={bgB.y} stroke="#e2e8f0" strokeWidth="0.5" />
+
+                {/* Data Polygon */}
+                <polygon points={polyPoints} fill="rgba(183, 40, 46, 0.2)" stroke="#b7282e" strokeWidth="1.5" />
+
+                {/* Dots */}
+                <circle cx={pM.x} cy={pM.y} r="2" fill="#b7282e" />
+                <circle cx={pT.x} cy={pT.y} r="2" fill="#amber-500" />
+                <circle cx={pB.x} cy={pB.y} r="2" fill="#475569" />
+            </svg>
+
+            {/* Labels */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-500 bg-white/80 px-1 rounded">{labels[0]} {Math.floor(stats.m)}</div>
+            <div className="absolute bottom-2 right-0 text-[10px] font-bold text-slate-500 bg-white/80 px-1 rounded">{labels[1]} {Math.floor(stats.t)}</div>
+            <div className="absolute bottom-2 left-0 text-[10px] font-bold text-slate-500 bg-white/80 px-1 rounded">{labels[2]} {Math.floor(stats.b)}</div>
+        </div>
+    );
+};
 
 export const Sidebar = ({
     selectedWrestler,
     onRetireWrestler,
-    onClearSelection,
+    // onClearSelection, // unused
+    isOpen = false,
+    onClose,
 }: SidebarProps) => {
     const {
         wrestlers,
         gamePhase,
-        trainingPoints,
         todaysMatchups,
-        currentDate // Added
+        trainingPoints // used for cost checks
     } = useGame();
     const { t, i18n } = useTranslation();
 
-    const { doSpecialTraining, giveAdvice, renameWrestler } = useGameLoop();
+    const { renameWrestler } = useGameLoop();
 
-    const [sidebarTab, setSidebarTab] = useState<'info' | 'matches'>('info');
     const [showRenameModal, setShowRenameModal] = useState(false);
     const [showSkillBookModal, setShowSkillBookModal] = useState(false);
+    const [isRetiring, setIsRetiring] = useState(false); // Added missing state
 
-    // Auto-switch tabs based on phase
-    useEffect(() => {
-        if (gamePhase === 'tournament') {
-            setSidebarTab('matches');
-        } else {
-            setSidebarTab('info');
-        }
-    }, [gamePhase]);
-
-    // Auto-switch to Info when wrestler is selected
-    useEffect(() => {
-        if (selectedWrestler) {
-            setSidebarTab('info');
-        }
-    }, [selectedWrestler]);
+    // Determine Severance Pay
+    const severancePay = selectedWrestler
+        ? calculateSeverance(selectedWrestler) // Use the imported function
+        : 0;
 
     // Get active wrestler data (refreshed from state)
     const activeSelectedWrestler = selectedWrestler
@@ -71,281 +126,215 @@ export const Sidebar = ({
         ? (i18n.language === 'en' && activeSelectedWrestler.reading ? activeSelectedWrestler.reading : activeSelectedWrestler.name)
         : '';
 
+    // Drawer Logic
+    const sidebarClasses = `
+        fixed inset-y-0 right-0 z-[60]
+        w-full sm:w-[26rem] md:w-[22rem] lg:w-[26rem]
+        bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
+        md:relative md:transform-none md:shadow-none md:border-l md:border-slate-200
+        ${isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+    `;
+
+    // Overlay logic (Mobile only)
+    const overlayClasses = `
+        fixed inset-0 bg-black/50 z-[55] transition-opacity duration-300
+        md:hidden
+        ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+    `;
+
+
+
     return (
-        <div className="w-full md:w-80 shrink-0 flex flex-col h-[calc(100vh-100px)]">
-            {/* Tabs (Tournament Only) */}
-            {gamePhase === 'tournament' && (
-                <div className="flex gap-1 shrink-0 mb-0 translate-y-[1px] z-10 px-1">
+        <>
+            {/* Mobile Overlay */}
+            <div className={overlayClasses} onClick={onClose} aria-hidden="true" />
+
+            <div className={sidebarClasses}>
+                <div className="h-full flex flex-col bg-slate-50 relative">
+
+                    {/* Mobile Close Button */}
                     <button
-                        onClick={() => setSidebarTab('matches')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-t-sm transition-all border-t border-x ${sidebarTab === 'matches' ? 'bg-white border-slate-200 border-b-white text-[#b7282e] shadow-sm -mb-px' : 'bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200'}`}
+                        onClick={onClose}
+                        className="md:hidden absolute top-4 right-4 z-10 p-2 bg-white/80 rounded-full shadow-sm hover:bg-slate-100"
                     >
-                        {t('sidebar.matches_tab')}
+                        <X className="w-5 h-5 text-slate-500" />
                     </button>
-                    <button
-                        onClick={() => setSidebarTab('info')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-t-sm transition-all border-t border-x ${sidebarTab === 'info' ? 'bg-white border-slate-200 border-b-white text-[#b7282e] shadow-sm -mb-px' : 'bg-slate-100 text-slate-500 border-transparent hover:bg-slate-200'}`}
-                    >
-                        {t('sidebar.info_tab')}
-                    </button>
-                </div>
-            )}
 
-            {/* Content Area */}
-            <div className={`flex-1 overflow-hidden flex flex-col min-h-0 bg-white shadow-md border border-slate-200 ${gamePhase === 'tournament' ? 'rounded-b-sm rounded-tr-sm' : 'rounded-sm border-t-4 border-t-[#b7282e] sticky top-24'}`}>
-
-                {/* Matches View */}
-                {sidebarTab === 'matches' && gamePhase === 'tournament' && (
-                    <div className="flex-1 min-h-0 overflow-hidden">
-                        <DailyMatchList
-                            matchups={todaysMatchups}
-                            onAdvice={giveAdvice}
-                            currentTp={trainingPoints}
-                        />
-                    </div>
-                )}
-
-                {/* Info View */}
-                {(sidebarTab === 'info' || gamePhase !== 'tournament') && (
-                    <div className="h-full overflow-y-auto p-5 scrollbar-thin">
-                        {/* Header of Info Panel */}
-                        {gamePhase !== 'tournament' && (
-                            <div className="mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
-                                <h3 className="font-serif font-bold text-slate-800">{t('sidebar.details_title')}</h3>
-                                {activeSelectedWrestler && <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-500">ID: {activeSelectedWrestler.id.slice(0, 4)}</span>}
-                            </div>
-                        )}
-
-                        {activeSelectedWrestler ? (
-                            <div className="space-y-5">
-                                <div className="text-center relative">
-                                    <div className="inline-block bg-[#2c1a1b] text-[#f2d07e] px-3 py-0.5 text-xs font-bold rounded-sm shadow-sm mb-2 font-serif">
-                                        {formatRank(activeSelectedWrestler.rank, activeSelectedWrestler.rankSide, activeSelectedWrestler.rankNumber)}
+                    {activeSelectedWrestler ? (
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
+                            {/* Header Image / Background Pattern */}
+                            <div className="h-24 bg-gradient-to-br from-slate-800 to-slate-900 relative">
+                                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/japanese-sayagata.png')]"></div>
+                                <div className="absolute -bottom-12 left-6">
+                                    <div className="w-24 h-24 rounded-full border-4 border-white bg-slate-200 shadow-md flex items-center justify-center text-4xl overflow-hidden">
+                                        {/* Avatar Placeholder */}
+                                        <span className="opacity-50">力</span>
                                     </div>
-                                    <div className="relative inline-block">
-                                        <div className="text-3xl font-bold font-serif text-slate-900 border-b-2 border-[#b7282e] inline-block px-4 pb-1 mb-2">
-                                            {displayName}
+                                </div>
+                            </div>
+
+                            <div className="mt-14 px-6 pb-6">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h2 className="text-2xl font-bold font-serif text-slate-800">{displayName}</h2>
+                                        <div className="text-sm text-slate-500 font-mono mb-2">
+                                            {formatRank(activeSelectedWrestler.rank)}
+                                            <span className="mx-2">•</span>
+                                            {activeSelectedWrestler.origin}
+                                            <span className="mx-2">•</span>
+                                            {activeSelectedWrestler.age || 18}{t('common.age_suffix')}
                                         </div>
-                                        {/* Rename Button */}
-                                        {activeSelectedWrestler.heyaId === 'player_heya' && (
-                                            <button
-                                                onClick={() => setShowRenameModal(true)}
-                                                className="absolute -right-8 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#b7282e] p-1"
-                                                title={t('modal.shikona_change.title', '改名')}
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowRenameModal(true)}
+                                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                                        title={t('cmd.rename')}
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                {/* Stats Grid */}
+                                <div className="grid grid-cols-2 gap-4 mt-6">
+                                    <div className="bg-white p-3 rounded-sm shadow-sm border border-slate-100">
+                                        <div className="text-[10px] uppercase text-slate-400 font-bold mb-1">{t('stats.height_weight')}</div>
+                                        <div className="font-mono text-lg font-bold text-slate-700">
+                                            {activeSelectedWrestler.height}cm / {activeSelectedWrestler.weight}kg
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-sm shadow-sm border border-slate-100">
+                                        <div className="text-[10px] uppercase text-slate-400 font-bold mb-1">{t('common.career_record')}</div>
+                                        <div className="font-mono text-lg font-bold text-slate-700">
+                                            {/* Placeholder for career record */}
+                                            ---
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Radar Chart */}
+                                <div className="mt-6">
+                                    <div className="text-xs font-bold text-slate-400 uppercase mb-2 text-center">{t('stats.attributes')}</div>
+                                    <RadarChart
+                                        stats={{
+                                            m: activeSelectedWrestler.stats.mind,
+                                            t: activeSelectedWrestler.stats.technique,
+                                            b: activeSelectedWrestler.stats.body
+                                        }}
+                                        labels={[t('stats.mind'), t('stats.technique'), t('stats.body')]}
+                                    />
+                                </div>
+
+                                {/* Skills */}
+                                <div className="mt-6">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div className="text-xs font-bold text-slate-400 uppercase">{t('wrestler.skills')}</div>
+                                        <button
+                                            onClick={() => setShowSkillBookModal(true)}
+                                            className="text-xs flex items-center gap-1 text-slate-500 hover:text-[#b7282e] transition-colors"
+                                        >
+                                            <BookOpen className="w-3 h-3" />
+                                            {t('wrestler.skill_book')}
+                                        </button>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {activeSelectedWrestler.skills && activeSelectedWrestler.skills.length > 0 ? (
+                                            activeSelectedWrestler.skills.map((skill, idx) => (
+                                                <span key={idx} className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs border border-slate-200">
+                                                    {skill}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-slate-400 text-xs italic">{t('wrestler.no_skills')}</span>
                                         )}
                                     </div>
-
-                                    {activeSelectedWrestler.injuryStatus === 'injured' && (
-                                        <div className="mt-2 inline-flex items-center gap-1 bg-red-50 text-red-600 px-3 py-1 text-xs font-bold rounded-sm border border-red-200 animate-pulse">
-                                            <AlertTriangle className="w-3 h-3" /> {t('sidebar.injury_status')}
-                                        </div>
-                                    )}
-                                    {/* Current Basho Stats (if active) */}
-                                    {gamePhase === 'tournament' && (
-                                        <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-                                            <div className="bg-red-50 p-2 rounded-sm border border-red-100">
-                                                <div className="text-xl font-mono font-bold text-red-700">{activeSelectedWrestler.currentBashoStats.wins}</div>
-                                                <div className="text-[10px] text-red-400 font-bold">{t('sidebar.win')}</div>
-                                            </div>
-                                            <div className="bg-slate-50 p-2 rounded-sm border border-slate-100">
-                                                <div className="text-xl font-mono font-bold text-slate-700">{activeSelectedWrestler.currentBashoStats.losses}</div>
-                                                <div className="text-[10px] text-slate-400 font-bold">{t('sidebar.loss')}</div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Age and Tenure Info */}
-                                    <div className="mt-3 flex flex-wrap justify-center gap-2 text-xs font-bold">
-                                        <div className={`px-2 py-1 rounded bg-slate-50 ${activeSelectedWrestler.age >= 35 ? 'text-red-600' : 'text-slate-600'}`}>
-                                            {activeSelectedWrestler.age}{t('sidebar.age_suffix')}
-                                        </div>
-                                        <div className="px-2 py-1 rounded bg-slate-50 text-slate-500">
-                                            {t('sidebar.tenure', { years: Math.floor((activeSelectedWrestler.timeInHeya || 0) / 12) })}
-                                        </div>
-                                        <div className="px-2 py-1 rounded bg-slate-50 text-slate-600">
-                                            {activeSelectedWrestler.height}cm
-                                        </div>
-                                        <div className="px-2 py-1 rounded bg-slate-50 text-slate-600">
-                                            {activeSelectedWrestler.weight}kg
-                                        </div>
-                                    </div>
                                 </div>
 
-                                <div className="space-y-3 bg-slate-50 p-3 rounded-sm border border-slate-100">
-                                    <div className="flex justify-between text-sm items-center">
-                                        <span className="font-serif font-bold text-slate-600 w-8">{t('sidebar.mind')}</span>
-                                        <div className="flex-1 mx-2 bg-white rounded-full h-2 overflow-hidden border border-slate-100">
-                                            <div className="bg-[#b7282e] h-full" style={{ width: `${activeSelectedWrestler.stats.mind}%` }}></div>
-                                        </div>
-                                        <span className="font-mono text-slate-700 w-6 text-right">{Math.floor(activeSelectedWrestler.stats.mind)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm items-center">
-                                        <span className="font-serif font-bold text-slate-600 w-8">{t('sidebar.tech')}</span>
-                                        <div className="flex-1 mx-2 bg-white rounded-full h-2 overflow-hidden border border-slate-100">
-                                            <div className="bg-amber-500 h-full" style={{ width: `${activeSelectedWrestler.stats.technique}%` }}></div>
-                                        </div>
-                                        <span className="font-mono text-slate-700 w-6 text-right">{Math.floor(activeSelectedWrestler.stats.technique)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm items-center">
-                                        <span className="font-serif font-bold text-slate-600 w-8">{t('sidebar.body')}</span>
-                                        <div className="flex-1 mx-2 bg-white rounded-full h-2 overflow-hidden border border-slate-100">
-                                            <div className="bg-slate-600 h-full" style={{ width: `${activeSelectedWrestler.stats.body}%` }}></div>
-                                        </div>
-                                        <span className="font-mono text-slate-700 w-6 text-right">{Math.floor(activeSelectedWrestler.stats.body)}</span>
-                                    </div>
-                                    {/* Divider */}
-                                    <div className="h-px bg-slate-200 my-2"></div>
-                                    <div className="flex justify-between text-sm items-center">
-                                        <span className="font-serif font-bold text-slate-500 w-8 text-xs">{t('sidebar.stress')}</span>
-                                        <div className="flex-1 mx-2 bg-white rounded-full h-2 overflow-hidden border border-slate-100">
-                                            <div className={`h-full ${activeSelectedWrestler.stress > 80 ? 'bg-red-500' : 'bg-blue-400'}`} style={{ width: `${activeSelectedWrestler.stress || 0}%` }}></div>
-                                        </div>
-                                        <span className="font-mono text-slate-500 w-6 text-right">{Math.floor(activeSelectedWrestler.stress || 0)}</span>
-                                    </div>
-                                </div>
-
-                                {/* Retire Button (Only for Player Wrestlers) */}
-                                {selectedWrestler && selectedWrestler.heyaId === 'player_heya' && (
-                                    <div className="mt-6 pt-6 border-t border-slate-100">
-                                        {/* Special Training Section */}
-                                        <div className="mb-6">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <h4 className="font-bold text-slate-800 text-sm font-serif">{t('sidebar.special_training')}</h4>
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`text-[10px] font-bold ${(function () {
-                                                        if (!activeSelectedWrestler) return 'text-slate-400';
-                                                        const currentWeekId = getWeekId(currentDate);
-                                                        const history = activeSelectedWrestler.trainingHistory;
-                                                        const weeklyCount = (history?.weekId === currentWeekId) ? history.count : 0;
-                                                        return weeklyCount >= 5 ? 'text-red-600' : 'text-slate-500';
-                                                    })()
-                                                        }`}>
-                                                        {(function () {
-                                                            if (!activeSelectedWrestler) return '';
-                                                            const currentWeekId = getWeekId(currentDate);
-                                                            const history = activeSelectedWrestler.trainingHistory;
-                                                            const weeklyCount = (history?.weekId === currentWeekId) ? history.count : 0;
-                                                            return t('sidebar.training.limit_info', { current: weeklyCount, max: 5 });
-                                                        })()}
-                                                    </span>
-                                                    <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">{t('sidebar.remaining_tp', { tp: trainingPoints })}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {(function () {
-                                                    const currentWeekId = getWeekId(currentDate);
-                                                    const history = activeSelectedWrestler?.trainingHistory;
-                                                    const weeklyCount = (history?.weekId === currentWeekId) ? history.count : 0;
-                                                    const isLimitReached = weeklyCount >= 5;
-
-                                                    return (
-                                                        <>
-                                                            <button
-                                                                onClick={() => doSpecialTraining(selectedWrestler.id, 'shiko')}
-                                                                disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured' || isLimitReached}
-                                                                className="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                                title={isLimitReached ? t('sidebar.training.limit_reached') : ''}
-                                                            >
-                                                                {t('sidebar.training.shiko')}
-                                                            </button>
-                                                            <button
-                                                                onClick={() => doSpecialTraining(selectedWrestler.id, 'teppo')}
-                                                                disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured' || isLimitReached}
-                                                                className="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                                title={isLimitReached ? t('sidebar.training.limit_reached') : ''}
-                                                            >
-                                                                {t('sidebar.training.teppo')}
-                                                            </button>
-                                                            <button
-                                                                onClick={() => doSpecialTraining(selectedWrestler.id, 'moushi_ai')}
-                                                                disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured' || isLimitReached}
-                                                                className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                                title={isLimitReached ? t('sidebar.training.limit_reached') : ''}
-                                                            >
-                                                                {t('sidebar.training.moushi_ai')}
-                                                            </button>
-                                                            <button
-                                                                onClick={() => doSpecialTraining(selectedWrestler.id, 'meditation')}
-                                                                disabled={trainingPoints <= 0 || selectedWrestler.injuryStatus === 'injured' || isLimitReached}
-                                                                className="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 text-xs font-bold py-2 px-1 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                                title={isLimitReached ? t('sidebar.training.limit_reached') : ''}
-                                                            >
-                                                                {t('sidebar.training.meditation')}
-                                                            </button>
-                                                        </>
-                                                    );
-                                                })()}
-                                            </div>
-
-                                            <button
-                                                onClick={() => setShowSkillBookModal(true)}
-                                                className="w-full mt-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold py-2 px-1 rounded-sm transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <BookOpen className="w-3 h-3" />
-                                                <span>{t('dictionary.title_manage')}</span>
-                                            </button>
-                                        </div>
-
-                                        <div className="bg-stone-50 p-3 rounded-sm border border-stone-200">
-                                            <h4 className="font-bold text-stone-700 mb-1 text-xs">{t('sidebar.processing')}</h4>
-                                            <p className="text-[10px] text-stone-500 mb-3 leading-tight">
-                                                {t('sidebar.retire_desc')}
+                                {/* Retirement Action */}
+                                <div className="mt-8 pt-6 border-t border-slate-200">
+                                    {!isRetiring ? (
+                                        <Button
+                                            variant="primary"
+                                            className="w-full text-sm py-2 opacity-80 hover:opacity-100 bg-red-600 hover:bg-red-700 border-red-700"
+                                            onClick={() => setIsRetiring(true)}
+                                        >
+                                            {t('cmd.retire')}
+                                        </Button>
+                                    ) : (
+                                        <div className="bg-red-50 p-4 rounded-sm border border-red-100 animate-fadeIn">
+                                            <h4 className="font-bold text-red-800 text-sm mb-2">{t('wrestler.retire_confirm_title')}</h4>
+                                            <p className="text-xs text-red-600 mb-4">
+                                                {t('wrestler.retire_confirm_msg')}
+                                                <br />
+                                                {t('wrestler.severance_pay')}: <strong className="font-mono">¥{severancePay.toLocaleString()}</strong>
                                             </p>
-                                            <Button
-                                                variant="secondary"
-                                                size="sm"
-                                                className="w-full text-stone-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-                                                onClick={() => {
-                                                    if (!selectedWrestler) return;
-                                                    const severance = calculateSeverance(selectedWrestler);
-                                                    if (window.confirm(t('sidebar.retire_confirm', { name: selectedWrestler.name, amount: severance.toLocaleString() }))) {
-                                                        onRetireWrestler(selectedWrestler.id);
-                                                        onClearSelection();
-                                                    }
-                                                }}
-                                            >
-                                                {t('sidebar.retire_btn')}
-                                            </Button>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    className="flex-1 text-xs"
+                                                    onClick={() => setIsRetiring(false)}
+                                                >
+                                                    {t('common.cancel')}
+                                                </Button>
+                                                <Button
+                                                    variant="primary"
+                                                    className="flex-1 text-xs bg-red-600 hover:bg-red-700 border-red-700 text-white"
+                                                    onClick={() => {
+                                                        if (activeSelectedWrestler) onRetireWrestler(activeSelectedWrestler.id);
+                                                        setIsRetiring(false);
+                                                    }}
+                                                >
+                                                    {t('cmd.retire_confirm')}
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
 
                             </div>
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-300">
-                                <Scale className="w-8 h-8 mb-2 opacity-50" />
-                                <p className="text-sm">{t('sidebar.list_hint')}</p>
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center">
+                            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                                <span className="text-2xl opacity-50">?</span>
                             </div>
-                        )}
-                    </div>
-                )}
+                            <p className="text-sm">{t('sidebar.no_selection')}</p>
+                            <p className="text-xs mt-2 opacity-70">{t('sidebar.select_instruction')}</p>
+
+                            {/* Daily Matches Tab Content */}
+                            {gamePhase === 'tournament' && (
+                                <div className="mt-8 w-full">
+                                    <div className="text-xs font-bold uppercase tracking-wider mb-2">{t('sidebar.todays_matches')}</div>
+                                    <DailyMatchList
+                                        matchups={todaysMatchups}
+                                        onAdvice={() => { }}
+                                        currentTp={trainingPoints}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Rename Modal */}
-            {activeSelectedWrestler && showRenameModal && (
-                <ShikonaChangeModal
-                    isOpen={showRenameModal}
-                    onClose={() => setShowRenameModal(false)}
-                    wrestler={activeSelectedWrestler}
-                    currentTp={trainingPoints}
-                    onRename={renameWrestler}
-                />
+            {/* Modals */}
+            {activeSelectedWrestler && (
+                <>
+                    <ShikonaChangeModal
+                        isOpen={showRenameModal}
+                        onClose={() => setShowRenameModal(false)}
+                        wrestler={activeSelectedWrestler}
+                        currentTp={trainingPoints}
+                        onRename={(id, newName, newReading) => {
+                            renameWrestler(id, newName, newReading);
+                            setShowRenameModal(false);
+                        }}
+                    />
+                    <SkillBookModal
+                        isOpen={showSkillBookModal}
+                        onClose={() => setShowSkillBookModal(false)}
+                        selectedWrestlerId={activeSelectedWrestler.id}
+                    />
+                </>
             )}
-
-            {showSkillBookModal && (
-                <SkillBookModal
-                    isOpen={showSkillBookModal}
-                    onClose={() => setShowSkillBookModal(false)}
-                    selectedWrestlerId={activeSelectedWrestler?.id}
-                />
-            )}
-
-        </div>
+        </>
     );
 };
-
-export default Sidebar;

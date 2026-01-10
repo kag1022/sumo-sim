@@ -55,3 +55,46 @@ export const getWesternYearFromBashoId = (bashoId: string): number | null => {
     }
     return null;
 };
+
+export const getNextBashoStartDate = (currentDate: Date): Date => {
+    // Game Logic: Basho starts on 10th of Odd months (1, 3, 5, 7, 9, 11)
+    let year = currentDate.getFullYear();
+    let month = currentDate.getMonth(); // 0-11
+
+    // Find next odd month (target month index: 0, 2, 4...)
+    // If current is even (e.g. 0=Jan), it is odd month. But if date > 10, next is 2=March.
+    // If current is odd (e.g. 1=Feb), next is 2=March.
+
+    // Target month logic
+    let targetMonth = month;
+    if (month % 2 === 0) { // Jan(0), Mar(2)...
+        if (currentDate.getDate() >= 10) {
+            targetMonth = month + 2;
+        } else {
+            targetMonth = month; // Still this month's basho? No, announcement check assumes future.
+            // If today is Jan 5, logic says Basho starts Jan 10. Announcement should have been Dec 27.
+            // But if we are checking "is today announcement day", we look forward.
+        }
+    } else { // Feb(1), Apr(3)...
+        targetMonth = month + 1;
+    }
+
+    if (targetMonth > 11) {
+        targetMonth -= 12;
+        year++;
+    }
+
+    return new Date(year, targetMonth, 10);
+};
+
+export const isBanzukeAnnouncementDay = (currentDate: Date): boolean => {
+    const nextBasho = getNextBashoStartDate(currentDate);
+    const announceDate = new Date(nextBasho);
+    announceDate.setDate(announceDate.getDate() - 14);
+
+    return (
+        currentDate.getFullYear() === announceDate.getFullYear() &&
+        currentDate.getMonth() === announceDate.getMonth() &&
+        currentDate.getDate() === announceDate.getDate()
+    );
+};

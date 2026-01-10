@@ -1,9 +1,14 @@
 export const ja = {
     translation: {
+        common: {
+            age_suffix: '歳',
+            career_record: '通算戦績',
+            cancel: 'キャンセル'
+        },
         rank: {
-            Yokozuna: '横綱',
-            Ozeki: '大関',
-            Sekiwake: '関脇',
+            Yokozuna: '横綱', // existing line
+            Ozeki: '大関', // existing line
+            Sekiwake: '関脇', // existing line
             Komusubi: '小結',
             Maegashira: '前頭',
             Juryo: '十両',
@@ -12,12 +17,13 @@ export const ja = {
             Jonidan: '序二段',
             Jonokuchi: '序ノ口',
             MaeZumo: '前相撲',
+            Makuuchi: '幕内', // Added division
+            S: '名門', // Heya rank
+            A: '強豪',
+            B: '中堅',
+            C: '新興',
             East: '東',
-            West: '西',
-            S: 'Sランク',
-            A: 'Aランク',
-            B: 'Bランク',
-            C: 'Cランク',
+            West: '西'
         },
         rank_short: {
             Yokozuna: '横',
@@ -32,6 +38,29 @@ export const ja = {
             Jonokuchi: '口',
             MaeZumo: '前'
         },
+        wrestler: {
+            age: '年齢',
+            age_label: '年齢: ',
+            age_suffix: '歳',
+            weight: '体重',
+            weight_suffix: 'kg',
+            career: '関取在位',
+            career_suffix: '年',
+            stress: '疲労',
+            stress_suffix: '%',
+            injury: '休場'
+        },
+        stats: {
+            mind: '心',
+            tech: '技',
+            body: '体',
+            mind_abbr: '心',
+            tech_abbr: '技',
+
+            height_weight: '身長 / 体重',
+            attributes: 'パラメータ'
+        },
+
         matches: {
             title: '取組一覧',
             division_hint: '幕内・十両',
@@ -183,6 +212,7 @@ export const ja = {
                 last_month: '先月の収支',
                 insufficient_funds: '資金が不足しています'
             },
+
             okami: {
                 title: '女将さんの手腕',
                 desc: '女将さんのレベルが高いほど、力士のケアや部屋の運営効率が向上します。ストレス解消効果や、タニマチとの関係構築に影響を与えます。',
@@ -191,7 +221,17 @@ export const ja = {
                 max_level_desc: 'これ以上の強化は必要ありません',
                 upgrade_cost: '次のレベルへ強化',
                 approve_btn: '承認する',
-                confirm_upgrade: '女将レベルを強化しますか？\n費用: ¥{{cost}}'
+                confirm_upgrade: '女将レベルを強化しますか？\n費用: ¥{{cost}}',
+                levels: {
+                    1: '見習い',
+                    2: '駆け出し',
+                    3: '一人前',
+                    4: 'ベテラン',
+                    5: '名物女将'
+                },
+                current_effect: '現在の効果',
+                next_effect: '次の効果',
+                locked: '資金不足'
             },
             facility: {
                 title: '設備投資',
@@ -209,7 +249,9 @@ export const ja = {
                     3: '基礎器具充実',
                     4: '近代的ジム',
                     5: 'スポーツ科学研究所'
-                }
+                },
+                locked: '資金不足',
+                max_level_label: '最高品質'
             },
             settings: {
                 auto_scout: '新弟子自動スカウト',
@@ -254,7 +296,9 @@ export const ja = {
             confirm: '確認',
             encyclopedia: '図鑑',
             next_day: '翌日へ',
-            next_week: '翌週へ'
+
+            next_week: '翌週へ',
+            rename: '改名'
         },
         ui: {
             funds: '資金',
@@ -346,13 +390,21 @@ export const ja = {
             StageFright: { name: 'あがり症', desc: '大一番で力を発揮できない' }
         },
         title: {
-            newGame: 'はじめから',
-            continue: 'つづきから',
-            mode_select: 'ゲームモード選択',
+            game_title: '相撲部屋経営シミュレーション',
+            hero_title: '大相撲',
+            continue: '続きから',
+            continue_desc: '{{year}}年 {{month}}月場所 - {{rank}}',
+            new_game: '新しい部屋を興す',
+            new_game_desc: 'ゼロから親方として部屋を経営します',
+            collection: '決まり手図鑑',
+            support: '開発支援 (タニマチ)',
+            credits: 'クレジット',
+            version: 'Ver {{version}}',
+            mode_select: 'モード選択',
             mode: {
                 establish: {
-                    name: '独立',
-                    subtitle: '創設',
+                    name: '独立・創設',
+                    subtitle: 'ESTABLISH',
                     desc: '自らの手で部屋を興す。\n茨の道だが栄光は全て自分のもの。',
                     funds: '資金',
                     funds_val: '300万円 (少)',
@@ -522,16 +574,11 @@ export const ja = {
             izori: '居反り', tsutaezori: '伝え反り', tasukizori: 'たすき反り', shumokuzori: '撞木反り'
         },
         basho_result: {
-            title: '番付編成発表',
-            flash: '昇進ニュース',
-            division: '階級',
-            shikona: '四股名',
-            result: '成績',
-            trend: '変動',
-            header: '番付編成会議が終了しました。来場所の番付が決定しました。',
+            title: '新番付発表',
+            official_announcement: '日本相撲協会 公式発表',
             watermark: '番付',
-            official_announcement: '公式番付発表',
-            flash_news: '速報'
+            flash_news: '番付速報',
+            division: '幕下以下'
         },
         retirement: {
             dialogue: {
@@ -581,6 +628,45 @@ export const ja = {
             promote_makuuchi: '【新入幕】',
             promote_juryo: '【新十両】'
         },
+        heya_list: {
+            title: '相撲部屋一覧',
+            oyakata: '親方',
+            location: '所在地',
+            founded: '創設',
+            specialty: '育成方針',
+            wrestlers: '所属力士',
+            specialty_types: {
+                Power: '怪力',
+                Tech: '技巧',
+                Stamina: '根性',
+                Balanced: '平均'
+            },
+            rank: {
+                S: '名門',
+                A: '強豪',
+                B: '中堅',
+                C: '新興'
+            },
+            close: '閉じる'
+        },
+        yusho: {
+            title: '各段優勝',
+            subtitle: 'Championship Results',
+            your_heya: 'あなたの部屋',
+            next: '次へ'
+        },
+        banzuke: {
+            announcement: {
+                title: '新番付発表',
+                subtitle: '令和{{year}}年 {{month}}月場所',
+                promoted: '昇進',
+                demoted: '降格',
+                stay: '据置',
+                new_recruit: '新弟子',
+                close: '確認',
+                hero_title: '注目力士'
+            }
+        },
         scout: {
             title: '新弟子スカウト',
             subtitle: '新弟子採用',
@@ -619,6 +705,10 @@ export const ja = {
             funds: '資金',
             members: '在籍力士',
             contract_fee: '契約金',
+            height_label: '身長',
+            weight_label: '体重',
+            age_label_simple: '年齢',
+            inspect_cost_hint: '(¥{{val}}万)',
 
             encyclopedia: {
                 title: '大相撲図鑑',
@@ -724,6 +814,19 @@ export const ja = {
             Tokushima: '徳島', Kagawa: '香川', Ehime: '愛媛', Kochi: '高知', Fukuoka: '福岡', Saga: '佐賀', Nagasaki: '長崎',
             Kumamoto: '熊本', Oita: '大分', Miyazaki: '宮崎', Kagoshima: '鹿児島', Okinawa: '沖縄',
             Mongolia: 'モンゴル', Foreign: '外国'
+        },
+        training: {
+            title: '稽古方針',
+            modes: {
+                shiko: { label: '基礎固め', sub: '体+ (安全)' },
+                teppo: { label: '鉄砲特訓', sub: '技+ (安全)' },
+                moushi_ai: { label: '強化合宿', sub: '全++ (危険)' },
+                rest: { label: '積極的休養', sub: '怪我回復' }
+            }
+        },
+        log_btn: {
+            label: 'ログ',
+            tooltip: 'ログを表示'
         }
     }
 };

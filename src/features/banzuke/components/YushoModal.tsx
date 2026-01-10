@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Wrestler } from '../../../types';
+import { useTranslation } from 'react-i18next';
 
 interface YushoModalProps {
     winners: Record<string, Wrestler>;
@@ -8,18 +9,11 @@ interface YushoModalProps {
 }
 
 const YushoModal: React.FC<YushoModalProps> = ({ winners, onClose }) => {
+    const { t, i18n } = useTranslation();
+
     if (!winners) return null;
 
     const divisionOrder = ['Makuuchi', 'Juryo', 'Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi'];
-
-    // Helper for Division Name
-    const divisionName = (div: string) => {
-        const names: Record<string, string> = {
-            'Makuuchi': '幕内', 'Juryo': '十両', 'Makushita': '幕下',
-            'Sandanme': '三段目', 'Jonidan': '序二段', 'Jonokuchi': '序ノ口'
-        };
-        return names[div] || div;
-    };
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fadeIn">
@@ -34,9 +28,9 @@ const YushoModal: React.FC<YushoModalProps> = ({ winners, onClose }) => {
 
                 {/* Header */}
                 <div className="mb-8 text-center">
-                    <h2 className="text-5xl font-black font-serif text-[#b7282e] mb-2 tracking-widest drop-shadow-sm">各段優勝</h2>
+                    <h2 className="text-5xl font-black font-serif text-[#b7282e] mb-2 tracking-widest drop-shadow-sm">{t('yusho.title')}</h2>
                     <div className="h-px w-32 bg-slate-300 mx-auto"></div>
-                    <div className="text-slate-400 text-xs font-serif mt-2 tracking-[0.3em] uppercase">Championship Results</div>
+                    <div className="text-slate-400 text-xs font-serif mt-2 tracking-[0.3em] uppercase">{t('yusho.subtitle')}</div>
                 </div>
 
                 {/* Winners List */}
@@ -54,25 +48,25 @@ const YushoModal: React.FC<YushoModalProps> = ({ winners, onClose }) => {
                             `}>
                                 <div className="text-left flex items-center gap-4">
                                     <div className={`
-                                        text-xs font-bold px-2 py-1 rounded-sm w-16 text-center
+                                        text-xs font-bold px-2 py-1 rounded-sm w-16 text-center whitespace-nowrap
                                         ${isMakuuchi ? 'bg-[#b7282e] text-white' : 'bg-slate-100 text-slate-500'}
                                      `}>
-                                        {divisionName(div)}
+                                        {t(`rank.${div}`)}
                                     </div>
                                     <div>
                                         <div className={`font-serif leading-none ${isMakuuchi ? 'text-3xl font-bold text-slate-900' : 'text-lg font-bold text-slate-700'}`}>
-                                            {winner.name}
+                                            {i18n.language === 'en' ? winner.reading : winner.name}
                                         </div>
-                                        {isPlayer && <div className="text-[10px] text-amber-600 font-bold mt-1">あなたの部屋</div>}
+                                        {isPlayer && <div className="text-[10px] text-amber-600 font-bold mt-1">{t('yusho.your_heya')}</div>}
                                     </div>
                                 </div>
 
                                 <div className="text-right">
                                     <div className={`font-mono font-bold leading-none ${isMakuuchi ? 'text-2xl text-[#b7282e]' : 'text-slate-600'}`}>
                                         {winner.currentBashoStats.wins}
-                                        <span className="text-sm ml-0.5 text-slate-400">勝</span>
+                                        <span className="text-sm ml-0.5 text-slate-400">{t('common.win_short', '勝')}</span>
                                         {winner.currentBashoStats.losses}
-                                        <span className="text-sm ml-0.5 text-slate-400">敗</span>
+                                        <span className="text-sm ml-0.5 text-slate-400">{t('common.loss_short', '敗')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -86,7 +80,7 @@ const YushoModal: React.FC<YushoModalProps> = ({ winners, onClose }) => {
                         onClick={onClose}
                         className="group relative overflow-hidden bg-slate-900 text-white font-serif font-bold text-lg py-3 px-12 rounded-sm shadow-lg hover:shadow-xl hover:bg-[#b7282e] transition-all duration-300"
                     >
-                        <span className="relative z-10">次へ</span>
+                        <span className="relative z-10">{t('yusho.next')}</span>
                     </button>
                 </div>
 

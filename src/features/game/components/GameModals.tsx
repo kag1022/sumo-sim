@@ -12,17 +12,20 @@ import { EventModal } from '../../events/components/EventModal';
 import ScoutPanel from '../../wrestler/components/ScoutPanel';
 import { MAX_PLAYERS_PER_HEYA } from '../../../utils/constants';
 import { EncyclopediaModal } from '../../collection/components/EncyclopediaModal';
+import { HeyaListModal } from '../../heya/components/HeyaListModal';
 
 interface GameModalsProps {
     showManagement: boolean;
     showHistory: boolean;
     showScout: boolean;
     showEncyclopedia: boolean;
+    showHeyaList: boolean;
     showHelp: boolean;
     onCloseManagement: () => void;
     onCloseHistory: () => void;
     onCloseScout: () => void;
     onCloseEncyclopedia: () => void;
+    onCloseHeyaList: () => void;
     onCloseHelp: () => void;
     onRecruit: (candidate: Candidate, customName?: string) => void;
 }
@@ -36,11 +39,13 @@ export const GameModals = ({
     showHistory,
     showScout,
     showEncyclopedia,
+    showHeyaList,
     showHelp,
     onCloseManagement,
     onCloseHistory,
     onCloseScout,
     onCloseEncyclopedia,
+    onCloseHeyaList,
     onCloseHelp,
     onRecruit,
 }: GameModalsProps) => {
@@ -168,6 +173,9 @@ export const GameModals = ({
 
             {/* Encyclopedia Modal */}
             {showEncyclopedia && <EncyclopediaModal onClose={onCloseEncyclopedia} />}
+
+            {/* Heya List Modal */}
+            <HeyaListModal isOpen={showHeyaList} onClose={onCloseHeyaList} />
         </>
     );
 };
