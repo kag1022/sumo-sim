@@ -3,6 +3,14 @@
 @theme {
     --font-serif: "Zen Old Mincho", "Noto Serif JP", serif;
     --font-sans: "Zen Kaku Gothic New", "Noto Sans JP", scan-serif;
+
+    /* Color Palette */
+    --color-sumo-red: #b7282e;     /* Primary: Japan Red */
+    --color-sumo-cream: #fcf9f2;   /* Background: Cream White */
+    --color-sumo-dark: #1e293b;    /* Text: Ink (Slate 800) */
+    --color-sumo-gold: #fbbf24;    /* Secondary: Amber 400 (mapped closest to tailwind amber-400 for consistency if used directly, or define custom if specific hex provided) */
+    /* Note: User specified bg-amber-400 for secondary. We can just use standard amber-400 or define an alias. 
+       Let's stick to defining the custom ones that are hex codes. */
 }
 
 /* Washi Texture */
@@ -31,8 +39,8 @@
 }
 
 body {
-    background-color: #fcf9f2; /* Washi-like off-white */
-    color: #1e293b;
+    background-color: var(--color-sumo-cream);
+    color: var(--color-sumo-dark);
 }
 
 /* Simple font import example - likely handled in index.html in real prod, but via CSS works for loose prototyping if we had the URL, 

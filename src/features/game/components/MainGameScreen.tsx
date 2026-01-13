@@ -9,12 +9,12 @@ import WrestlerList from '../../wrestler/components/WrestlerList';
 import LogWindow from '../../match/components/LogWindow';
 import { generateFullRoster, generateHeyas } from '../../wrestler/logic/generator';
 import { updateBanzuke } from '../../banzuke/logic/banzuke';
-import { MAX_PLAYERS_PER_HEYA } from '../../../utils/constants';
 import { AchievementSystem } from '../../collection/components/AchievementSystem';
 // New Imports for Design
-import { ChevronRight, Dumbbell, Zap, Swords, Coffee } from 'lucide-react';
+import { ChevronRight, Dumbbell, Zap, Swords, Coffee, X } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import { useTranslation } from 'react-i18next';
+import DailyMatchList from '../../match/components/DailyMatchList';
 
 // Dummy data generation
 const generateDummyWrestlers = (): Wrestler[] => {
@@ -151,42 +151,55 @@ const generateDummyWrestlers = (): Wrestler[] => {
 };
 
 /**
- * メインゲーム画面コンポーネント
- * Updated to "Sumo Modern Dashboard"
+ * メインゲーム画面コンポーネント (Refactored for Robustness & Mobile)
  */
 export const MainGameScreen = () => {
-    const { wrestlers, setWrestlers, setHeyas, gamePhase } = useGame();
-    const { advanceTime, recruitWrestler, retireWrestler } = useGameLoop();
+    const { wrestlers, setWrestlers, setHeyas, gamePhase, todaysMatchups, trainingPoints } = useGame();
+    const { advanceTime, recruitWrestler, retireWrestler, giveAdvice } = useGameLoop();
     const { t } = useTranslation();
 
     // UI State
     const [selectedWrestler, setSelectedWrestler] = useState<Wrestler | null>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile Sidebar State
+    
+    // Panel States - layout control
+    const [isListOpen, setIsListOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    // Responsive: Initial Check
+    useEffect(() => {
+        const handleResize = () => {
+             // Mobile/Tablet Landscape or Portrait logic
+             if (window.innerWidth < 1024) {
+                 // On smaller screens, default to focused view (panels closed or overlay)
+                 // But for "3-column" requirement on desktop, we keep defaults.
+                 // Let start with Sidebar closed on mobile?
+                 setIsSidebarOpen(false);
+                 setIsListOpen(false); // Let user open list
+             } else {
+                 setIsSidebarOpen(true);
+                 setIsListOpen(true);
+             }
+        };
+        handleResize(); // Run once
+    }, []);
+
     const [showScout, setShowScout] = useState(false);
     const [showManagement, setShowManagement] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [showEncyclopedia, setShowEncyclopedia] = useState(false);
     const [showHeyaList, setShowHeyaList] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
-    const [showLog, setShowLog] = useState(false); // Default hidden
+    const [showLog, setShowLog] = useState(false);
     const [trainingType, setTrainingType] = useState<TrainingType>('shiko');
 
     // Initialize Data once
     useEffect(() => {
         if (wrestlers.length === 0) {
-            // 1. Generate Heyas
             const newHeyas = generateHeyas();
             setHeyas(newHeyas);
-
-            // 2. Get Player Wrestlers
             const playerWrestlers = generateDummyWrestlers();
-
-            // 3. Generate CPU Roster
             let roster = [...playerWrestlers, ...generateFullRoster(newHeyas)];
-
-            // 4. Normalize Ranks
             roster = updateBanzuke(roster);
-
             setWrestlers(roster);
         }
     }, [wrestlers.length, setWrestlers, setHeyas]);
@@ -195,50 +208,42 @@ export const MainGameScreen = () => {
         advanceTime(trainingType);
     };
 
+    const handleAdvice = (index: number, side: 'east' | 'west') => {
+        giveAdvice(index, side);
+    };
+
     // Filter for Display: Only Player's Heya
     const playerWrestlers = wrestlers.filter(w => w.heyaId === 'player_heya');
 
-    // Mukofuda (Wood Tag) Card Component
+    // Training Mukofuda Component
     const MukofudaCard = ({ type, label, subLabel, icon: Icon }: any) => {
         const isSelected = trainingType === type;
         return (
-            <button
+             <button
                 onClick={() => setTrainingType(type)}
                 className={`
-                    relative group flex flex-col items-center justify-center p-3 rounded-sm transition-all duration-300 w-full
+                    flex flex-col items-center justify-center p-4 rounded-sm transition-all duration-200 w-full min-h-[100px]
                     ${isSelected
-                        ? 'bg-[#f0e6d2] shadow-md -translate-y-1 z-10'
-                        : 'bg-[#fcf9f2] hover:bg-[#fffdf9] hover:shadow-sm hover:-translate-y-0.5'
+                        ? 'bg-[#f0e6d2] border-2 border-[#b7282e] shadow-md transform -translate-y-1'
+                        : 'bg-white border border-slate-300 hover:bg-slate-50'
                     }
-                    border-2 ${isSelected ? 'border-[#b7282e]' : 'border-[#d4c5a9]'}
                 `}
             >
-                {/* Wood Texture Overlay (CSS Pattern) */}
-                <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 1px, transparent 10px)' }}></div>
-
-                {/* Hole for string (Visual) */}
-                <div className="w-2 h-2 rounded-full bg-[#5c4a3d] absolute top-1.5 left-1/2 -translate-x-1/2 shadow-inner"></div>
-
-                <div className={`mb-1 mt-1 ${isSelected ? 'text-[#b7282e]' : 'text-slate-400'}`}>
-                    <Icon className="w-6 h-6" />
+                <div className={`mb-2 ${isSelected ? 'text-[#b7282e]' : 'text-slate-400'}`}>
+                    <Icon className="w-8 h-8" />
                 </div>
-                <div className={`font-serif font-bold text-sm mb-0.5 ${isSelected ? 'text-[#2c1a1b]' : 'text-slate-600'}`}>
+                <div className={`font-serif font-bold text-sm md:text-base leading-tight text-center break-words w-full ${isSelected ? 'text-[#2c1a1b]' : 'text-slate-600'}`}>
                     {label}
                 </div>
-                <div className="text-[10px] font-mono text-slate-500">
+                <div className="hidden md:block text-xs font-mono text-slate-500 mt-1 text-center break-words w-full">
                     {subLabel}
                 </div>
-
-                {/* Selection Badge */}
-                {isSelected && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#b7282e] rounded-full shadow-sm"></div>
-                )}
             </button>
         );
     };
 
     return (
-        <div className="min-h-screen bg-[#fcf9f2] text-slate-800 font-sans flex flex-col overflow-hidden relative">
+        <div className="h-screen w-screen bg-[#fcf9f2] text-slate-800 font-sans flex flex-col overflow-hidden">
             {/* Header */}
             <Header
                 onShowScout={() => setShowScout(true)}
@@ -246,122 +251,208 @@ export const MainGameScreen = () => {
                 onShowHistory={() => setShowHistory(true)}
                 onShowEncyclopedia={() => setShowEncyclopedia(true)}
                 onShowHeyaList={() => setShowHeyaList(true)}
-                onShowHelp={() => setShowHelp(true)}
-                onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                // Toggles
+                onToggleLeftPanel={() => setIsListOpen(!isListOpen)}
+                onToggleRightPanel={() => setIsSidebarOpen(!isSidebarOpen)}
+                isLeftPanelOpen={isListOpen}
+                isRightPanelOpen={isSidebarOpen}
             />
 
-            {/* Main Content */}
-            <main className="container mx-auto px-4 py-4 flex-1 overflow-hidden flex flex-col relative z-0">
-                <div className="flex flex-col md:flex-row gap-4 h-full relative">
-
-                    {/* Left Column: Training & List */}
-                    <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-hidden h-full pb-16 md:pb-0"> {/* Added padding for mobile action bar */}
-
-                        {/* Training Selector (Mukofuda Style) */}
-                        <div className={`transition-all duration-500 shrink-0 ${gamePhase === 'tournament' ? 'opacity-50 pointer-events-none grayscale' : 'opacity-100'}`}>
-                            <div className="flex items-center gap-2 mb-2 px-1">
-                                <span className="w-1.5 h-4 bg-[#b7282e] rounded-full"></span>
-                                <h3 className="font-serif font-bold text-slate-800">{t('training.title')}</h3>
-                            </div>
-
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                                <MukofudaCard
-                                    type="shiko"
-                                    label={t('training.modes.shiko.label')}
-                                    subLabel={t('training.modes.shiko.sub')}
-                                    icon={Dumbbell}
-                                />
-                                <MukofudaCard
-                                    type="teppo"
-                                    label={t('training.modes.teppo.label')}
-                                    subLabel={t('training.modes.teppo.sub')}
-                                    icon={Zap}
-                                />
-                                <MukofudaCard
-                                    type="moushi_ai"
-                                    label={t('training.modes.moushi_ai.label')}
-                                    subLabel={t('training.modes.moushi_ai.sub')}
-                                    icon={Swords}
-                                />
-                                <MukofudaCard
-                                    type="rest"
-                                    label={t('training.modes.rest.label')}
-                                    subLabel={t('training.modes.rest.sub')}
-                                    icon={Coffee}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Roster List */}
-                        <div className="flex-1 flex flex-col bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden relative">
-                            {/* Japanese Pattern Background */}
-                            <div className="absolute top-0 right-0 w-32 h-32 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#b7282e 20%, transparent 20%)', backgroundSize: '10px 10px' }}></div>
-
-                            <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 backdrop-blur-sm z-10">
-                                <h2 className="font-bold font-serif text-slate-800 flex items-center gap-2">
-                                    <span className="text-[#b7282e]">◆</span>
-                                    {t('heya.roster')}
-                                </h2>
-                                <span className="text-xs font-mono bg-slate-200 px-2 py-0.5 rounded text-slate-600">
-                                    {playerWrestlers.length} / {MAX_PLAYERS_PER_HEYA}
-                                </span>
-                            </div>
-
-                            <div className="flex-1 overflow-hidden p-2 z-10">
-                                <WrestlerList wrestlers={playerWrestlers} onSelect={setSelectedWrestler} />
-                            </div>
+            {/* Main Content Layout (Flex Row) */}
+            <div className="flex-1 flex overflow-hidden">
+                
+                {/* 1. LEFT PANEL: Roster List */}
+                <div className={`
+                    bg-[#fcf9f2] border-r border-slate-200 flex flex-col z-20
+                    transition-all duration-300 ease-in-out
+                    ${isListOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full opacity-0 overflow-hidden'}
+                    absolute md:relative h-full shadow-lg md:shadow-none
+                `}>
+                     <div className="p-3 border-b border-slate-200 bg-slate-50 flex justify-between items-center shrink-0">
+                        <h2 className="font-bold font-serif text-slate-800 flex items-center gap-2">
+                            <span className="text-[#b7282e]">◆</span>
+                            {t('heya.roster')}
+                        </h2>
+                        <div className="flex items-center gap-2">
+                             <span className="text-xs font-mono bg-slate-200 px-2 py-0.5 rounded text-slate-600">
+                                {playerWrestlers.length}
+                            </span>
+                            {/* Mobile Close */}
+                            <button onClick={() => setIsListOpen(false)} className="md:hidden p-1 text-slate-400">
+                                <X className="w-5 h-5"/>
+                            </button>
                         </div>
                     </div>
+                    <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                        <WrestlerList wrestlers={playerWrestlers} onSelect={setSelectedWrestler} />
+                    </div>
+                </div>
 
-                    {/* Right Column: Sidebar (Drawer) */}
+
+                {/* 2. CENTER PANEL: Main Game Area */}
+                <div className="flex-1 flex flex-col relative min-w-0 bg-[#f4f1e8] z-0">
+                    
+                    {/* Background Visuals */}
+                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+                         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}>
+                    </div>
+
+                    {/* Scrollable Content Area */}
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24">
+                        
+                        {/* Phase 1: Training Mode */}
+                        {gamePhase === 'training' && (
+                            <div className="max-w-4xl mx-auto animate-fadeIn">
+                                <div className="mb-6 flex items-center gap-3">
+                                    <div className="p-2 bg-[#b7282e] text-white rounded-sm">
+                                        <Dumbbell className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-serif font-bold text-slate-800 leading-none">{t('training.title')}</h2>
+                                        <p className="text-sm text-slate-500 mt-1">{t('training.description', 'Select training regimen for the week')}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <MukofudaCard
+                                        type="shiko"
+                                        label={t('training.modes.shiko.label')}
+                                        subLabel={t('training.modes.shiko.sub')}
+                                        icon={Dumbbell}
+                                    />
+                                    <MukofudaCard
+                                        type="teppo"
+                                        label={t('training.modes.teppo.label')}
+                                        subLabel={t('training.modes.teppo.sub')}
+                                        icon={Zap}
+                                    />
+                                    <MukofudaCard
+                                        type="moushi_ai"
+                                        label={t('training.modes.moushi_ai.label')}
+                                        subLabel={t('training.modes.moushi_ai.sub')}
+                                        icon={Swords}
+                                    />
+                                    <MukofudaCard
+                                        type="rest"
+                                        label={t('training.modes.rest.label')}
+                                        subLabel={t('training.modes.rest.sub')}
+                                        icon={Coffee}
+                                    />
+                                </div>
+                                <div className="mt-8 p-4 bg-white/60 border border-slate-200 rounded text-sm text-slate-600">
+                                   <h3 className="font-bold mb-2 flex items-center gap-2">
+                                        <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                                        Overview
+                                   </h3>
+                                   <p>{t('training.advisor_msg', 'Focus on Shiko to build base stats safely, or risk injury with Moushi-ai for higher gains.')}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Phase 2: Tournament Mode (Basho) */}
+                        {gamePhase === 'tournament' && (
+                            <div className="max-w-4xl mx-auto animate-fadeIn pb-12">
+                                <div className="mb-6 flex items-center gap-3">
+                                    <div className="p-2 bg-amber-500 text-amber-950 rounded-sm">
+                                        <Swords className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-serif font-bold text-slate-800 leading-none">{t('basho.title', 'Hon-Basho in Progress')}</h2>
+                                        <p className="text-sm text-slate-500 mt-1">{t('basho.subtitle', 'Daily Matches')}</p>
+                                    </div>
+                                </div>
+
+                                {/* Match List Component */}
+                                <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
+                                     <DailyMatchList
+                                        matchups={todaysMatchups}
+                                        onAdvice={(index, side) => {
+                                            // Handle Advice
+                                            // We need to map the filtered index to actual ID, but DailyMatchList
+                                            // now passes index of the filtered list.
+                                            // Ideally DailyMatchList should return the MATCH OBJECT or ID.
+                                            // But for now, assuming refactor kept index consistent?
+                                            // Wait, refactor logic: onAdvice(matchups.indexOf(m), ...)
+                                            // So it passes the index in the ORIGINAL array if `matchups` is todaysMatchups.
+                                            // Yes, `matchups.indexOf(m)` ensures correct index.
+                                            handleAdvice(index, side);
+                                        }}
+                                        currentTp={trainingPoints}
+                                        mode="full"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+
+                    {/* Bottom Action Bar (Fixed at bottom right of Center Panel) */}
+                    <div className="absolute bottom-6 right-6 z-10 flex flex-col items-end gap-3">
+                         <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setShowLog(!showLog)}
+                                className={`
+                                    rounded-full w-12 h-12 flex items-center justify-center shadow-lg border-2 border-white/20 transition-transform active:scale-95
+                                    ${showLog ? 'bg-slate-700 text-white' : 'bg-white text-slate-600'}
+                                `}
+                                title={t('log_btn.tooltip')}
+                            >
+                                <span className="font-serif font-bold text-xs writing-vertical-rl">{t('log_btn.label')}</span>
+                            </button>
+
+                            <Button
+                                variant={gamePhase === 'tournament' ? 'secondary' : 'action'} // Use Secondary/Gold for tournament? Or Action?
+                                size="lg"
+                                onClick={handleAdvance}
+                                className={`
+                                    shadow-xl min-w-[200px] h-14 flex items-center justify-between px-6 text-lg
+                                    ${gamePhase === 'tournament' ? 'bg-amber-400 text-amber-950 hover:bg-amber-300' : ''}
+                                `}
+                            >
+                                <span className="font-serif font-bold">
+                                    {gamePhase === 'tournament' ? t('cmd.next_day') : t('cmd.next_week')}
+                                </span>
+                                <ChevronRight className="w-6 h-6" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+
+                {/* 3. RIGHT PANEL: Sidebar (Details) */}
+                {/* Mobile Overlay for Sidebar */}
+                {isSidebarOpen && (
+                    <div 
+                        className="fixed inset-0 bg-black/30 z-30 md:hidden backdrop-blur-sm"
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
+                )}
+                
+                <div className={`
+                    fixed md:relative top-0 right-0 h-full z-40 md:z-20
+                    bg-white border-l border-slate-200 shadow-2xl md:shadow-none
+                    transition-transform duration-300 ease-in-out flex flex-col
+                    ${isSidebarOpen ? 'translate-x-0 w-80 md:w-96' : 'translate-x-full w-0 md:w-0 overflow-hidden border-none'}
+                `}>
+                     {/* Close Button (Mobile Only, or if needed on Desktop) */}
+                     {isSidebarOpen && (
+                        <div className="md:hidden absolute top-2 right-2 z-50">
+                             <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-slate-100 rounded-full text-slate-500">
+                                 <X className="w-5 h-5"/>
+                             </button>
+                        </div>
+                     )}
+
                     <Sidebar
                         selectedWrestler={selectedWrestler}
                         onRetireWrestler={retireWrestler}
                         onClearSelection={() => setSelectedWrestler(null)}
-                        isOpen={isSidebarOpen}
+                        isOpen={true}
                         onClose={() => setIsSidebarOpen(false)}
                     />
                 </div>
-            </main>
 
-            {/* Floating Action Bar (Bottom Right) */}
-            <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3 pointer-events-none">
-                {/* Re-enable pointer events for buttons */}
-
-                {/* Next Turn Button */}
-                <div className="pointer-events-auto">
-                    <Button
-                        variant={gamePhase === 'tournament' ? 'primary' : 'action'}
-                        size="lg"
-                        onClick={handleAdvance}
-                        className="shadow-xl border-2 border-white/20 transform hover:-translate-y-1 transition-transform"
-                    >
-                        <div className="flex items-center gap-3 px-2">
-                            <span className="font-serif font-bold text-lg">
-                                {gamePhase === 'tournament' ? t('cmd.next_day') : t('cmd.next_week')}
-                            </span>
-                            <ChevronRight className="w-5 h-5 animate-pulse" />
-                        </div>
-                    </Button>
-                </div>
-
-                {/* Log Toggle Button (Above Action) */}
-                <div className="pointer-events-auto">
-                    <button
-                        onClick={() => setShowLog(!showLog)}
-                        className={`
-                            rounded-full w-12 h-12 flex items-center justify-center shadow-lg border-2 border-white/20 transition-all hover:scale-105 active:scale-95
-                            ${showLog ? 'bg-slate-700 text-white' : 'bg-white text-slate-600'}
-                        `}
-                        title={t('log_btn.tooltip')}
-                    >
-                        <span className="font-serif font-bold text-xs writing-vertical-rl">{t('log_btn.label')}</span>
-                    </button>
-                </div>
             </div>
-
-            {/* Mobile Drawer Placeholder (if Sidebar is hidden on mobile, need drawer) */}
-            {/* NOTE: Sidebar is 'hidden md:flex'. We need a mobile solution. For now sticking to desktop layout focus, but maybe add a 'Show Detail' button for mobile later? */}
 
             {/* Log Window - Side Drawer */}
             <LogWindow isOpen={showLog} onClose={() => setShowLog(false)} />

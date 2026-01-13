@@ -1,9 +1,36 @@
 export const ja = {
     translation: {
+        orientation_guard: {
+            title: "画面を横にしてください",
+            message: "このゲームは横画面専用です。端末を回転させてプレイしてください。"
+        },
         common: {
             age_suffix: '歳',
             career_record: '通算戦績',
             cancel: 'キャンセル'
+        },
+        training: {
+             title: '稽古期間',
+             description: '今週の稽古メニューを選択してください',
+             advisor_msg: '四股で基礎を固めるか、申し合いで実戦感覚を磨くか（怪我のリスクあり）。親方の采配が問われます。',
+             modes: {
+                 shiko: { label: '四股', sub: '体++' },
+                 teppo: { label: '鉄砲', sub: '技+ 体+' },
+                 moushi_ai: { label: '申し合い', sub: '技++ 心+' },
+                 rest: { label: '休養', sub: '疲労回復' },
+                 max_level_desc: 'これ以上の指導は不要です',
+            }
+        },
+        header: {
+            heya_list_btn: '部屋一覧',
+            tp_title: '育成pt'
+        },
+        heya: {
+            roster: '在籍力士'
+        },
+        log_btn: {
+             label: '記録',
+             tooltip: '履歴を表示'
         },
         rank: {
             Yokozuna: '横綱', // existing line
@@ -18,6 +45,7 @@ export const ja = {
             Jonokuchi: '序ノ口',
             MaeZumo: '前相撲',
             Makuuchi: '幕内', // Added division
+            Sekitori: '幕内・十両',
             S: '名門', // Heya rank
             A: '強豪',
             B: '中堅',
@@ -48,7 +76,15 @@ export const ja = {
             career_suffix: '年',
             stress: '疲労',
             stress_suffix: '%',
-            injury: '休場'
+            injury: '休場',
+            skills: '所持スキル',
+            skill_book: '秘技図鑑',
+            no_skills: 'スキルなし',
+            height: '身長',
+            healthy: '健康',
+            retire_confirm_title: '引退確認',
+            retire_confirm_msg: '本当にこの力士を引退させますか？部屋から去ることになります。',
+            severance_pay: '予想退職金'
         },
         stats: {
             mind: '心',
@@ -298,7 +334,9 @@ export const ja = {
             next_day: '翌日へ',
 
             next_week: '翌週へ',
-            rename: '改名'
+            rename: '改名',
+            retire: '引退',
+            retire_confirm: '引退実行'
         },
         ui: {
             funds: '資金',
@@ -347,7 +385,14 @@ export const ja = {
                 meditation: '瞑想 (心++ 休)',
                 limit_info: '今週の特訓: {{current}}/{{max}}',
                 limit_reached: '上限'
-            }
+            },
+            no_selection: '力士未選択',
+            select_instruction: 'リストから力士を選択して詳細を表示してください',
+            todays_matches: '本日の取組'
+        },
+        basho: {
+            title: '本場所開催中',
+            subtitle: '本日の取組'
         },
         dictionary: {
             title: '秘技図鑑',
@@ -481,6 +526,8 @@ export const ja = {
                 insufficient_funds: '資金が足りません！'
             },
             basho: {
+                title: '本場所開催中',
+                subtitle: '本日の取組',
                 winner: '幕内最高優勝: {{name}} ({{wins}}勝{{losses}}敗)',
                 prize_money: '優勝賞金 {{amount}}を獲得しました！',
                 retired_summary: '{{count}}名の力士が引退しました。'
@@ -669,7 +716,7 @@ export const ja = {
         },
         scout: {
             title: '新弟子スカウト',
-            subtitle: '新弟子採用',
+            subtitle: '人材発掘',
             no_candidates: '候補者なし',
             wait_next_week: '来週のスカウト報告をお待ちください',
             inspection_report: '新弟子検査票',
@@ -815,18 +862,5 @@ export const ja = {
             Kumamoto: '熊本', Oita: '大分', Miyazaki: '宮崎', Kagoshima: '鹿児島', Okinawa: '沖縄',
             Mongolia: 'モンゴル', Foreign: '外国'
         },
-        training: {
-            title: '稽古方針',
-            modes: {
-                shiko: { label: '基礎固め', sub: '体+ (安全)' },
-                teppo: { label: '鉄砲特訓', sub: '技+ (安全)' },
-                moushi_ai: { label: '強化合宿', sub: '全++ (危険)' },
-                rest: { label: '積極的休養', sub: '怪我回復' }
-            }
-        },
-        log_btn: {
-            label: 'ログ',
-            tooltip: 'ログを表示'
-        }
     }
 };

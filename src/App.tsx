@@ -4,6 +4,7 @@ import { TitleScreen } from './components/TitleScreen';
 import { MainGameScreen } from './features/game/components/MainGameScreen';
 import { GameProvider, useGame } from './context/GameContext';
 import { GameMode } from './types';
+import { OrientationGuard } from './components/common/OrientationGuard';
 
 /**
  * ゲームのルーティングを管理するコンポーネント
@@ -39,6 +40,7 @@ const GameAppContent = () => {
 function App() {
   return (
     <GameProvider>
+      <OrientationGuard />
       <GameAppContent />
     </GameProvider>
   );

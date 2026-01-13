@@ -1,16 +1,38 @@
 export const en = {
     translation: {
+        orientation_guard: {
+            title: "Please rotate your device",
+            message: "This game is designed for landscape mode. Please rotate your device to play."
+        },
         common: {
             age_suffix: ' y.o.',
             career_record: 'Career Record',
             cancel: 'Cancel'
         },
+        training: {
+             title: 'Training Phase',
+             description: 'Select training regimen for the week',
+             advisor_msg: 'Focus on Shiko to build base stats safely, or risk injury with Moushi-ai for higher gains.',
+             modes: {
+                 shiko: { label: 'Shiko', sub: 'Body++' },
+                 teppo: { label: 'Teppo', sub: 'Tech+ Body+' },
+                 moushi_ai: { label: 'Moushi-ai', sub: 'Tech++ Mind+' },
+                 rest: { label: 'Rest', sub: 'Recover' }
+             }
+        },
+        heya: {
+            roster: 'Stable Roster'
+        },
+        log_btn: {
+             label: 'LOG',
+             tooltip: 'View Match Log'
+        },
         header: {
             app_title: 'SUMO SIM',
             tp: 'TP',
-            tp_title: 'Training Points',
+            tp_title: 'Training Pts',
             heya_list_title: 'Stable List',
-            heya_list_btn: 'LIST'
+            heya_list_btn: 'Heya List'
         },
         rank: {
             Yokozuna: 'Yokozuna',
@@ -25,6 +47,7 @@ export const en = {
             Jonokuchi: 'Jonokuchi',
             MaeZumo: 'Maezumo',
             Makuuchi: 'Makuuchi', // Added division
+            Sekitori: 'Makuuchi / Juryo',
             East: 'East',
             West: 'West',
             S: 'Legend',
@@ -43,7 +66,8 @@ export const en = {
             Sandanme: 'Sd',
             Jonidan: 'Jd',
             Jonokuchi: 'Jk',
-            MaeZumo: 'Mz'
+            MaeZumo: 'Mz',
+            Sekitori: 'Sk'
         },
         wrestler: {
             age: 'Age',
@@ -55,7 +79,15 @@ export const en = {
             career_suffix: 'y',
             stress: 'Stress',
             stress_suffix: '%',
-            injury: 'INJURY'
+            injury: 'INJURY',
+            skills: 'Skills',
+            skill_book: 'Skill Book',
+            no_skills: 'No active skills',
+            height: 'Height',
+            healthy: 'Healthy',
+            retire_confirm_title: 'Retirement Confirmation',
+            retire_confirm_msg: 'Are you sure you want to retire this wrestler? They will leave the stable permanently.',
+            severance_pay: 'Expected Severance'
         },
         stats: {
             mind: 'Mind',
@@ -76,7 +108,11 @@ export const en = {
             title_bout: 'Title Bout',
             senshuraku: 'Senshuraku',
             advice_action: '🗣️Advice',
-            advised: 'Ordered'
+            advised: 'Ordered',
+            kimarite: 'Technique',
+            wins: 'W',
+            losses: 'L',
+            omitted_hint: '*Lower division matches omitted'
         },
         event: {
             tanimachi_party: {
@@ -300,7 +336,9 @@ export const en = {
             encyclopedia: 'Encyclopedia',
             next_day: 'Next Day',
             next_week: 'Next Week',
-            rename: 'Rename'
+            rename: 'Rename',
+            retire: 'Retire',
+            retire_confirm: 'Retire'
         },
         shikona_change: {
             title: 'Rename Wrestler',
@@ -308,7 +346,6 @@ export const en = {
             new_name_label: 'New Shikona',
             new_reading_label: 'Reading (Romaji)',
         },
-
         ui: {
             funds: 'Funds',
             date: 'Date',
@@ -361,6 +398,10 @@ export const en = {
             no_selection: 'No Wrestler Selected',
             select_instruction: 'Select a wrestler from the list to view details',
             todays_matches: 'Today\'s Matches'
+        },
+        basho: {
+            title: 'Hon-Basho in Progress',
+            subtitle: 'Daily Matches'
         },
         dictionary: {
             title: 'Skill Book',
@@ -491,6 +532,8 @@ export const en = {
                 insufficient_funds: 'Insufficient funds!'
             },
             basho: {
+                title: 'Hon-Basho',
+                subtitle: 'Daily Matches',
                 winner: 'Makuuchi Champion: {{name}} ({{wins}}-{{losses}})',
                 prize_money: 'Won Prize Money: ¥{{amount}}!',
                 retired_summary: '{{count}} wrestlers retired.'
@@ -829,18 +872,5 @@ export const en = {
             Kumamoto: 'Kumamoto', Oita: 'Oita', Miyazaki: 'Miyazaki', Kagoshima: 'Kagoshima', Okinawa: 'Okinawa',
             Mongolia: 'Mongolia', Foreign: 'Foreign'
         },
-        training: {
-            title: 'Training Routine',
-            modes: {
-                shiko: { label: 'Basics', sub: 'Body+ (Safe)' },
-                teppo: { label: 'Teppo', sub: 'Tech+ (Safe)' },
-                moushi_ai: { label: 'Camp', sub: 'All++ (Risk)' },
-                rest: { label: 'Active Rest', sub: 'Recovery' }
-            }
-        },
-        log_btn: {
-            label: 'Log',
-            tooltip: 'Show Log'
-        }
     }
 };

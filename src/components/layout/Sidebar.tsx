@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Wrestler } from '../../types';
 import { useGame } from '../../context/GameContext';
 import { useGameLoop } from '../../hooks/useGameLoop';
+import { getWeekId } from '../../utils/time';
 import { formatRank } from '../../utils/formatting';
 import DailyMatchList from '../../features/match/components/DailyMatchList';
 import Button from '../ui/Button';
-import { Edit2, BookOpen, X } from 'lucide-react';
+import { RadarChart } from '../ui/RadarChart';
+import { Edit2, BookOpen, X, Trash2 } from 'lucide-react';
 import { ShikonaChangeModal } from '../../features/heya/components/ShikonaChangeModal';
 import { SkillBookModal } from '../../features/wrestler/components/SkillBookModal';
 import { useTranslation } from 'react-i18next';
@@ -14,81 +16,10 @@ import { calculateSeverance } from '../../features/wrestler/logic/retirement'; /
 interface SidebarProps {
     selectedWrestler: Wrestler | null;
     onRetireWrestler: (wrestlerId: string) => void;
-    onClearSelection: () => void;
+    onClearSelection?: () => void;
     isOpen?: boolean;
     onClose?: () => void;
 }
-
-// Simple Radar Chart Component
-const RadarChart = ({ stats, labels }: { stats: { m: number, t: number, b: number }, labels: [string, string, string] }) => {
-    // 0-100 scale. Center 50,50. Radius 40.
-    const r = 40;
-
-    // Axis 1: Top (Mind) - Angle -90 deg (or 270)
-    // Axis 2: Bottom Right (Tech) - Angle 30 deg
-    // Axis 3: Bottom Left (Body) - Angle 150 deg
-
-    // Helper to get coords
-    const getPoint = (value: number, angleDeg: number) => {
-        // Actually typical svg: 0 is right. -90 is top.
-        // wait, let's use standard trig with offset.
-        // Angle 0 = Top: (c, c-r)
-        // Let's manually calculcate for Triangle
-        // Top: (50, 10)
-        // Bot Right: (50 + r*sin(120), 50 - r*cos(120)) -> (50 + 34.6, 50 - (-20)) = (84.6, 70)
-        // Bot Left: (50 - 34.6, 70) = (15.4, 70)
-
-        // Let's use clean rotation.
-        // 0 deg = Up. 120 deg = Right Down. 240 deg = Left Down.
-        const normalized = Math.min(100, Math.max(0, value)) / 100;
-        const dist = normalized * r;
-
-        // Up (Mind)
-        if (angleDeg === 0) return { x: 50, y: 50 - dist };
-        // Right Down (Tech)
-        if (angleDeg === 120) return { x: 50 + dist * 0.866, y: 50 + dist * 0.5 };
-        // Left Down (Body)
-        if (angleDeg === 240) return { x: 50 - dist * 0.866, y: 50 + dist * 0.5 };
-        return { x: 50, y: 50 };
-    };
-
-    const pM = getPoint(stats.m, 0);
-    const pT = getPoint(stats.t, 120);
-    const pB = getPoint(stats.b, 240);
-
-    const polyPoints = `${pM.x},${pM.y} ${pT.x},${pT.y} ${pB.x},${pB.y}`;
-
-    const bgM = getPoint(100, 0);
-    const bgT = getPoint(100, 120);
-    const bgB = getPoint(100, 240);
-    const bgPoly = `${bgM.x},${bgM.y} ${bgT.x},${bgT.y} ${bgB.x},${bgB.y}`;
-
-    return (
-        <div className="relative w-32 h-32 mx-auto">
-            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm">
-                {/* Background Triangle */}
-                <polygon points={bgPoly} fill="#fcf9f2" stroke="#e2e8f0" strokeWidth="1" />
-                {/* Mid lines */}
-                <line x1="50" y1="50" x2={bgM.x} y2={bgM.y} stroke="#e2e8f0" strokeWidth="0.5" />
-                <line x1="50" y1="50" x2={bgT.x} y2={bgT.y} stroke="#e2e8f0" strokeWidth="0.5" />
-                <line x1="50" y1="50" x2={bgB.x} y2={bgB.y} stroke="#e2e8f0" strokeWidth="0.5" />
-
-                {/* Data Polygon */}
-                <polygon points={polyPoints} fill="rgba(183, 40, 46, 0.2)" stroke="#b7282e" strokeWidth="1.5" />
-
-                {/* Dots */}
-                <circle cx={pM.x} cy={pM.y} r="2" fill="#b7282e" />
-                <circle cx={pT.x} cy={pT.y} r="2" fill="#amber-500" />
-                <circle cx={pB.x} cy={pB.y} r="2" fill="#475569" />
-            </svg>
-
-            {/* Labels */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-500 bg-white/80 px-1 rounded">{labels[0]} {Math.floor(stats.m)}</div>
-            <div className="absolute bottom-2 right-0 text-[10px] font-bold text-slate-500 bg-white/80 px-1 rounded">{labels[1]} {Math.floor(stats.t)}</div>
-            <div className="absolute bottom-2 left-0 text-[10px] font-bold text-slate-500 bg-white/80 px-1 rounded">{labels[2]} {Math.floor(stats.b)}</div>
-        </div>
-    );
-};
 
 export const Sidebar = ({
     selectedWrestler,
@@ -97,15 +28,10 @@ export const Sidebar = ({
     isOpen = false,
     onClose,
 }: SidebarProps) => {
-    const {
-        wrestlers,
-        gamePhase,
-        todaysMatchups,
-        trainingPoints // used for cost checks
-    } = useGame();
+    const { gamePhase, trainingPoints, todaysMatchups, wrestlers, heyas } = useGame();
     const { t, i18n } = useTranslation();
 
-    const { renameWrestler } = useGameLoop();
+    const { renameWrestler, doSpecialTraining } = useGameLoop();
 
     const [showRenameModal, setShowRenameModal] = useState(false);
     const [showSkillBookModal, setShowSkillBookModal] = useState(false);
@@ -121,6 +47,11 @@ export const Sidebar = ({
         ? wrestlers.find(w => w.id === selectedWrestler.id) || selectedWrestler
         : null;
 
+    // Resolve Heya Name
+    const heyaName = activeSelectedWrestler
+        ? heyas.find(h => h.id === activeSelectedWrestler.heyaId)?.name || activeSelectedWrestler.heyaId
+        : '';
+
     // Display Name Logic: Use reading (Romaji) if English mode, else Name (Kanji)
     const displayName = activeSelectedWrestler
         ? (i18n.language === 'en' && activeSelectedWrestler.reading ? activeSelectedWrestler.reading : activeSelectedWrestler.name)
@@ -130,6 +61,7 @@ export const Sidebar = ({
     const sidebarClasses = `
         fixed inset-y-0 right-0 z-[60]
         w-full sm:w-[26rem] md:w-[22rem] lg:w-[26rem]
+        h-[100dvh]
         bg-white shadow-2xl transform transition-transform duration-300 ease-in-out
         md:relative md:transform-none md:shadow-none md:border-l md:border-slate-200
         ${isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
@@ -137,7 +69,7 @@ export const Sidebar = ({
 
     // Overlay logic (Mobile only)
     const overlayClasses = `
-        fixed inset-0 bg-black/50 z-[55] transition-opacity duration-300
+        fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] transition-opacity duration-300
         md:hidden
         ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}
     `;
@@ -155,102 +87,179 @@ export const Sidebar = ({
                     {/* Mobile Close Button */}
                     <button
                         onClick={onClose}
-                        className="md:hidden absolute top-4 right-4 z-10 p-2 bg-white/80 rounded-full shadow-sm hover:bg-slate-100"
+                        className="md:hidden absolute top-4 right-4 z-20 p-2 bg-white/80 rounded-full shadow-sm hover:bg-slate-100"
                     >
                         <X className="w-5 h-5 text-slate-500" />
                     </button>
 
                     {activeSelectedWrestler ? (
-                        <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
-                            {/* Header Image / Background Pattern */}
-                            <div className="h-24 bg-gradient-to-br from-slate-800 to-slate-900 relative">
-                                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/japanese-sayagata.png')]"></div>
-                                <div className="absolute -bottom-12 left-6">
-                                    <div className="w-24 h-24 rounded-full border-4 border-white bg-slate-200 shadow-md flex items-center justify-center text-4xl overflow-hidden">
-                                        {/* Avatar Placeholder */}
-                                        <span className="opacity-50">力</span>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-0 pb-safe">
+                            <div className="sticky top-0 bg-[#fcf9f2]/95 backdrop-blur-sm z-10 px-6 py-4 border-b border-stone-200 shadow-sm">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="text-xs font-bold text-[#b7282e] tracking-widest uppercase mb-1">{heyaName}</div>
+                                        <h2 className="text-3xl font-bold font-serif text-slate-900 leading-tight tracking-tight">{displayName}</h2>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="bg-slate-900 text-white text-[10px] px-1.5 py-0.5 rounded font-bold tracking-wider">{formatRank(activeSelectedWrestler.rank)}</span>
+                                            <span className="text-xs text-slate-500 font-mono">{activeSelectedWrestler.origin} • {activeSelectedWrestler.age || 18}{t('common.age_suffix')}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                         <button
+                                            onClick={() => setShowRenameModal(true)}
+                                            className="p-1.5 text-slate-400 hover:text-[#b7282e] hover:bg-red-50 rounded-sm transition-colors border border-transparent hover:border-red-100"
+                                            title={t('cmd.rename')}
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
+                                         <button
+                                            onClick={() => {
+                                                // Ideally scroll to bottom or show retire modal directly? 
+                                                // For now, let's keep it near the bottom action but maybe add a shortcut?
+                                                // Actually, user wants "better UI/UX". Let's put Retire in a "Settings" or "Management" dropdown?
+                                                // Or just keep it at bottom for safety.
+                                                const element = document.getElementById('retire-section');
+                                                element?.scrollIntoView({ behavior: 'smooth' });
+                                            }}
+                                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-sm transition-colors"
+                                            title={t('cmd.retire')}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-14 px-6 pb-6">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h2 className="text-2xl font-bold font-serif text-slate-800">{displayName}</h2>
-                                        <div className="text-sm text-slate-500 font-mono mb-2">
-                                            {formatRank(activeSelectedWrestler.rank)}
-                                            <span className="mx-2">•</span>
-                                            {activeSelectedWrestler.origin}
-                                            <span className="mx-2">•</span>
-                                            {activeSelectedWrestler.age || 18}{t('common.age_suffix')}
+                            <div className="p-4 space-y-4 pb-32">
+                                {/* Profile Card */}
+                                <div className="bg-white p-4 rounded-sm shadow-sm border border-stone-200">
+                                    <div className="flex gap-4">
+                                         {/* Simple Avatar Representation */}
+                                        <div className="w-20 h-24 bg-slate-100 rounded-sm flex items-center justify-center flex-shrink-0 border border-slate-200 overflow-hidden relative">
+                                            {/* Pattern or Initial */}
+                                             <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/japanese-sayagata.png')]"></div>
+                                             <span className="font-serif text-4xl text-slate-300 font-bold opacity-30">{displayName.charAt(0)}</span>
+                                        </div>
+                                        
+                                        <div className="flex-1 grid grid-cols-2 gap-y-2 gap-x-4 content-center">
+                                            <div>
+                                                 <div className="text-[10px] uppercase text-slate-400 font-bold">{t('wrestler.weight')}</div>
+                                                 <div className="font-mono text-base font-bold text-slate-700">{activeSelectedWrestler.weight}kg</div>
+                                            </div>
+                                            <div>
+                                                 <div className="text-[10px] uppercase text-slate-400 font-bold">{t('wrestler.height')}</div>
+                                                 <div className="font-mono text-base font-bold text-slate-700">{activeSelectedWrestler.height}cm</div>
+                                            </div>
+                                             <div className="col-span-2 mt-1">
+                                                 <div className="text-[10px] uppercase text-slate-400 font-bold">{t('wrestler.injury')}</div>
+                                                 <div className={`font-bold text-sm ${activeSelectedWrestler.injuryStatus === 'injured' ? 'text-red-600' : 'text-emerald-600'}`}>
+                                                    {activeSelectedWrestler.injuryStatus === 'injured' ? t('sidebar.injury_status') : t('wrestler.healthy')}
+                                                 </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => setShowRenameModal(true)}
-                                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                                        title={t('cmd.rename')}
-                                    >
-                                        <Edit2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-
-                                {/* Stats Grid */}
-                                <div className="grid grid-cols-2 gap-4 mt-6">
-                                    <div className="bg-white p-3 rounded-sm shadow-sm border border-slate-100">
-                                        <div className="text-[10px] uppercase text-slate-400 font-bold mb-1">{t('stats.height_weight')}</div>
-                                        <div className="font-mono text-lg font-bold text-slate-700">
-                                            {activeSelectedWrestler.height}cm / {activeSelectedWrestler.weight}kg
-                                        </div>
-                                    </div>
-                                    <div className="bg-white p-3 rounded-sm shadow-sm border border-slate-100">
-                                        <div className="text-[10px] uppercase text-slate-400 font-bold mb-1">{t('common.career_record')}</div>
-                                        <div className="font-mono text-lg font-bold text-slate-700">
-                                            {/* Placeholder for career record */}
-                                            ---
-                                        </div>
+                                    
+                                    <div className="mt-4 pt-4 border-t border-slate-100">
+                                        <RadarChart
+                                            stats={{
+                                                m: activeSelectedWrestler.stats.mind,
+                                                t: activeSelectedWrestler.stats.technique,
+                                                b: activeSelectedWrestler.stats.body
+                                            }}
+                                            labels={[t('stats.mind'), t('stats.tech'), t('stats.body')]}
+                                        />
                                     </div>
                                 </div>
 
-                                {/* Radar Chart */}
-                                <div className="mt-6">
-                                    <div className="text-xs font-bold text-slate-400 uppercase mb-2 text-center">{t('stats.attributes')}</div>
-                                    <RadarChart
-                                        stats={{
-                                            m: activeSelectedWrestler.stats.mind,
-                                            t: activeSelectedWrestler.stats.technique,
-                                            b: activeSelectedWrestler.stats.body
-                                        }}
-                                        labels={[t('stats.mind'), t('stats.technique'), t('stats.body')]}
-                                    />
+                                {/* Special Training Card (Highlighted) */}
+                                <div className="bg-white rounded-sm shadow-sm border-t-4 border-[#b7282e] overflow-hidden">
+                                    <div className="bg-red-50/50 px-4 py-2 border-b border-red-100 flex justify-between items-center">
+                                         <h3 className="font-serif font-bold text-[#b7282e] flex items-center gap-2">
+                                            <span className="text-lg">⚡</span> {t('sidebar.special_training')}
+                                         </h3>
+                                         <span className="text-xs font-mono font-bold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                            {t('sidebar.training.limit_info', {
+                                                current: activeSelectedWrestler.trainingHistory?.weekId === getWeekId(useGame().currentDate) ? activeSelectedWrestler.trainingHistory.count : 0,
+                                                max: 5
+                                            })}
+                                         </span>
+                                    </div>
+                                    <div className="p-4 grid grid-cols-2 gap-2">
+                                        {[
+                                            { id: 'shiko', cost: 1, label: t('sidebar.training.shiko'), icon: '' },
+                                            { id: 'teppo', cost: 1, label: t('sidebar.training.teppo'), icon: '' },
+                                            { id: 'moushi_ai', cost: 1, label: t('sidebar.training.moushi_ai'), icon: '' },
+                                            { id: 'meditation', cost: 1, label: t('sidebar.training.meditation'), icon: '' }
+                                        ].map((menu) => {
+                                            const currentCount = activeSelectedWrestler.trainingHistory?.weekId === getWeekId(useGame().currentDate) ? activeSelectedWrestler.trainingHistory.count : 0;
+                                            const isLimitReached = currentCount >= 5;
+                                            const hasTp = trainingPoints >= menu.cost;
+                                            const canTrain = !isLimitReached && hasTp && !isRetiring;
+
+                                            return (
+                                                <button
+                                                    key={menu.id}
+                                                    onClick={() => doSpecialTraining(activeSelectedWrestler.id, menu.id)}
+                                                    disabled={!canTrain}
+                                                    className={`
+                                                        relative p-3 rounded-sm text-center transition-all border group
+                                                        ${canTrain 
+                                                            ? 'bg-white hover:bg-[#b7282e] border-slate-200 hover:border-[#b7282e] text-slate-700 hover:text-white shadow-sm hover:shadow-md' 
+                                                            : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'}
+                                                    `}
+                                                >
+                                                    <div className="text-sm font-bold mb-1">{menu.label}</div>
+                                                    <div className={`text-[10px] font-mono ${canTrain ? 'text-slate-400 group-hover:text-red-100' : ''}`}>
+                                                        TP -{menu.cost}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
 
-                                {/* Skills */}
-                                <div className="mt-6">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <div className="text-xs font-bold text-slate-400 uppercase">{t('wrestler.skills')}</div>
+                                {/* Skills Card */}
+                                <div className="bg-white p-4 rounded-sm shadow-sm border border-stone-200">
+                                     <div className="flex justify-between items-center mb-3">
+                                        <h3 className="text-sm font-bold font-serif text-slate-700">{t('wrestler.skills')}</h3>
                                         <button
                                             onClick={() => setShowSkillBookModal(true)}
-                                            className="text-xs flex items-center gap-1 text-slate-500 hover:text-[#b7282e] transition-colors"
+                                            className="text-xs flex items-center gap-1 text-[#b7282e] hover:text-red-700 hover:underline decoration-red-200 underline-offset-4 transition-colors"
                                         >
-                                            <BookOpen className="w-3 h-3" />
+                                            <BookOpen className="w-3.5 h-3.5" />
                                             {t('wrestler.skill_book')}
                                         </button>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {activeSelectedWrestler.skills && activeSelectedWrestler.skills.length > 0 ? (
                                             activeSelectedWrestler.skills.map((skill, idx) => (
-                                                <span key={idx} className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs border border-slate-200">
-                                                    {skill}
+                                                <span key={idx} className="bg-stone-100 text-stone-700 px-2.5 py-1 rounded-sm text-xs border border-stone-200 font-medium">
+                                                    {t(`skills.${skill}.name`, { defaultValue: skill })}
                                                 </span>
                                             ))
                                         ) : (
-                                            <span className="text-slate-400 text-xs italic">{t('wrestler.no_skills')}</span>
+                                            <div className="w-full text-center py-4 text-slate-300 italic text-sm border-2 border-dashed border-slate-100 rounded-sm">
+                                                {t('wrestler.no_skills')}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
+                                
+                                {/* Matches Card (Preview) */}
+                                <div className="bg-white rounded-sm shadow-sm border border-stone-200 overflow-hidden">
+                                    <div className="px-4 py-2 bg-stone-50 border-b border-stone-100">
+                                        <h3 className="text-sm font-bold font-serif text-slate-700">{t('sidebar.matches_tab')}</h3>
+                                    </div>
+                                    {/* Sidebar only shows relevant match for this wrestler */}
+                                    <DailyMatchList 
+                                        matchups={todaysMatchups.filter(m => (m.east.id === activeSelectedWrestler.id || m.west.id === activeSelectedWrestler.id))}
+                                        onAdvice={() => {}} // No-op for sidebar view currently
+                                        currentTp={trainingPoints}
+                                    />
+                                </div>
 
-                                {/* Retirement Action */}
-                                <div className="mt-8 pt-6 border-t border-slate-200">
+                                {/* Retirement Section */}
+                                <div id="retire-section" className="mt-8 pt-4">
                                     {!isRetiring ? (
                                         <Button
                                             variant="primary"

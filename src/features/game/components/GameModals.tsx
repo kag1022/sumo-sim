@@ -9,7 +9,7 @@ import { DanpatsuModal } from '../../wrestler/components/DanpatsuModal';
 import { HelpModal } from '../../../components/HelpModal';
 import { RetirementConsultationModal } from '../../../components/RetirementConsultationModal';
 import { EventModal } from '../../events/components/EventModal';
-import ScoutPanel from '../../wrestler/components/ScoutPanel';
+import ScoutScreen from '../../wrestler/components/ScoutScreen';
 import { MAX_PLAYERS_PER_HEYA } from '../../../utils/constants';
 import { EncyclopediaModal } from '../../collection/components/EncyclopediaModal';
 import { HeyaListModal } from '../../heya/components/HeyaListModal';
@@ -160,7 +160,7 @@ export const GameModals = ({
 
             {/* Scout Panel */}
             {showScout && (
-                <ScoutPanel
+                <ScoutScreen
                     candidates={candidates}
                     funds={funds}
                     currentCount={playerWrestlers.length}
