@@ -3,8 +3,11 @@ import { useGame } from '../../../context/GameContext';
 import { KIMARITE_DATA, KimariteDef, KimariteType } from '../../match/data/kimariteData';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { SKILL_REGISTRY, SkillTier, SkillDef } from '../../wrestler/data/skillRegistry';
-import { X, Book, Trophy, Lock, BookOpen } from 'lucide-react';
+import { Book, Trophy, Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import ModalShell from '../../../components/ui/ModalShell';
+import SectionHeader from '../../../components/ui/SectionHeader';
+import TabList from '../../../components/ui/TabList';
 
 interface EncyclopediaModalProps {
     onClose: () => void;
@@ -57,53 +60,35 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({ onClose })
     }, [unlockedAchievements]);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="w-full max-w-4xl bg-[#fcf9f2] rounded-sm shadow-xl border-t-4 border-[#b7282e] flex flex-col max-h-[90vh]">
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white">
-                    <div className="flex items-center gap-2">
-                        <Book className="w-6 h-6 text-[#b7282e]" />
-                        <div>
-                            <h2 className="text-xl font-bold font-serif text-slate-800">{t('encyclopedia.title')}</h2>
-                            <p className="text-xs text-slate-500 uppercase tracking-widest">{t('encyclopedia.subtitle')}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <X className="w-6 h-6 text-slate-500" />
-                    </button>
-                </div>
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-4xl max-h-[90vh] border-2 border-[#b7282e]"
+            bodyClassName="flex flex-col h-full"
+        >
+            {/* Header */}
+            <div className="px-6 pt-6">
+                <SectionHeader
+                    eyebrow={t('encyclopedia.subtitle')}
+                    title={t('encyclopedia.title')}
+                    illustrationKey="encyclopedia"
+                    icon={<Book className="w-4 h-4" />}
+                    actions={<></>}
+                />
+            </div>
 
-                {/* Tabs */}
-                <div className="flex border-b border-slate-200 bg-white">
-                    <button
-                        onClick={() => setActiveTab('kimarite')}
-                        className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 flex items-center justify-center gap-2 ${activeTab === 'kimarite'
-                            ? 'border-[#b7282e] text-[#b7282e] bg-red-50/50'
-                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                            }`}
-                    >
-                        {t('encyclopedia.tabs.kimarite')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('skills')}
-                        className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 flex items-center justify-center gap-2 ${activeTab === 'skills'
-                            ? 'border-[#b7282e] text-[#b7282e] bg-red-50/50'
-                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                            }`}
-                    >
-                        <BookOpen className="w-4 h-4" />
-                        {t('dictionary.title')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('achievements')}
-                        className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 flex items-center justify-center gap-2 ${activeTab === 'achievements'
-                            ? 'border-[#b7282e] text-[#b7282e] bg-red-50/50'
-                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                            }`}
-                    >
-                        {t('encyclopedia.tabs.achievements')}
-                    </button>
-                </div>
+            {/* Tabs */}
+            <div className="px-6 pt-4">
+                <TabList
+                    tabs={[
+                        { id: 'kimarite', label: t('encyclopedia.tabs.kimarite') },
+                        { id: 'skills', label: t('dictionary.title') },
+                        { id: 'achievements', label: t('encyclopedia.tabs.achievements') },
+                    ]}
+                    activeId={activeTab}
+                    onChange={(id) => setActiveTab(id as any)}
+                />
+            </div>
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto p-6 scrollbar-thin bg-[#fcf9f2]">
@@ -242,7 +227,6 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({ onClose })
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+        </ModalShell>
     );
 };

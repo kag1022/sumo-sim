@@ -3,8 +3,12 @@ import React, { useMemo } from 'react';
 import { getOkamiUpgradeCost, MAX_OKAMI_LEVEL } from '../logic/okami';
 import { saveGame as saveToStorage, loadGame as loadFromStorage, exportSaveData, importSaveData, clearSave } from '../../../utils/storage';
 import { useGame } from '../../../context/GameContext';
-import { Flower, Save, FolderOpen, Download, Upload, AlertTriangle, X, Lock, Hammer, GraduationCap, ChevronRight } from 'lucide-react';
+import { Flower, Save, FolderOpen, Download, Upload, AlertTriangle, Lock, Hammer, GraduationCap, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import ModalShell from '../../../components/ui/ModalShell';
+import SectionHeader from '../../../components/ui/SectionHeader';
+import TabList from '../../../components/ui/TabList';
+import KpiChip from '../../../components/ui/KpiChip';
 
 interface ManagementModalProps {
     okamiLevel: number;
@@ -92,95 +96,54 @@ const ManagementModal: React.FC<ManagementModalProps> = ({
     const canAffordFacility = nextFacility ? funds >= nextFacility.cost : false;
     const isMaxFacility = currentHeyaLevel >= 5;
 
-    // Sub-components
-    const WoodTab = ({ id, label, icon: Icon }: { id: string, label: string, icon?: any }) => (
-        <button
-            onClick={() => setActiveTab(id as any)}
-            className={`
-                relative px-6 py-3 font-serif font-bold text-sm tracking-wider transition-all duration-300
-                flex items-center gap-2 group overflow-hidden
-                ${activeTab === id
-                    ? 'text-[#2c1a1b] -translate-y-1 z-10'
-                    : 'text-stone-400 hover:text-stone-600 hover:-translate-y-0.5'
-                }
-            `}
-        >
-            {/* Wood Texture Background for Active */}
-            {activeTab === id && (
-                <div className="absolute inset-0 bg-[#e6dcc5] shadow-[0_-2px_4px_rgba(0,0,0,0.1)] rounded-t-sm border-t-2 border-x border-[#d1c4a5]">
-                    <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]"></div>
-                </div>
-            )}
-
-            {/* Hover Background for Inactive */}
-            {activeTab !== id && (
-                <div className="absolute inset-0 bg-stone-100 rounded-t-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            )}
-
-            <div className="relative z-10 flex items-center gap-2">
-                {Icon && <Icon className={`w-4 h-4 ${activeTab === id ? 'text-[#b7282e]' : 'text-stone-400'}`} />}
-                {label}
-            </div>
-        </button>
-    );
+    const tabs = [
+        { id: 'okami', label: t('management.tabs.okami') },
+        { id: 'facility', label: t('management.tabs.facility') },
+        { id: 'settings', label: t('management.tabs.settings') },
+        { id: 'system', label: t('management.tabs.system') },
+    ];
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-            {/* Main Modal Container - Ledger Style */}
-            <div className="bg-[#fcf9f2] w-full max-w-3xl rounded-sm shadow-2xl overflow-hidden flex flex-col border-[6px] border-slate-800 relative h-[85vh]">
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-3xl h-[85vh] border-[6px] border-[#b7282e]"
+            bodyClassName="flex flex-col h-full"
+            overlayClassName="z-[100] bg-black/60"
+        >
 
                 {/* Texture Overlay */}
                 <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
 
-                {/* Header: Noren Style */}
-                <div className="bg-slate-800 p-6 flex justify-between items-start shrink-0 relative overflow-hidden shadow-md z-20">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-[#b7282e] z-10"></div>
-                    <div className="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/japanese-sayagata.png')]"></div>
-
-                    <div className="relative z-10">
-                        <h2 className="text-3xl font-black font-serif text-white tracking-widest mb-1 flex items-center gap-3">
-                            <span className="w-8 h-8 rounded-full bg-[#b7282e] flex items-center justify-center text-white border-2 border-white/20">
-                                <span className="font-sans text-lg">帳</span>
-                            </span>
-                            {t('management.title')}
-                        </h2>
-                        <div className="text-white/40 text-xs font-bold uppercase tracking-[0.3em] pl-11">
-                            {t('management.subtitle')}
-                        </div>
-                    </div>
-
-                    <button onClick={onClose} className="relative z-10 text-slate-400 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center group">
-                        <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-                    </button>
+                {/* Header */}
+                <div className="px-6 pt-6">
+                    <SectionHeader
+                        eyebrow={t('management.subtitle')}
+                        title={t('management.title')}
+                        illustrationKey="management"
+                        icon={<Flower className="w-4 h-4" />}
+                        actions={
+                            <div className="flex flex-wrap items-center gap-2 justify-end">
+                                <KpiChip label={t('management.financial.current_funds')} value={`¥${funds.toLocaleString()}`} />
+                                {lastMonthBalance !== null && (
+                                    <KpiChip
+                                        label={t('management.financial.last_month')}
+                                        value={`${lastMonthBalance >= 0 ? '+' : ''}${lastMonthBalance.toLocaleString()}`}
+                                    />
+                                )}
+                                <KpiChip label={t('ui.okami')} value={`Lv.${okamiLevel}`} />
+                            </div>
+                        }
+                    />
                 </div>
 
-                {/* Financial Ledger Strip */}
-                <div className="bg-[#e6dcc5] border-b border-[#d1c4a5] p-4 relative z-10 shadow-inner flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        <div>
-                            <div className="text-[9px] font-bold text-[#8c7b64] uppercase tracking-wider mb-0.5">{t('management.financial.current_funds')}</div>
-                            <div className={`font-mono font-bold text-2xl tracking-tight leading-none ${funds < 0 ? 'text-red-700' : 'text-[#4a3b32]'}`}>
-                                ¥{funds.toLocaleString()}
-                            </div>
-                        </div>
-                        <div className="w-px h-8 bg-[#d1c4a5]"></div>
-                        {lastMonthBalance !== null && (
-                            <div>
-                                <div className="text-[9px] font-bold text-[#8c7b64] uppercase tracking-wider mb-0.5">{t('management.financial.last_month')}</div>
-                                <div className={`font-mono font-bold text-lg leading-none ${lastMonthBalance >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-                                    {lastMonthBalance >= 0 ? '+' : ''}{lastMonthBalance.toLocaleString()}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Tabs - Wood Tag Style */}
-                <div className="flex px-6 pt-6 gap-1 shrink-0 bg-[#f4f0e6] border-b border-[#d1c4a5] overflow-x-auto custom-scrollbar">
-                    <WoodTab id="okami" label={t('management.tabs.okami')} icon={Flower} />
-                    <WoodTab id="facility" label={t('management.tabs.facility')} icon={Hammer} />
-                    <WoodTab id="settings" label={t('management.tabs.settings')} />
-                    <WoodTab id="system" label={t('management.tabs.system')} />
+                {/* Tabs */}
+                <div className="px-6 pt-4">
+                    <TabList
+                        tabs={tabs}
+                        activeId={activeTab}
+                        onChange={(id) => setActiveTab(id as any)}
+                    />
                 </div>
 
                 {/* Content Area */}
@@ -498,8 +461,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({
                     )}
 
                 </div>
-            </div>
-        </div>
+        </ModalShell>
     );
 };
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { useGame } from '../../../context/GameContext';
 import { useTranslation } from 'react-i18next';
 import { Milestone } from 'lucide-react';
+import ModalShell from '../../../components/ui/ModalShell';
 
 interface HeyaListModalProps {
     isOpen: boolean;
@@ -52,8 +53,13 @@ export const HeyaListModal: React.FC<HeyaListModalProps> = ({ isOpen, onClose })
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-            <div className="bg-[#fcf9f2] w-full max-w-5xl h-[85vh] rounded-sm shadow-2xl overflow-hidden flex flex-col border border-stone-400 relative">
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-5xl h-[85vh] border border-[#b7282e]"
+            bodyClassName="flex flex-col h-full"
+            overlayClassName="z-[100] bg-black/60"
+        >
 
                 {/* Header */}
                 <div className="bg-white p-5 shrink-0 border-b border-stone-300 flex justify-between items-center shadow-sm z-10">
@@ -132,7 +138,6 @@ export const HeyaListModal: React.FC<HeyaListModalProps> = ({ isOpen, onClose })
                         {t('heya_list.close')}
                     </button>
                 </div>
-            </div>
-        </div>
+        </ModalShell>
     );
 };

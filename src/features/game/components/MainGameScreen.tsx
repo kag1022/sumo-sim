@@ -3,6 +3,7 @@ import { TrainingType, Wrestler } from '../../../types';
 import { useGame } from '../../../context/GameContext';
 import { useGameLoop } from '../../../hooks/useGameLoop';
 import { Header } from '../../../components/layout/Header';
+import AppShell from '../../../components/layout/AppShell';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { GameModals } from './GameModals';
 import WrestlerList from '../../wrestler/components/WrestlerList';
@@ -13,6 +14,10 @@ import { AchievementSystem } from '../../collection/components/AchievementSystem
 // New Imports for Design
 import { ChevronRight, Dumbbell, Zap, Swords, Coffee, X } from 'lucide-react';
 import Button from '../../../components/ui/Button';
+import ActionBar from '../../../components/ui/ActionBar';
+import Panel from '../../../components/ui/Panel';
+import SectionHeader from '../../../components/ui/SectionHeader';
+import KpiChip from '../../../components/ui/KpiChip';
 import { useTranslation } from 'react-i18next';
 import DailyMatchList from '../../match/components/DailyMatchList';
 
@@ -154,7 +159,7 @@ const generateDummyWrestlers = (): Wrestler[] => {
  * メインゲーム画面コンポーネント (Refactored for Robustness & Mobile)
  */
 export const MainGameScreen = () => {
-    const { wrestlers, setWrestlers, setHeyas, gamePhase, todaysMatchups, trainingPoints } = useGame();
+    const { wrestlers, setWrestlers, setHeyas, gamePhase, todaysMatchups, trainingPoints, setBashoFinished, setYushoWinners, yushoWinners } = useGame();
     const { advanceTime, recruitWrestler, retireWrestler, giveAdvice } = useGameLoop();
     const { t } = useTranslation();
 
@@ -191,6 +196,7 @@ export const MainGameScreen = () => {
     const [showHelp, setShowHelp] = useState(false);
     const [showLog, setShowLog] = useState(false);
     const [trainingType, setTrainingType] = useState<TrainingType>('shiko');
+    const [debugRenameSignal, setDebugRenameSignal] = useState(0);
 
     // Initialize Data once
     useEffect(() => {
@@ -214,6 +220,66 @@ export const MainGameScreen = () => {
 
     // Filter for Display: Only Player's Heya
     const playerWrestlers = wrestlers.filter(w => w.heyaId === 'player_heya');
+    const enableTestShortcuts = import.meta.env.DEV && new URLSearchParams(window.location.search).has('test');
+
+    useEffect(() => {
+        if (!enableTestShortcuts) return;
+
+        const handler = (event: KeyboardEvent) => {
+            const target = event.target as HTMLElement | null;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return;
+            }
+
+            switch (event.key) {
+                case 'a':
+                case 'A':
+                    setShowScout((prev) => !prev);
+                    break;
+                case 'b':
+                case 'B':
+                    setShowManagement((prev) => !prev);
+                    break;
+                case 'ArrowLeft':
+                    setShowHistory((prev) => !prev);
+                    break;
+                case 'ArrowRight':
+                    setShowEncyclopedia((prev) => !prev);
+                    break;
+                case 'ArrowUp': {
+                    if (yushoWinners) {
+                        setYushoWinners(null);
+                        return;
+                    }
+                    const winner = playerWrestlers[0] || wrestlers[0];
+                    if (winner) {
+                        setBashoFinished(false);
+                        setYushoWinners({ Makuuchi: winner });
+                    }
+                    break;
+                }
+                case 'ArrowDown':
+                    setYushoWinners(null);
+                    setBashoFinished((prev) => !prev);
+                    break;
+                case 'Enter': {
+                    if (!selectedWrestler && playerWrestlers[0]) {
+                        setSelectedWrestler(playerWrestlers[0]);
+                    }
+                    setDebugRenameSignal((prev) => prev + 1);
+                    break;
+                }
+                case ' ':
+                    setShowHeyaList((prev) => !prev);
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [enableTestShortcuts, playerWrestlers, wrestlers, selectedWrestler, setBashoFinished, setYushoWinners, yushoWinners]);
 
     // Training Mukofuda Component
     const MukofudaCard = ({ type, label, subLabel, icon: Icon }: any) => {
@@ -245,54 +311,56 @@ export const MainGameScreen = () => {
     const nextLabel = gamePhase === 'tournament' ? t('cmd.next_day') : t('cmd.next_week');
 
     return (
-        <div className="h-screen w-screen bg-[#fcf9f2] text-slate-800 font-sans flex flex-col overflow-hidden">
-            {/* Header */}
-            <Header
-                onShowScout={() => setShowScout(true)}
-                onShowManagement={() => setShowManagement(true)}
-                onShowHistory={() => setShowHistory(true)}
-                onShowEncyclopedia={() => setShowEncyclopedia(true)}
-                onShowHeyaList={() => setShowHeyaList(true)}
-                // Toggles
-                onToggleLeftPanel={() => setIsListOpen(!isListOpen)}
-                onToggleRightPanel={() => setIsSidebarOpen(!isSidebarOpen)}
-                isLeftPanelOpen={isListOpen}
-                isRightPanelOpen={isSidebarOpen}
-            />
-
+        <AppShell
+            header={
+                <Header
+                    onShowScout={() => setShowScout(true)}
+                    onShowManagement={() => setShowManagement(true)}
+                    onShowHistory={() => setShowHistory(true)}
+                    onShowEncyclopedia={() => setShowEncyclopedia(true)}
+                    onShowHeyaList={() => setShowHeyaList(true)}
+                    // Toggles
+                    onToggleLeftPanel={() => setIsListOpen(!isListOpen)}
+                    onToggleRightPanel={() => setIsSidebarOpen(!isSidebarOpen)}
+                    isLeftPanelOpen={isListOpen}
+                    isRightPanelOpen={isSidebarOpen}
+                />
+            }
+        >
             {/* Main Content Layout (Flex Row) */}
             <div className="flex-1 flex overflow-hidden">
                 
                 {/* 1. LEFT PANEL: Roster List */}
                 <div className={`
-                    bg-[#fcf9f2] border-r border-slate-200 flex flex-col z-20
-                    transition-all duration-300 ease-in-out
+                    flex flex-col z-20 transition-all duration-300 ease-in-out
                     ${isListOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full opacity-0 overflow-hidden'}
                     absolute md:relative h-full shadow-lg md:shadow-none
                 `}>
-                     <div className="p-3 border-b border-slate-200 bg-slate-50 flex justify-between items-center shrink-0">
-                        <h2 className="font-bold font-serif text-slate-800 flex items-center gap-2">
-                            <span className="text-[#b7282e]">◆</span>
-                            {t('heya.roster')}
-                        </h2>
-                        <div className="flex items-center gap-2">
-                             <span className="text-xs font-mono bg-slate-200 px-2 py-0.5 rounded text-slate-600">
-                                {playerWrestlers.length}
-                            </span>
-                            {/* Mobile Close */}
-                            <button onClick={() => setIsListOpen(false)} className="md:hidden p-1 text-slate-400">
-                                <X className="w-5 h-5"/>
-                            </button>
+                    <Panel className="h-full rounded-none border-0 border-r border-[var(--color-sumo-line)] shadow-none">
+                        <div className="p-3 border-b border-[var(--color-sumo-line)] bg-white/80 flex justify-between items-center shrink-0">
+                            <h2 className="font-bold font-serif text-slate-800 flex items-center gap-2">
+                                <span className="text-[#b7282e]">◆</span>
+                                {t('heya.roster')}
+                            </h2>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono bg-slate-200 px-2 py-0.5 rounded text-slate-600">
+                                    {playerWrestlers.length}
+                                </span>
+                                {/* Mobile Close */}
+                                <button onClick={() => setIsListOpen(false)} className="md:hidden p-1 text-slate-400">
+                                    <X className="w-5 h-5"/>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
-                        <WrestlerList wrestlers={playerWrestlers} onSelect={setSelectedWrestler} />
-                    </div>
+                        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                            <WrestlerList wrestlers={playerWrestlers} onSelect={setSelectedWrestler} />
+                        </div>
+                    </Panel>
                 </div>
 
 
                 {/* 2. CENTER PANEL: Main Game Area */}
-                <div className="flex-1 flex flex-col relative min-w-0 bg-[#f4f1e8] z-0">
+                <div className="flex-1 flex flex-col relative min-w-0 bg-[var(--color-sumo-paper)] z-0">
                     
                     {/* Background Visuals */}
                      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
@@ -302,39 +370,23 @@ export const MainGameScreen = () => {
                     {/* Scrollable Content Area */}
                     <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32">
                         <div className="max-w-5xl mx-auto">
-                            <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-sm border border-slate-200 bg-white/80 px-4 py-3 shadow-sm">
-                                <div>
-                                    <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                                        {gamePhase === 'tournament' ? t('ui.tournament') : t('ui.training')}
+                            <SectionHeader
+                                eyebrow={gamePhase === 'tournament' ? t('ui.tournament') : t('ui.training')}
+                                title={gamePhase === 'tournament' ? t('basho.title', 'Hon-Basho in Progress') : t('training.title')}
+                                subtitle={gamePhase === 'tournament' ? t('basho.subtitle', 'Daily Matches') : t('training.description')}
+                                illustrationKey={gamePhase === 'tournament' ? 'basho' : 'training'}
+                                actions={
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <KpiChip label="TP" value={trainingPoints} tone="gold" />
+                                        <KpiChip label="NEXT" value={nextLabel} />
                                     </div>
-                                    <div className="text-lg font-serif font-bold text-slate-800">
-                                        {gamePhase === 'tournament' ? t('basho.title', 'Hon-Basho in Progress') : t('training.title')}
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 text-xs font-mono text-slate-500">
-                                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600">
-                                        TP {trainingPoints}
-                                    </span>
-                                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600">
-                                        {nextLabel}
-                                    </span>
-                                </div>
-                            </div>
+                                }
+                            />
                         </div>
                         
                         {/* Phase 1: Training Mode */}
                         {gamePhase === 'training' && (
                             <div className="max-w-4xl mx-auto animate-fadeIn">
-                                <div className="mb-6 flex items-center gap-3">
-                                    <div className="p-2 bg-[#b7282e] text-white rounded-sm">
-                                        <Dumbbell className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-serif font-bold text-slate-800 leading-none">{t('training.title')}</h2>
-                                        <p className="text-sm text-slate-500 mt-1">{t('training.description', 'Select training regimen for the week')}</p>
-                                    </div>
-                                </div>
-
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                     <MukofudaCard
                                         type="shiko"
@@ -374,16 +426,6 @@ export const MainGameScreen = () => {
                         {/* Phase 2: Tournament Mode (Basho) */}
                         {gamePhase === 'tournament' && (
                             <div className="max-w-4xl mx-auto animate-fadeIn pb-12">
-                                <div className="mb-6 flex items-center gap-3">
-                                    <div className="p-2 bg-amber-500 text-amber-950 rounded-sm">
-                                        <Swords className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-serif font-bold text-slate-800 leading-none">{t('basho.title', 'Hon-Basho in Progress')}</h2>
-                                        <p className="text-sm text-slate-500 mt-1">{t('basho.subtitle', 'Daily Matches')}</p>
-                                    </div>
-                                </div>
-
                                 {/* Match List Component */}
                                 <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
                                      <DailyMatchList
@@ -409,22 +451,20 @@ export const MainGameScreen = () => {
                     </div>
 
                     {/* Bottom Command Bar */}
-                    <div className="sticky bottom-0 z-10 border-t border-slate-200 bg-[#fcf9f2]/95 backdrop-blur-sm">
+                    <ActionBar>
                         <div className="flex flex-col gap-3 px-4 py-3 md:px-6 md:py-4">
                             <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-500">
                                 <div className="flex items-center gap-2">
-                                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600">
-                                        <span className="w-2 h-2 rounded-full bg-amber-400" />
-                                        {gamePhase === 'tournament' ? t('basho.title', 'Hon-Basho in Progress') : t('training.title')}
-                                    </span>
-                                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600">
-                                        TP {trainingPoints}
-                                    </span>
+                                    <KpiChip
+                                        label={t('ui.training')}
+                                        value={gamePhase === 'tournament' ? t('basho.title', 'Hon-Basho in Progress') : t('training.title')}
+                                    />
+                                    <KpiChip label="TP" value={trainingPoints} tone="gold" />
                                 </div>
                                 <button
                                     onClick={() => setShowLog(!showLog)}
                                     className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 transition-colors ${
-                                        showLog ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:text-slate-900'
+                                        showLog ? 'border-slate-600 bg-slate-700 text-white' : 'border-[var(--color-sumo-line)] bg-white text-slate-600 hover:text-slate-900'
                                     }`}
                                     title={t('log_btn.tooltip')}
                                 >
@@ -445,7 +485,7 @@ export const MainGameScreen = () => {
                                 <ChevronRight className="w-6 h-6" />
                             </Button>
                         </div>
-                    </div>
+                    </ActionBar>
                 </div>
 
 
@@ -460,9 +500,8 @@ export const MainGameScreen = () => {
                 
                 <div className={`
                     fixed md:relative top-0 right-0 h-full z-40 md:z-20
-                    bg-white border-l border-slate-200 shadow-2xl md:shadow-none
                     transition-transform duration-300 ease-in-out flex flex-col
-                    ${isSidebarOpen ? 'translate-x-0 w-80 md:w-96' : 'translate-x-full w-0 md:w-0 overflow-hidden border-none'}
+                    ${isSidebarOpen ? 'translate-x-0 w-80 md:w-96' : 'translate-x-full w-0 md:w-0 overflow-hidden'}
                 `}>
                      {/* Close Button (Mobile Only, or if needed on Desktop) */}
                      {isSidebarOpen && (
@@ -472,14 +511,16 @@ export const MainGameScreen = () => {
                              </button>
                         </div>
                      )}
-
+                    <Panel className="h-full rounded-none border-0 border-l border-[var(--color-sumo-line)] shadow-none bg-white">
                     <Sidebar
                         selectedWrestler={selectedWrestler}
                         onRetireWrestler={retireWrestler}
                         onClearSelection={() => setSelectedWrestler(null)}
                         isOpen={true}
                         onClose={() => setIsSidebarOpen(false)}
+                        debugRenameSignal={debugRenameSignal}
                     />
+                    </Panel>
                 </div>
 
             </div>
@@ -509,7 +550,7 @@ export const MainGameScreen = () => {
                     setShowScout(false);
                 }}
             />
-        </div>
+        </AppShell>
     );
 };
 

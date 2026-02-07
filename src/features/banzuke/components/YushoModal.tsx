@@ -2,6 +2,8 @@
 import React from 'react';
 import { Wrestler } from '../../../types';
 import { useTranslation } from 'react-i18next';
+import ModalShell from '../../../components/ui/ModalShell';
+import SectionHeader from '../../../components/ui/SectionHeader';
 
 interface YushoModalProps {
     winners: Record<string, Wrestler>;
@@ -16,22 +18,27 @@ const YushoModal: React.FC<YushoModalProps> = ({ winners, onClose }) => {
     const divisionOrder = ['Makuuchi', 'Juryo', 'Makushita', 'Sandanme', 'Jonidan', 'Jonokuchi'];
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fadeIn">
-            {/* Main Card */}
-            <div className="relative max-w-xl w-full bg-[#fcf9f2] rounded-sm shadow-2xl p-8 flex flex-col items-center border-[12px] border-[#b7282e] outline outline-4 outline-white outline-offset-[-14px]">
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-xl border-[12px] border-[#b7282e] outline outline-4 outline-white outline-offset-[-14px]"
+            bodyClassName="flex flex-col items-center p-8 relative"
+            overlayClassName="z-[200] bg-black/60 backdrop-blur-md"
+        >
+            {/* Corner Ornaments */}
+            <div className="absolute top-2 left-2 w-16 h-16 border-t-[1px] border-l-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
+            <div className="absolute top-2 right-2 w-16 h-16 border-t-[1px] border-r-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
+            <div className="absolute bottom-2 left-2 w-16 h-16 border-b-[1px] border-l-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
+            <div className="absolute bottom-2 right-2 w-16 h-16 border-b-[1px] border-r-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
 
-                {/* Corner Ornaments */}
-                <div className="absolute top-2 left-2 w-16 h-16 border-t-[1px] border-l-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
-                <div className="absolute top-2 right-2 w-16 h-16 border-t-[1px] border-r-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
-                <div className="absolute bottom-2 left-2 w-16 h-16 border-b-[1px] border-l-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
-                <div className="absolute bottom-2 right-2 w-16 h-16 border-b-[1px] border-r-[1px] border-[#b7282e] opacity-20 pointer-events-none"></div>
-
-                {/* Header */}
-                <div className="mb-8 text-center">
-                    <h2 className="text-5xl font-black font-serif text-[#b7282e] mb-2 tracking-widest drop-shadow-sm">{t('yusho.title')}</h2>
-                    <div className="h-px w-32 bg-slate-300 mx-auto"></div>
-                    <div className="text-slate-400 text-xs font-serif mt-2 tracking-[0.3em] uppercase">{t('yusho.subtitle')}</div>
-                </div>
+            {/* Header */}
+            <SectionHeader
+                align="center"
+                eyebrow={t('yusho.subtitle')}
+                title={t('yusho.title')}
+                illustrationKey="yusho"
+                className="border-0 shadow-none bg-transparent mb-6"
+            />
 
                 {/* Winners List */}
                 <div className="w-full space-y-4 mb-4">
@@ -74,18 +81,16 @@ const YushoModal: React.FC<YushoModalProps> = ({ winners, onClose }) => {
                     })}
                 </div>
 
-                {/* Footer Stamp/Button */}
-                <div className="mt-8">
-                    <button
-                        onClick={onClose}
-                        className="group relative overflow-hidden bg-slate-900 text-white font-serif font-bold text-lg py-3 px-12 rounded-sm shadow-lg hover:shadow-xl hover:bg-[#b7282e] transition-all duration-300"
-                    >
-                        <span className="relative z-10">{t('yusho.next')}</span>
-                    </button>
-                </div>
-
+            {/* Footer Stamp/Button */}
+            <div className="mt-8">
+                <button
+                    onClick={onClose}
+                    className="group relative overflow-hidden bg-slate-900 text-white font-serif font-bold text-lg py-3 px-12 rounded-sm shadow-lg hover:shadow-xl hover:bg-[#b7282e] transition-all duration-300"
+                >
+                    <span className="relative z-10">{t('yusho.next')}</span>
+                </button>
             </div>
-        </div>
+        </ModalShell>
     );
 };
 

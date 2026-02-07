@@ -7,14 +7,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        'sumo-paper': '#f5f5f0', // Washi-like off-white
-        'sumo-red': '#b33e30',
-        'sumo-gold': '#d4af37',
-        'sumo-black': '#1a1a1a',
+        'sumo-paper': '#fcf9f2',
+        'sumo-red': '#b7282e',
+        'sumo-gold': '#fbbf24',
+        'sumo-ink': '#1e293b',
+        'sumo-line': '#e6dfcf',
       },
       fontFamily: {
-        'serif': ['"Noto Serif JP"', 'serif'], // Mincho style
-        'sans': ['"Inter"', 'sans-serif'],
+        'serif': ['"Noto Serif JP"', 'serif'],
+        'sans': ['"Noto Sans JP"', 'sans-serif'],
       }
     },
   },

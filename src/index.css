@@ -1,16 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-    --font-serif: "Zen Old Mincho", "Noto Serif JP", serif;
-    --font-sans: "Zen Kaku Gothic New", "Noto Sans JP", scan-serif;
+    --font-serif: "Noto Serif JP", "Zen Old Mincho", serif;
+    --font-sans: "Noto Sans JP", "Zen Kaku Gothic New", sans-serif;
 
     /* Color Palette */
     --color-sumo-red: #b7282e;     /* Primary: Japan Red */
     --color-sumo-cream: #fcf9f2;   /* Background: Cream White */
-    --color-sumo-dark: #1e293b;    /* Text: Ink (Slate 800) */
-    --color-sumo-gold: #fbbf24;    /* Secondary: Amber 400 (mapped closest to tailwind amber-400 for consistency if used directly, or define custom if specific hex provided) */
-    /* Note: User specified bg-amber-400 for secondary. We can just use standard amber-400 or define an alias. 
-       Let's stick to defining the custom ones that are hex codes. */
+    --color-sumo-ink: #1e293b;     /* Text: Ink (Slate 800) */
+    --color-sumo-gold: #fbbf24;    /* Secondary: Amber 400 */
+    --color-sumo-paper: #f4f1e8;   /* Panel background */
+    --color-sumo-line: #e6dfcf;    /* Hairline borders */
+
+    /* Radius + Shadow */
+    --radius-sm: 0.125rem;
+    --radius-md: 0.375rem;
+    --shadow-sm: 0 2px 6px rgba(30, 41, 59, 0.08);
+    --shadow-md: 0 10px 24px rgba(30, 41, 59, 0.12);
+}
+
+@layer base {
+    :root {
+        color-scheme: light;
+    }
+
+    body {
+        background-color: var(--color-sumo-cream);
+        color: var(--color-sumo-ink);
+        font-family: var(--font-sans);
+        text-rendering: optimizeLegibility;
+    }
+
+    h1, h2, h3, h4 {
+        font-family: var(--font-serif);
+        color: var(--color-sumo-ink);
+    }
+
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    input, textarea, select {
+        font-family: var(--font-sans);
+    }
 }
 
 /* Washi Texture */
@@ -38,10 +71,4 @@
     background-position: 0 0, 20px 10px, -20px 10px;
 }
 
-body {
-    background-color: var(--color-sumo-cream);
-    color: var(--color-sumo-dark);
-}
-
-/* Simple font import example - likely handled in index.html in real prod, but via CSS works for loose prototyping if we had the URL, 
-   but standard serif is fine for "Traditional" feel if not available */
+/* Simple font import example - handled in index.html for production */

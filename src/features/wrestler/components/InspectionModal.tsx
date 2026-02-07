@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { RadarChart } from '../../../components/ui/RadarChart';
 import { getGrade } from '../../wrestler/logic/scouting';
 import { useGame } from '../../../context/GameContext';
+import ModalShell from '../../../components/ui/ModalShell';
 
 interface InspectionModalProps {
     candidate: Candidate;
@@ -55,8 +56,14 @@ export const InspectionModal: React.FC<InspectionModalProps> = ({ candidate, onA
     };
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn p-4">
-            <div className="bg-[#fcf9f2] rounded-sm shadow-2xl max-w-lg w-full overflow-hidden border-2 border-slate-300 relative transition-all duration-500">
+        <ModalShell
+            onClose={onReject}
+            header={<></>}
+            size="sm"
+            className="max-w-lg border-2 border-[#b7282e]"
+            bodyClassName="flex flex-col"
+            overlayClassName="z-[200] bg-black/60"
+        >
                 
                 {/* Paper Texture Overlay */}
                 <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
@@ -162,7 +169,6 @@ export const InspectionModal: React.FC<InspectionModalProps> = ({ candidate, onA
                         </div>
                     </div>
                 )}
-            </div>
-        </div>
+        </ModalShell>
     );
 };
