@@ -6,6 +6,7 @@ import { formatRank } from '../../../utils/formatting';
 import { ChevronUp, ChevronDown, Minus, Crown } from 'lucide-react';
 import { useGame } from '../../../context/GameContext';
 import { RANK_VALUE_MAP } from '../../../utils/constants';
+import ModalShell from '../../../components/ui/ModalShell';
 
 interface BashoResultModalProps {
     wrestlers: Wrestler[];
@@ -114,23 +115,28 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
     }, []);
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn p-4">
-            <div className="relative bg-[#fcf9f2] w-full max-w-5xl max-h-[90vh] rounded-sm shadow-2xl flex flex-col border-[6px] border-double border-stone-800 overflow-hidden">
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-5xl max-h-[90vh] border-[6px] border-double border-stone-800"
+            bodyClassName="flex flex-col h-full"
+            overlayClassName="z-[200] bg-black/70"
+        >
 
-                {/* Paper Texture Overlay */}
-                <div className="absolute inset-0 pointer-events-none opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
+            {/* Paper Texture Overlay */}
+            <div className="absolute inset-0 pointer-events-none opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
 
-                {/* Header */}
-                <div className="relative z-10 p-6 pb-2 text-center shrink-0">
-                    <div className="inline-block border-b-2 border-[#b7282e] pb-1 mb-1">
-                        <h2 className="text-3xl md:text-4xl font-black font-serif text-stone-900 tracking-widest drop-shadow-sm">
-                            {t('banzuke.announcement.title')}
-                        </h2>
-                    </div>
-                    <div className="text-stone-500 font-serif font-bold text-sm tracking-widest">
-                        {t('banzuke.announcement.subtitle', { year: currentDate.getFullYear() - 2024, month: currentDate.getMonth() + 1 })}
-                    </div>
+            {/* Header */}
+            <div className="relative z-10 p-6 pb-2 text-center shrink-0">
+                <div className="inline-block border-b-2 border-[#b7282e] pb-1 mb-1">
+                    <h2 className="text-3xl md:text-4xl font-black font-serif text-stone-900 tracking-widest drop-shadow-sm">
+                        {t('banzuke.announcement.title')}
+                    </h2>
                 </div>
+                <div className="text-stone-500 font-serif font-bold text-sm tracking-widest">
+                    {t('banzuke.announcement.subtitle', { year: currentDate.getFullYear() - 2024, month: currentDate.getMonth() + 1 })}
+                </div>
+            </div>
 
                 {/* Hero Section (Promoted Sekitori) - Only show if current tab is Makuuchi or Juryo? Or always? Always is good for hype. */}
                 {promotedHeroes.length > 0 && (
@@ -262,8 +268,7 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
                     </button>
                 </div>
 
-            </div>
-        </div>
+        </ModalShell>
     );
 };
 

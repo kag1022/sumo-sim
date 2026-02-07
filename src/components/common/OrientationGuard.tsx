@@ -8,7 +8,7 @@ export const OrientationGuard = () => {
     const { t } = useTranslation();
 
     return (
-        <div className="fixed inset-0 z-[100] bg-slate-900 text-white flex flex-col items-center justify-center p-6 text-center portrait:flex landscape:hidden">
+        <div className="fixed inset-0 z-[100] bg-slate-900 text-white flex flex-col items-center justify-center p-6 text-center portrait:flex landscape:hidden min-h-[100svh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             <div className="mb-6 animate-pulse">
                 <RotateCcw className="w-16 h-16 md:w-24 md:h-24 text-amber-400" />
             </div>

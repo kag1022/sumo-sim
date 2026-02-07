@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import ModalShell from './ui/ModalShell';
 
 interface HelpModalProps {
     onClose: () => void;
@@ -9,27 +10,30 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
     const [activeTab, setActiveTab] = useState<'flow' | 'tips' | 'terms'>('flow');
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-[110] backdrop-blur-sm p-4" onClick={onClose}>
-            {/* Book/Scroll Container */}
-            <div className="bg-[#fcf9f2] max-w-3xl w-full h-[85vh] rounded-sm shadow-2xl overflow-hidden flex flex-col border-l-8 border-l-[#b7282e] relative" onClick={e => e.stopPropagation()}>
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-3xl h-[85vh] border-l-8 border-l-[#b7282e]"
+            bodyClassName="flex flex-col h-full"
+        >
 
-                {/* Paper Texture */}
-                <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
+            {/* Paper Texture */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
 
-                {/* Header */}
-                <div className="bg-[#fcf9f2] p-8 pb-4 shrink-0 flex justify-between items-start border-b border-stone-200">
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="w-8 h-px bg-[#b7282e]"></span>
-                            <span className="text-[#b7282e] text-xs font-bold uppercase tracking-widest">Guidebook</span>
-                        </div>
-                        <h2 className="text-4xl font-black font-serif text-slate-900 tracking-tight">相撲部屋 経営指南書</h2>
+            {/* Header */}
+            <div className="bg-[#fcf9f2] p-8 pb-4 shrink-0 flex justify-between items-start border-b border-stone-200">
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="w-8 h-px bg-[#b7282e]"></span>
+                        <span className="text-[#b7282e] text-xs font-bold uppercase tracking-widest">Guidebook</span>
                     </div>
-                    <button onClick={onClose} className="text-stone-400 hover:text-[#b7282e] transition-colors text-2xl leading-none">×</button>
+                    <h2 className="text-4xl font-black font-serif text-slate-900 tracking-tight">相撲部屋 経営指南書</h2>
                 </div>
+                <button onClick={onClose} className="text-stone-400 hover:text-[#b7282e] transition-colors text-2xl leading-none">×</button>
+            </div>
 
-                {/* Tabs */}
-                <div className="flex px-8 border-b border-stone-200 gap-8 shrink-0 bg-white/50">
+            {/* Tabs */}
+            <div className="flex px-8 border-b border-stone-200 gap-8 shrink-0 bg-white/50">
                     {['flow', 'tips', 'terms'].map((tab) => (
                         <button
                             key={tab}
@@ -48,8 +52,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
                     ))}
                 </div>
 
-                {/* Content Area */}
-                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar text-slate-800 leading-relaxed">
+            {/* Content Area */}
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar text-slate-800 leading-relaxed">
                     {activeTab === 'flow' && (
                         <div className="space-y-12 max-w-2xl">
                             <div className="flex gap-6">
@@ -162,13 +166,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
                     )}
                 </div>
 
-                {/* Footer seal */}
-                <div className="p-4 bg-[#fcf9f2] border-t border-stone-200 text-right">
-                    <div className="inline-block border border-[#b7282e] text-[#b7282e] px-3 py-1 text-[10px] font-bold font-serif">
-                        相撲協会 公認
-                    </div>
+            {/* Footer seal */}
+            <div className="p-4 bg-[#fcf9f2] border-t border-stone-200 text-right">
+                <div className="inline-block border border-[#b7282e] text-[#b7282e] px-3 py-1 text-[10px] font-bold font-serif">
+                    相撲協会 公認
                 </div>
             </div>
-        </div>
+        </ModalShell>
     );
 };

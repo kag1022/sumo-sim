@@ -19,13 +19,13 @@ const Button: React.FC<ButtonProps> = ({
     children,
     ...props
 }) => {
-    const baseStyles = "inline-flex items-center justify-center font-bold transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none rounded-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 whitespace-nowrap";
+    const baseStyles = "inline-flex items-center justify-center font-bold transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none rounded-sm shadow-[var(--shadow-sm)] focus:outline-none focus:ring-2 focus:ring-offset-1 whitespace-nowrap";
 
     const variants = {
-        primary: "bg-[#b7282e] hover:bg-[#a02027] text-white border border-[#b7282e] focus:ring-[#b7282e]",
-        secondary: "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 focus:ring-slate-400",
-        action: "bg-amber-400 text-amber-950 hover:bg-amber-300 border border-amber-500 focus:ring-amber-500",
-        outline: "bg-transparent border border-slate-300 text-slate-700 hover:bg-slate-50 focus:ring-slate-400",
+        primary: "bg-[var(--color-sumo-red)] hover:bg-[#a01e23] text-white border border-[var(--color-sumo-red)] focus:ring-[var(--color-sumo-red)]",
+        secondary: "bg-white text-slate-700 hover:bg-slate-50 border border-[var(--color-sumo-line)] focus:ring-slate-400",
+        action: "bg-[var(--color-sumo-gold)] text-amber-950 hover:bg-amber-300 border border-amber-400 focus:ring-amber-500",
+        outline: "bg-transparent border border-[var(--color-sumo-line)] text-slate-700 hover:bg-slate-50 focus:ring-slate-400",
         ghost: "bg-transparent text-slate-600 hover:bg-slate-100 shadow-none focus:ring-slate-400"
     };
 

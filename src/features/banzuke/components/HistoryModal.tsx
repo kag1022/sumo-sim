@@ -4,6 +4,7 @@ import { YushoRecord } from '../../../types';
 import { getWesternYearFromBashoId } from '../../../utils/time';
 import { useTranslation } from 'react-i18next';
 import { Crown, Landmark } from 'lucide-react';
+import ModalShell from '../../../components/ui/ModalShell';
 
 interface HistoryModalProps {
     history?: YushoRecord[];
@@ -57,33 +58,37 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
     }, [sortedHistory, rankFilter]);
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-            <div className="bg-[#fcf9f2] w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl rounded-sm border-y-[12px] border-[#b7282e] relative overflow-hidden">
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-5xl h-[90vh] border-y-[12px] border-[#b7282e]"
+            bodyClassName="flex flex-col h-full"
+        >
 
-                {/* Texture */}
-                <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
+            {/* Texture */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
 
-                {/* Header */}
-                <div className="bg-white px-8 py-6 flex justify-between items-center shrink-0 shadow-sm border-b border-stone-200 relative z-10">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-[#b7282e] rounded-full flex items-center justify-center text-white shadow-md border-4 border-double border-white">
-                            <span className="font-serif font-black text-2xl">史</span>
-                        </div>
-                        <div>
-                            <h2 className="text-3xl font-black font-serif text-slate-900 tracking-tight">{t('history.title')}</h2>
-                            <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">{t('history.subtitle')}</p>
-                        </div>
+            {/* Header */}
+            <div className="bg-white px-8 py-6 flex justify-between items-center shrink-0 shadow-sm border-b border-stone-200 relative z-10">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-[#b7282e] rounded-full flex items-center justify-center text-white shadow-md border-4 border-double border-white">
+                        <span className="font-serif font-black text-2xl">史</span>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="text-stone-400 hover:text-[#b7282e] transition-colors font-serif font-bold text-sm tracking-widest border-b border-transparent hover:border-[#b7282e]"
-                    >
-                        {t('history.close')}
-                    </button>
+                    <div>
+                        <h2 className="text-3xl font-black font-serif text-slate-900 tracking-tight">{t('history.title')}</h2>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold">{t('history.subtitle')}</p>
+                    </div>
                 </div>
+                <button
+                    onClick={onClose}
+                    className="text-stone-400 hover:text-[#b7282e] transition-colors font-serif font-bold text-sm tracking-widest border-b border-transparent hover:border-[#b7282e]"
+                >
+                    {t('history.close')}
+                </button>
+            </div>
 
-                {/* Tabs */}
-                <div className="flex px-8 border-b border-stone-200 bg-stone-50 shrink-0 gap-1">
+            {/* Tabs */}
+            <div className="flex px-8 border-b border-stone-200 bg-stone-50 shrink-0 gap-1">
                     <button
                         onClick={() => setActiveTab('timeline')}
                         className={`px-6 py-4 text-sm font-bold transition-all relative overflow-hidden group ${activeTab === 'timeline' ? 'bg-[#fcf9f2] text-[#b7282e] border-x border-stone-200 -mb-px pt-4 pb-4 shadow-[0_-2px_5px_rgba(0,0,0,0.02)]' : 'text-stone-400 hover:text-stone-600'}`}
@@ -100,8 +105,8 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto bg-[#fcf9f2] custom-scrollbar p-8 relative z-0">
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto bg-[#fcf9f2] custom-scrollbar p-8 relative z-0">
 
                     {/* --- Hall of Fame Tab --- */}
                     {activeTab === 'hallOfFame' && (
@@ -259,8 +264,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history = [], onClos
                             </div>
                         </div>
                     )}
-                </div>
             </div>
-        </div>
+        </ModalShell>
     );
 };

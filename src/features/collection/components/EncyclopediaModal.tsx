@@ -5,6 +5,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { SKILL_REGISTRY, SkillTier, SkillDef } from '../../wrestler/data/skillRegistry';
 import { X, Book, Trophy, Lock, BookOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import ModalShell from '../../../components/ui/ModalShell';
 
 interface EncyclopediaModalProps {
     onClose: () => void;
@@ -57,8 +58,12 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({ onClose })
     }, [unlockedAchievements]);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="w-full max-w-4xl bg-[#fcf9f2] rounded-sm shadow-xl border-t-4 border-[#b7282e] flex flex-col max-h-[90vh]">
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-4xl max-h-[90vh] border-t-4 border-[#b7282e]"
+            bodyClassName="flex flex-col h-full"
+        >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white">
                     <div className="flex items-center gap-2">
@@ -242,7 +247,6 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({ onClose })
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+        </ModalShell>
     );
 };

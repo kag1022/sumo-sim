@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Leaf } from 'lucide-react';
 import { CandidateCard } from './CandidateCard';
 import { InspectionModal } from './InspectionModal';
+import ModalShell from '../../../components/ui/ModalShell';
 
 interface ScoutScreenProps {
     candidates: Candidate[];
@@ -39,7 +40,13 @@ const ScoutScreen: React.FC<ScoutScreenProps> = ({ candidates, funds, currentCou
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-6xl h-[90vh] border border-stone-400"
+            bodyClassName="flex flex-col h-full"
+            overlayClassName="z-[100] bg-black/60"
+        >
             
             {selectedCandidate && (
                 <InspectionModal 
@@ -49,10 +56,8 @@ const ScoutScreen: React.FC<ScoutScreenProps> = ({ candidates, funds, currentCou
                 />
             )}
 
-            <div className="bg-[#fcf9f2] w-full max-w-6xl h-[90vh] rounded-sm shadow-2xl overflow-hidden flex flex-col border border-stone-400 relative">
-
-                {/* Header Section */}
-                <div className="bg-white p-6 shrink-0 border-b border-stone-300 flex justify-between items-end shadow-sm z-10">
+            {/* Header Section */}
+            <div className="bg-white p-6 shrink-0 border-b border-stone-300 flex justify-between items-end shadow-sm z-10">
                     <div>
                         <div className="flex items-center gap-3 mb-1">
                             <span className="bg-[#b7282e] text-white text-xs font-bold px-2 py-0.5 rounded-sm">{t('scout.dept_name')}</span>
@@ -97,8 +102,8 @@ const ScoutScreen: React.FC<ScoutScreenProps> = ({ candidates, funds, currentCou
                     </div>
                 </div>
 
-                {/* Content Grid */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] custom-scrollbar">
+            {/* Content Grid */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] custom-scrollbar">
                     {candidates.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-slate-400">
                             <Leaf className="w-16 h-16 mb-4 text-green-200/50" />
@@ -127,8 +132,7 @@ const ScoutScreen: React.FC<ScoutScreenProps> = ({ candidates, funds, currentCou
                         {t('scout.close_panel')}
                     </button>
                 </div>
-            </div>
-        </div>
+        </ModalShell>
     );
 };
 

@@ -5,6 +5,7 @@ import { SKILL_REGISTRY, SkillTier } from '../data/skillRegistry';
 import { useTranslation } from 'react-i18next';
 import { useGame } from '../../../context/GameContext';
 import { useWrestlerActions } from '../hooks/useWrestlerActions';
+import ModalShell from '../../../components/ui/ModalShell';
 
 interface SkillBookModalProps {
     isOpen: boolean;
@@ -33,11 +34,16 @@ export const SkillBookModal: React.FC<SkillBookModalProps> = ({ isOpen, onClose,
     if (!selectedWrestler) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
-            <div className="bg-[#fcf9f2] w-full max-w-2xl max-h-[90vh] rounded-lg shadow-xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-                {/* Header */}
-                <div className="bg-[#b7282e] text-white px-6 py-4 flex justify-between items-center shadow-md shrink-0">
-                    <h2 className="text-xl font-serif font-bold flex items-center gap-2">
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-2xl max-h-[90vh]"
+            bodyClassName="flex flex-col h-full"
+            overlayClassName="z-[100]"
+        >
+            {/* Header */}
+            <div className="bg-[#b7282e] text-white px-6 py-4 flex justify-between items-center shadow-md shrink-0">
+                <h2 className="text-xl font-serif font-bold flex items-center gap-2">
                         <BookOpen className="w-6 h-6" /> {t('dictionary.title_manage', 'スキル管理')}
                     </h2>
                     <button onClick={onClose} className="text-white/80 hover:text-white text-2xl leading-none">&times;</button>
@@ -86,9 +92,8 @@ export const SkillBookModal: React.FC<SkillBookModalProps> = ({ isOpen, onClose,
                             )}
                         </div>
                     </div>
-                </div>
             </div>
-        </div>,
+        </ModalShell>,
         document.body
     );
 };

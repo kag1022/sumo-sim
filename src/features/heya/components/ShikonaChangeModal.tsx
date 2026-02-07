@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wrestler } from '../../../types';
+import ModalShell from '../../../components/ui/ModalShell';
 
 interface ShikonaChangeModalProps {
     isOpen: boolean;
@@ -52,8 +53,14 @@ export const ShikonaChangeModal: React.FC<ShikonaChangeModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
-            <div className="bg-white rounded-sm shadow-xl w-full max-w-md border border-stone-200 overflow-hidden">
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            size="sm"
+            className="max-w-md"
+            bodyClassName="flex flex-col"
+            overlayClassName="z-[100]"
+        >
                 {/* Header */}
                 <div className="bg-[#b7282e] text-white p-4 flex justify-between items-center">
                     <h2 className="font-serif font-bold text-lg">{t('modal.shikona_change.title', '四股名改名')}</h2>
@@ -118,7 +125,6 @@ export const ShikonaChangeModal: React.FC<ShikonaChangeModalProps> = ({
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
+        </ModalShell>
     );
 };

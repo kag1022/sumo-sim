@@ -5,6 +5,7 @@ import { saveGame as saveToStorage, loadGame as loadFromStorage, exportSaveData,
 import { useGame } from '../../../context/GameContext';
 import { Flower, Save, FolderOpen, Download, Upload, AlertTriangle, X, Lock, Hammer, GraduationCap, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import ModalShell from '../../../components/ui/ModalShell';
 
 interface ManagementModalProps {
     okamiLevel: number;
@@ -125,9 +126,13 @@ const ManagementModal: React.FC<ManagementModalProps> = ({
     );
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-            {/* Main Modal Container - Ledger Style */}
-            <div className="bg-[#fcf9f2] w-full max-w-3xl rounded-sm shadow-2xl overflow-hidden flex flex-col border-[6px] border-slate-800 relative h-[85vh]">
+        <ModalShell
+            onClose={onClose}
+            header={<></>}
+            className="max-w-3xl h-[85vh] border-[6px] border-slate-800"
+            bodyClassName="flex flex-col h-full"
+            overlayClassName="z-[100] bg-black/60"
+        >
 
                 {/* Texture Overlay */}
                 <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
@@ -498,8 +503,7 @@ const ManagementModal: React.FC<ManagementModalProps> = ({
                     )}
 
                 </div>
-            </div>
-        </div>
+        </ModalShell>
     );
 };
 
