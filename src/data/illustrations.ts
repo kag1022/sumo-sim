@@ -4,7 +4,10 @@ export type IllustrationKey =
   | 'basho'
   | 'management'
   | 'history'
-  | 'encyclopedia';
+  | 'encyclopedia'
+  | 'scout'
+  | 'banzuke'
+  | 'yusho';
 
 export interface IllustrationMeta {
   src?: string;
@@ -44,6 +47,21 @@ export const illustrations: Record<IllustrationKey, IllustrationMeta> = {
   encyclopedia: {
     src: sectionSrc,
     alt: 'Encyclopedia header illustration',
+    overlay: 'from-[#0b0b0b]/20 via-transparent to-transparent',
+  },
+  scout: {
+    src: sectionSrc,
+    alt: 'Scout header illustration',
+    overlay: 'from-[#0b0b0b]/20 via-transparent to-transparent',
+  },
+  banzuke: {
+    src: sectionSrc,
+    alt: 'Banzuke header illustration',
+    overlay: 'from-[#0b0b0b]/20 via-transparent to-transparent',
+  },
+  yusho: {
+    src: sectionSrc,
+    alt: 'Yusho header illustration',
     overlay: 'from-[#0b0b0b]/20 via-transparent to-transparent',
   },
 };

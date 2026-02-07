@@ -56,7 +56,7 @@ export const HeyaListModal: React.FC<HeyaListModalProps> = ({ isOpen, onClose })
         <ModalShell
             onClose={onClose}
             header={<></>}
-            className="max-w-5xl h-[85vh] border border-stone-400"
+            className="max-w-5xl h-[85vh] border border-[#b7282e]"
             bodyClassName="flex flex-col h-full"
             overlayClassName="z-[100] bg-black/60"
         >

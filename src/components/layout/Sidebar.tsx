@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Wrestler } from '../../types';
 import { useGame } from '../../context/GameContext';
 import { useGameLoop } from '../../hooks/useGameLoop';
@@ -19,6 +19,7 @@ interface SidebarProps {
     onClearSelection?: () => void;
     isOpen?: boolean;
     onClose?: () => void;
+    debugRenameSignal?: number;
 }
 
 export const Sidebar = ({
@@ -27,8 +28,9 @@ export const Sidebar = ({
     // onClearSelection, // unused
     isOpen = false,
     onClose,
+    debugRenameSignal,
 }: SidebarProps) => {
-    const { gamePhase, trainingPoints, todaysMatchups, wrestlers, heyas } = useGame();
+    const { gamePhase, trainingPoints, todaysMatchups, wrestlers, heyas, currentDate } = useGame();
     const { t, i18n } = useTranslation();
 
     const { renameWrestler, doSpecialTraining } = useGameLoop();
@@ -46,6 +48,12 @@ export const Sidebar = ({
     const activeSelectedWrestler = selectedWrestler
         ? wrestlers.find(w => w.id === selectedWrestler.id) || selectedWrestler
         : null;
+
+    useEffect(() => {
+        if (debugRenameSignal === undefined) return;
+        if (!activeSelectedWrestler) return;
+        setShowRenameModal((prev) => !prev);
+    }, [debugRenameSignal, activeSelectedWrestler]);
 
     // Resolve Heya Name
     const heyaName = activeSelectedWrestler
@@ -215,7 +223,7 @@ export const Sidebar = ({
                                          </h3>
                                          <span className="text-xs font-mono font-bold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
                                             {t('sidebar.training.limit_info', {
-                                                current: activeSelectedWrestler.trainingHistory?.weekId === getWeekId(useGame().currentDate) ? activeSelectedWrestler.trainingHistory.count : 0,
+                                                current: activeSelectedWrestler.trainingHistory?.weekId === getWeekId(currentDate) ? activeSelectedWrestler.trainingHistory.count : 0,
                                                 max: 5
                                             })}
                                         </span>
@@ -227,7 +235,7 @@ export const Sidebar = ({
                                             { id: 'moushi_ai', cost: 1, label: t('sidebar.training.moushi_ai'), icon: '' },
                                             { id: 'meditation', cost: 1, label: t('sidebar.training.meditation'), icon: '' }
                                         ].map((menu) => {
-                                            const currentCount = activeSelectedWrestler.trainingHistory?.weekId === getWeekId(useGame().currentDate) ? activeSelectedWrestler.trainingHistory.count : 0;
+                                            const currentCount = activeSelectedWrestler.trainingHistory?.weekId === getWeekId(currentDate) ? activeSelectedWrestler.trainingHistory.count : 0;
                                             const isLimitReached = currentCount >= 5;
                                             const hasTp = trainingPoints >= menu.cost;
                                             const canTrain = !isLimitReached && hasTp && !isRetiring;

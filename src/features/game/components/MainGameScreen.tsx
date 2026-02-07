@@ -159,7 +159,7 @@ const generateDummyWrestlers = (): Wrestler[] => {
  * メインゲーム画面コンポーネント (Refactored for Robustness & Mobile)
  */
 export const MainGameScreen = () => {
-    const { wrestlers, setWrestlers, setHeyas, gamePhase, todaysMatchups, trainingPoints } = useGame();
+    const { wrestlers, setWrestlers, setHeyas, gamePhase, todaysMatchups, trainingPoints, setBashoFinished, setYushoWinners, yushoWinners } = useGame();
     const { advanceTime, recruitWrestler, retireWrestler, giveAdvice } = useGameLoop();
     const { t } = useTranslation();
 
@@ -196,6 +196,7 @@ export const MainGameScreen = () => {
     const [showHelp, setShowHelp] = useState(false);
     const [showLog, setShowLog] = useState(false);
     const [trainingType, setTrainingType] = useState<TrainingType>('shiko');
+    const [debugRenameSignal, setDebugRenameSignal] = useState(0);
 
     // Initialize Data once
     useEffect(() => {
@@ -219,6 +220,66 @@ export const MainGameScreen = () => {
 
     // Filter for Display: Only Player's Heya
     const playerWrestlers = wrestlers.filter(w => w.heyaId === 'player_heya');
+    const enableTestShortcuts = import.meta.env.DEV && new URLSearchParams(window.location.search).has('test');
+
+    useEffect(() => {
+        if (!enableTestShortcuts) return;
+
+        const handler = (event: KeyboardEvent) => {
+            const target = event.target as HTMLElement | null;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return;
+            }
+
+            switch (event.key) {
+                case 'a':
+                case 'A':
+                    setShowScout((prev) => !prev);
+                    break;
+                case 'b':
+                case 'B':
+                    setShowManagement((prev) => !prev);
+                    break;
+                case 'ArrowLeft':
+                    setShowHistory((prev) => !prev);
+                    break;
+                case 'ArrowRight':
+                    setShowEncyclopedia((prev) => !prev);
+                    break;
+                case 'ArrowUp': {
+                    if (yushoWinners) {
+                        setYushoWinners(null);
+                        return;
+                    }
+                    const winner = playerWrestlers[0] || wrestlers[0];
+                    if (winner) {
+                        setBashoFinished(false);
+                        setYushoWinners({ Makuuchi: winner });
+                    }
+                    break;
+                }
+                case 'ArrowDown':
+                    setYushoWinners(null);
+                    setBashoFinished((prev) => !prev);
+                    break;
+                case 'Enter': {
+                    if (!selectedWrestler && playerWrestlers[0]) {
+                        setSelectedWrestler(playerWrestlers[0]);
+                    }
+                    setDebugRenameSignal((prev) => prev + 1);
+                    break;
+                }
+                case ' ':
+                    setShowHeyaList((prev) => !prev);
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [enableTestShortcuts, playerWrestlers, wrestlers, selectedWrestler, setBashoFinished, setYushoWinners, yushoWinners]);
 
     // Training Mukofuda Component
     const MukofudaCard = ({ type, label, subLabel, icon: Icon }: any) => {
@@ -451,13 +512,14 @@ export const MainGameScreen = () => {
                         </div>
                      )}
                     <Panel className="h-full rounded-none border-0 border-l border-[var(--color-sumo-line)] shadow-none bg-white">
-                        <Sidebar
-                            selectedWrestler={selectedWrestler}
-                            onRetireWrestler={retireWrestler}
-                            onClearSelection={() => setSelectedWrestler(null)}
-                            isOpen={true}
-                            onClose={() => setIsSidebarOpen(false)}
-                        />
+                    <Sidebar
+                        selectedWrestler={selectedWrestler}
+                        onRetireWrestler={retireWrestler}
+                        onClearSelection={() => setSelectedWrestler(null)}
+                        isOpen={true}
+                        onClose={() => setIsSidebarOpen(false)}
+                        debugRenameSignal={debugRenameSignal}
+                    />
                     </Panel>
                 </div>
 

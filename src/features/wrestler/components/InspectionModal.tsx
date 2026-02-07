@@ -60,7 +60,7 @@ export const InspectionModal: React.FC<InspectionModalProps> = ({ candidate, onA
             onClose={onReject}
             header={<></>}
             size="sm"
-            className="max-w-lg border-2 border-slate-300"
+            className="max-w-lg border-2 border-[#b7282e]"
             bodyClassName="flex flex-col"
             overlayClassName="z-[200] bg-black/60"
         >

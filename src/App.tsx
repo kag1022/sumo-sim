@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IntroScreen } from './components/IntroScreen';
 import { TitleScreen } from './components/TitleScreen';
 import { MainGameScreen } from './features/game/components/MainGameScreen';
@@ -11,9 +11,25 @@ import { OrientationGuard } from './components/common/OrientationGuard';
  * 初期化状態に基づいて TitleScreen / IntroScreen / MainGameScreen を切り替え
  */
 const GameAppContent = () => {
-  const { isInitialized, loadGameData } = useGame();
+  const { isInitialized, loadGameData, startGame } = useGame();
   const [showIntro, setShowIntro] = useState(false);
   const [selectedMode, setSelectedMode] = useState<GameMode>('Establish');
+  const shouldAutoStart = import.meta.env.DEV && new URLSearchParams(window.location.search).has('autostart');
+
+  useEffect(() => {
+    if (shouldAutoStart && !isInitialized) {
+      startGame({
+        oyakataName: 'テスト親方',
+        stableName: 'テスト部屋',
+        shikonaPrefix: 'テ',
+        shikonaPrefixReading: 'Te',
+        hometown: '東京都',
+        specialty: 'power',
+        location: '東京都',
+        mode: 'Establish'
+      });
+    }
+  }, [shouldAutoStart, isInitialized, startGame]);
 
   if (!isInitialized) {
     if (showIntro) {

@@ -13,7 +13,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
         <ModalShell
             onClose={onClose}
             header={<></>}
-            className="max-w-3xl h-[85vh] border-l-8 border-l-[#b7282e]"
+            className="max-w-3xl h-[85vh] border-2 border-[#b7282e]"
             bodyClassName="flex flex-col h-full"
         >
 
@@ -29,7 +29,6 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
                     </div>
                     <h2 className="text-4xl font-black font-serif text-slate-900 tracking-tight">相撲部屋 経営指南書</h2>
                 </div>
-                <button onClick={onClose} className="text-stone-400 hover:text-[#b7282e] transition-colors text-2xl leading-none">×</button>
             </div>
 
             {/* Tabs */}

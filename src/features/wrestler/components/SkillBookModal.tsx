@@ -44,10 +44,9 @@ export const SkillBookModal: React.FC<SkillBookModalProps> = ({ isOpen, onClose,
             {/* Header */}
             <div className="bg-[#b7282e] text-white px-6 py-4 flex justify-between items-center shadow-md shrink-0">
                 <h2 className="text-xl font-serif font-bold flex items-center gap-2">
-                        <BookOpen className="w-6 h-6" /> {t('dictionary.title_manage', 'スキル管理')}
-                    </h2>
-                    <button onClick={onClose} className="text-white/80 hover:text-white text-2xl leading-none">&times;</button>
-                </div>
+                    <BookOpen className="w-6 h-6" /> {t('dictionary.title_manage', 'スキル管理')}
+                </h2>
+            </div>
 
                 {/* Content */}
                 <div className="p-6 overflow-y-auto flex-1 bg-[#fcf9f2]">

@@ -11,6 +11,7 @@ interface ModalShellProps {
   footer?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   closeOnBackdrop?: boolean;
+  showCloseButton?: boolean;
   className?: string;
   bodyClassName?: string;
   overlayClassName?: string;
@@ -32,6 +33,7 @@ const ModalShell: React.FC<ModalShellProps> = ({
   footer,
   size = 'lg',
   closeOnBackdrop = true,
+  showCloseButton = true,
   className,
   bodyClassName,
   overlayClassName,
@@ -44,12 +46,19 @@ const ModalShell: React.FC<ModalShellProps> = ({
     >
       <div
         className={clsx(
-          'relative w-full rounded-sm border border-[var(--color-sumo-line)] bg-[var(--color-sumo-cream)] shadow-2xl overflow-hidden',
+          'relative w-full rounded-sm border-2 border-[var(--color-sumo-red)] bg-[var(--color-sumo-cream)] shadow-2xl overflow-hidden',
           sizeClasses[size],
           className
         )}
         onClick={(event) => event.stopPropagation()}
       >
+        {onClose && showCloseButton && (
+          <div className="absolute top-3 right-3 z-30">
+            <IconButton variant="outline" size="sm" onClick={onClose} aria-label="Close">
+              <X className="h-4 w-4" />
+            </IconButton>
+          </div>
+        )}
         {header ?? (
           (title || onClose) && (
             <div className="flex items-start justify-between gap-4 border-b border-[var(--color-sumo-line)] bg-white/80 px-6 py-4">
@@ -57,11 +66,6 @@ const ModalShell: React.FC<ModalShellProps> = ({
                 {title && <h2 className="text-2xl font-serif font-bold text-slate-900">{title}</h2>}
                 {subtitle && <p className="text-xs text-slate-500 uppercase tracking-widest mt-1">{subtitle}</p>}
               </div>
-              {onClose && (
-                <IconButton variant="outline" size="sm" onClick={onClose} aria-label="Close">
-                  <X className="h-4 w-4" />
-                </IconButton>
-              )}
             </div>
           )
         )}

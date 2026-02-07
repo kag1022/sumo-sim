@@ -7,6 +7,8 @@ import { ChevronUp, ChevronDown, Minus, Crown } from 'lucide-react';
 import { useGame } from '../../../context/GameContext';
 import { RANK_VALUE_MAP } from '../../../utils/constants';
 import ModalShell from '../../../components/ui/ModalShell';
+import SectionHeader from '../../../components/ui/SectionHeader';
+import TabList from '../../../components/ui/TabList';
 
 interface BashoResultModalProps {
     wrestlers: Wrestler[];
@@ -118,7 +120,7 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
         <ModalShell
             onClose={onClose}
             header={<></>}
-            className="max-w-5xl max-h-[90vh] border-[6px] border-double border-stone-800"
+            className="max-w-5xl max-h-[90vh] border-[6px] border-double border-[#b7282e]"
             bodyClassName="flex flex-col h-full"
             overlayClassName="z-[200] bg-black/70"
         >
@@ -127,15 +129,14 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
             <div className="absolute inset-0 pointer-events-none opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]"></div>
 
             {/* Header */}
-            <div className="relative z-10 p-6 pb-2 text-center shrink-0">
-                <div className="inline-block border-b-2 border-[#b7282e] pb-1 mb-1">
-                    <h2 className="text-3xl md:text-4xl font-black font-serif text-stone-900 tracking-widest drop-shadow-sm">
-                        {t('banzuke.announcement.title')}
-                    </h2>
-                </div>
-                <div className="text-stone-500 font-serif font-bold text-sm tracking-widest">
-                    {t('banzuke.announcement.subtitle', { year: currentDate.getFullYear() - 2024, month: currentDate.getMonth() + 1 })}
-                </div>
+            <div className="px-6 pt-6">
+                <SectionHeader
+                    align="center"
+                    eyebrow={t('banzuke.announcement.subtitle', { year: currentDate.getFullYear() - 2024, month: currentDate.getMonth() + 1 })}
+                    title={t('banzuke.announcement.title')}
+                    illustrationKey="banzuke"
+                    className="border-0 shadow-none bg-transparent"
+                />
             </div>
 
                 {/* Hero Section (Promoted Sekitori) - Only show if current tab is Makuuchi or Juryo? Or always? Always is good for hype. */}
@@ -169,21 +170,15 @@ const BashoResultModal: React.FC<BashoResultModalProps> = ({ wrestlers, onClose 
                 )}
 
                 {/* Tabs */}
-                <div className="relative z-10 px-6 shrink-0 flex gap-1 overflow-x-auto custom-scrollbar border-b border-stone-300 mb-0">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.key}
-                            onClick={() => setActiveTab(tab.key as any)}
-                            className={`
-                                px-4 py-2 font-serif font-bold text-sm tracking-wider rounded-t-sm transition-all relative top-[1px]
-                                ${activeTab === tab.key
-                                    ? 'bg-[#fcf9f2] text-[#b7282e] border border-stone-300 border-b-transparent shadow-[0_-2px_4px_rgba(0,0,0,0.05)]'
-                                    : 'bg-stone-200 text-stone-500 border border-transparent hover:bg-stone-100 hover:text-stone-700'}
-                            `}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
+                <div className="px-6 pt-2">
+                    <div className="overflow-x-auto custom-scrollbar border-b border-stone-300">
+                        <TabList
+                            tabs={tabs.map((tab) => ({ id: tab.key, label: tab.label }))}
+                            activeId={activeTab}
+                            onChange={(id) => setActiveTab(id as any)}
+                            className="min-w-max"
+                        />
+                    </div>
                 </div>
 
                 {/* Main List */}
