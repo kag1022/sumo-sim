@@ -242,6 +242,8 @@ export const MainGameScreen = () => {
         );
     };
 
+    const nextLabel = gamePhase === 'tournament' ? t('cmd.next_day') : t('cmd.next_week');
+
     return (
         <div className="h-screen w-screen bg-[#fcf9f2] text-slate-800 font-sans flex flex-col overflow-hidden">
             {/* Header */}
@@ -298,7 +300,7 @@ export const MainGameScreen = () => {
                     </div>
 
                     {/* Scrollable Content Area */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32">
                         
                         {/* Phase 1: Training Mode */}
                         {gamePhase === 'training' && (
@@ -386,32 +388,40 @@ export const MainGameScreen = () => {
 
                     </div>
 
-                    {/* Bottom Action Bar (Fixed at bottom right of Center Panel) */}
-                    <div className="absolute bottom-6 right-6 z-10 flex flex-col items-end gap-3">
-                         <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setShowLog(!showLog)}
-                                className={`
-                                    rounded-full w-12 h-12 flex items-center justify-center shadow-lg border-2 border-white/20 transition-transform active:scale-95
-                                    ${showLog ? 'bg-slate-700 text-white' : 'bg-white text-slate-600'}
-                                `}
-                                title={t('log_btn.tooltip')}
-                            >
-                                <span className="font-serif font-bold text-xs writing-vertical-rl">{t('log_btn.label')}</span>
-                            </button>
+                    {/* Bottom Command Bar */}
+                    <div className="sticky bottom-0 z-10 border-t border-slate-200 bg-[#fcf9f2]/95 backdrop-blur-sm">
+                        <div className="flex flex-col gap-3 px-4 py-3 md:px-6 md:py-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-500">
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600">
+                                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                                        {gamePhase === 'tournament' ? t('basho.title', 'Hon-Basho in Progress') : t('training.title')}
+                                    </span>
+                                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600">
+                                        TP {trainingPoints}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => setShowLog(!showLog)}
+                                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 transition-colors ${
+                                        showLog ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:text-slate-900'
+                                    }`}
+                                    title={t('log_btn.tooltip')}
+                                >
+                                    <span className="text-xs font-bold">{t('log_btn.label')}</span>
+                                </button>
+                            </div>
 
                             <Button
-                                variant={gamePhase === 'tournament' ? 'secondary' : 'action'} // Use Secondary/Gold for tournament? Or Action?
+                                variant={gamePhase === 'tournament' ? 'secondary' : 'action'}
                                 size="lg"
                                 onClick={handleAdvance}
                                 className={`
-                                    shadow-xl min-w-[200px] h-14 flex items-center justify-between px-6 text-lg
+                                    w-full shadow-xl h-14 flex items-center justify-between px-6 text-lg
                                     ${gamePhase === 'tournament' ? 'bg-amber-400 text-amber-950 hover:bg-amber-300' : ''}
                                 `}
                             >
-                                <span className="font-serif font-bold">
-                                    {gamePhase === 'tournament' ? t('cmd.next_day') : t('cmd.next_week')}
-                                </span>
+                                <span className="font-serif font-bold">{nextLabel}</span>
                                 <ChevronRight className="w-6 h-6" />
                             </Button>
                         </div>
