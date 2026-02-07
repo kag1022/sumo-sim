@@ -12,7 +12,7 @@ const createMockWrestler = (
     isKadoban: boolean = false,
     history: BashoLog[] = [],
     stats: WrestlerStats = { body: 50, technique: 50, mind: 50 }
-): Wrestler => ({
+    ): Wrestler => ({
     id,
     name: `Wrestler-${id}`,
     reading: `Read-${id}`,
@@ -44,6 +44,32 @@ const createMockWrestler = (
     skills: [],
     retirementStatus: 'None'
 });
+
+const assignBashoRecord = (wrestler: Wrestler, wins: number) => {
+    wrestler.currentBashoStats = {
+        wins,
+        losses: 15 - wins,
+        matchHistory: []
+    };
+};
+
+const createRoster = (count: number): Wrestler[] => {
+    return Array.from({ length: count }, (_, index) => {
+        const wrestler = createMockWrestler(
+            `sim-${index}`,
+            'Maegashira',
+            8,
+            index + 1,
+            index % 2 === 0 ? 'East' : 'West'
+        );
+        wrestler.stats = {
+            body: 45 + (index % 10),
+            technique: 45 + ((index + 3) % 10),
+            mind: 45 + ((index + 6) % 10)
+        };
+        return wrestler;
+    });
+};
 
 describe('Banzuke Logic', () => {
 
@@ -178,6 +204,54 @@ describe('Banzuke Logic', () => {
 
         const result = updateBanzuke([w]);
         expect(result[0].rank).toBe('Ozeki');
+    });
+
+    it('should return a demoted Ozeki to Ozeki with 10 wins at Sekiwake', () => {
+        const ozeki = createMockWrestler('w1', 'Ozeki', 7, 1, 'East', true);
+        const stableOzeki1 = createMockWrestler('w2', 'Ozeki', 9, 2, 'West');
+        const stableOzeki2 = createMockWrestler('w3', 'Ozeki', 8, 3, 'East');
+        const afterDemotion = updateBanzuke([ozeki, stableOzeki1, stableOzeki2]);
+
+        const sekiwake = afterDemotion.find(w => w.id === 'w1') as Wrestler;
+        expect(sekiwake.rank).toBe('Sekiwake');
+        expect(sekiwake.bantsukePriorRank).toBe('Ozeki');
+
+        assignBashoRecord(sekiwake, 10);
+        const afterReturn = updateBanzuke([sekiwake, stableOzeki1, stableOzeki2]);
+        const returned = afterReturn.find(w => w.id === 'w1') as Wrestler;
+        expect(returned.rank).toBe('Ozeki');
+    });
+
+    it('should require Ozeki rank in previous basho for Yokozuna promotion', () => {
+        const candidate = createMockWrestler('w1', 'Ozeki', 14, 1, 'East', false, [
+            { bashoId: 'prev', rank: 'Sekiwake', rankNumber: 1, rankSide: 'East', wins: 13, losses: 2 }
+        ]);
+
+        const result = updateBanzuke([candidate], 'current', 'w1', 'w1');
+        expect(result[0].rank).toBe('Ozeki');
+    });
+
+    it('should keep roster stable over multiple basho updates', () => {
+        const iterations = 12;
+        let roster = createRoster(80);
+
+        for (let i = 0; i < iterations; i++) {
+            roster.forEach((w, index) => {
+                const wins = (index + i) % 16;
+                assignBashoRecord(w, wins);
+            });
+            roster = updateBanzuke(roster, `basho-${i}`);
+        }
+
+        const ids = roster.map(w => w.id);
+        expect(new Set(ids).size).toBe(roster.length);
+
+        roster.forEach(w => {
+            expect(w.rank).toBeTruthy();
+            expect(w.rankNumber).toBeGreaterThan(0);
+            expect(['East', 'West']).toContain(w.rankSide);
+            expect(w.history.length).toBe(iterations);
+        });
     });
 
 });

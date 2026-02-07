@@ -76,6 +76,8 @@ export const Sidebar = ({
 
 
 
+    const sectionLabelClass = 'text-[11px] font-bold uppercase tracking-wider text-slate-400';
+
     return (
         <>
             {/* Mobile Overlay */}
@@ -131,6 +133,40 @@ export const Sidebar = ({
                             </div>
 
                             <div className="p-4 space-y-4 pb-32">
+                                {/* Quick Actions */}
+                                <div className="bg-white p-4 rounded-sm shadow-sm border border-stone-200">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className={sectionLabelClass}>{t('sidebar.quick_actions', 'Quick Actions')}</span>
+                                        <span className="text-xs text-slate-400">{t('sidebar.quick_actions_hint', 'Manage this wrestler')}</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <button
+                                            onClick={() => setShowRenameModal(true)}
+                                            className="flex flex-col items-center justify-center gap-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-3 text-xs font-bold text-slate-600 hover:border-[#b7282e] hover:bg-red-50 hover:text-[#b7282e]"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                            {t('cmd.rename')}
+                                        </button>
+                                        <button
+                                            onClick={() => setShowSkillBookModal(true)}
+                                            className="flex flex-col items-center justify-center gap-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-3 text-xs font-bold text-slate-600 hover:border-[#b7282e] hover:bg-red-50 hover:text-[#b7282e]"
+                                        >
+                                            <BookOpen className="w-4 h-4" />
+                                            {t('wrestler.skill_book')}
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const element = document.getElementById('retire-section');
+                                                element?.scrollIntoView({ behavior: 'smooth' });
+                                            }}
+                                            className="flex flex-col items-center justify-center gap-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-3 text-xs font-bold text-slate-600 hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            {t('cmd.retire')}
+                                        </button>
+                                    </div>
+                                </div>
+
                                 {/* Profile Card */}
                                 <div className="bg-white p-4 rounded-sm shadow-sm border border-stone-200">
                                     <div className="flex gap-4">
@@ -182,7 +218,7 @@ export const Sidebar = ({
                                                 current: activeSelectedWrestler.trainingHistory?.weekId === getWeekId(useGame().currentDate) ? activeSelectedWrestler.trainingHistory.count : 0,
                                                 max: 5
                                             })}
-                                         </span>
+                                        </span>
                                     </div>
                                     <div className="p-4 grid grid-cols-2 gap-2">
                                         {[
@@ -221,7 +257,7 @@ export const Sidebar = ({
                                 {/* Skills Card */}
                                 <div className="bg-white p-4 rounded-sm shadow-sm border border-stone-200">
                                      <div className="flex justify-between items-center mb-3">
-                                        <h3 className="text-sm font-bold font-serif text-slate-700">{t('wrestler.skills')}</h3>
+                                        <span className={sectionLabelClass}>{t('wrestler.skills')}</span>
                                         <button
                                             onClick={() => setShowSkillBookModal(true)}
                                             className="text-xs flex items-center gap-1 text-[#b7282e] hover:text-red-700 hover:underline decoration-red-200 underline-offset-4 transition-colors"
@@ -248,7 +284,7 @@ export const Sidebar = ({
                                 {/* Matches Card (Preview) */}
                                 <div className="bg-white rounded-sm shadow-sm border border-stone-200 overflow-hidden">
                                     <div className="px-4 py-2 bg-stone-50 border-b border-stone-100">
-                                        <h3 className="text-sm font-bold font-serif text-slate-700">{t('sidebar.matches_tab')}</h3>
+                                        <span className={sectionLabelClass}>{t('sidebar.matches_tab')}</span>
                                     </div>
                                     {/* Sidebar only shows relevant match for this wrestler */}
                                     <DailyMatchList 
